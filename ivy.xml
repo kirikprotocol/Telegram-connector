@@ -1,0 +1,17 @@
+<ivy-module version="2.0">
+	<info organisation="mobi.eyeline.mobilizer" module="sads-telegram"/>
+	<dependencies>
+		<dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.19,)" changing="true"/>
+		<dependency org="mobi.eyeline.mobilizer" name="sads-core" rev="[0.34,)" changing="true"/>
+		<dependency org="mobi.eyeline.mobilizer" name="sads-impl" rev="[0.124,)" changing="true"/>
+		<dependency org="commons-configuration" name="commons-configuration" rev="1.4"/>
+		<dependency org="commons-lang" name="commons-lang" rev="2.3"/>
+		<dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
+		<dependency org="log4j" name="log4j" rev="1.2.16"/>
+		<dependency org="mobi.eyeline.util" name="utils" rev="1.0.44"/>
+		<dependency org="mobi.eyeline.mobilizer" name="personalization-helpers" rev="0.09"/>
+		<dependency org="org.glassfish" name="javax.json" rev="1.0.4"/>
+		<!-- dependency org="org.glassfish" name="javax.json-api" rev="1.0"/ -->
+  </dependencies>
+
+</ivy-module>

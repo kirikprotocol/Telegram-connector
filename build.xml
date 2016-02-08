@@ -1,0 +1,152 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="sads-telegram" basedir="." default="jar">
+
+	<property file="build.properties"/>
+
+	<property name="build-dir" location="${basedir}/.build"/>
+	<property name="distr-dir" location="${build-dir}/distr"/>
+
+	<property name="src-dir" location="${basedir}/src"/>
+	<property name="test-dir" location="${basedir}/test"/>
+	<property name="test-src" location="${test-dir}/src"/>
+	<property name="report-dir" location="${build-dir}/report"/>
+
+	<condition property="resolver" value="eyeline" else="snapshot">
+		<isset property="JENKINS_VERSION"/>
+	</condition>
+
+
+	<tstamp>
+		<format property="build-date" pattern="yyyy-MM-dd HH:mm:ss" />
+	</tstamp>
+
+	<target name="clean" description="clean all">
+		<delete dir="${build-dir}"/>
+	</target>
+
+	<target name="resolve" description="retrieve dependencies with ivy">
+		<ivy:settings file="${user.home}/.ivy2/ivysettings.xml"/>
+		<ivy:resolve transitive="false"/>
+		<mkdir dir="${build-dir}/lib"/>
+		<ivy:retrieve pattern="${build-dir}/lib/[artifact]-[revision].[ext]" type="jar,bundle"/>
+		<mkdir dir="${report-dir}/ivy"/>
+		<ivy:report todir="${report-dir}/ivy" graph="true"/>
+	</target>
+
+	<path id="classpath">
+		<fileset dir="${build-dir}/lib">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="build" depends="clean, resolve">
+		<mkdir dir="${build-dir}/out"/>
+		<javac destdir="${build-dir}/out"
+			   optimize="off"
+			   debug="on"
+			   source="1.6"
+			   target="1.6"
+			   encoding="UTF-8"
+			   nowarn="true"
+			   includeantruntime="false">
+			<compilerarg value="-Xlint:all"/>
+			<src path="src"/>
+			<classpath refid="classpath"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="build">
+		<mkdir dir="${distr-dir}"/>
+		<jar destfile="${distr-dir}/${module-name}.jar">
+			<manifest>
+				<attribute name="Module" value="${module-name}"/>
+				<attribute name="Vendor" value="Eyeline Communications"/>
+				<attribute name="Release-Version" value="${release-version}"/>
+				<attribute name="Build-Date" value="${build-date}"/>
+			</manifest>
+			<fileset dir="${build-dir}/out" includes="**/*"/>
+			<fileset file="${basedir}/homeregion.txt"/>
+		</jar>
+	</target>
+
+	<target name="distr" depends="jar,test">
+		<ivy:publish resolver="${resolver}" pubrevision="${release-version}" overwrite="true">
+			<artifacts pattern=".build/distr/[artifact].[ext]"/>
+		</ivy:publish>
+	</target>
+
+	<target name="compile-test" depends="build">
+		<mkdir dir="${build-dir}/test"/>
+		<javac destdir="${build-dir}/test"
+			   optimize="off"
+			   debug="on"
+			   source="1.6"
+			   target="1.6"
+			   encoding="UTF-8"
+			   nowarn="true"
+			   includeantruntime="false">
+			<compilerarg value="-Xlint:all"/>
+			<src path="${test-src}"/>
+			<classpath refid="classpath"/>
+			<classpath path="${build-dir}/out"/>
+		</javac>
+	</target>
+
+	<target name="instrument" depends="compile-test">
+		<mkdir dir="${build-dir}/instrumented"/>
+
+    <taskdef resource="emma_ant.properties">
+      <classpath refid="classpath"/>
+    </taskdef>
+
+		<emma>
+			<instr instrpath="${build-dir}/out"
+				   destdir="${build-dir}/instrumented"
+				   metadatafile="${build-dir}/metadata.emma"
+				   merge="true"/>
+		</emma>
+	</target>
+
+	<target name="test" description="Execute unit tests" depends="instrument">
+		<mkdir dir="${report-dir}/tmp/test"/>
+		<mkdir dir="${report-dir}/junit"/>
+		<mkdir dir="${report-dir}/emma"/>
+
+		<junit printsummary="true" failureproperty="junit.failure" fork="true" dir="${basedir}">
+			<classpath>
+				<pathelement location="${build-dir}/test"/>
+				<pathelement location="${build-dir}/instrumented"/>
+				<pathelement location="${build-dir}/out"/>
+			</classpath>
+			<classpath refid="classpath"/>
+
+			<batchtest todir="${report-dir}/tmp/test">
+				<fileset dir="${test-src}"/>
+				<formatter type="xml"/>
+			</batchtest>
+
+			<jvmarg value="-Demma.coverage.out.file=${build-dir}/coverage.emma"/>
+			<jvmarg value="-Demma.coverage.out.merge=true"/>
+		</junit>
+
+		<junitreport todir="${report-dir}/tmp">
+			<fileset dir="${report-dir}/tmp/test"/>
+			<report todir="${report-dir}/junit"/>
+		</junitreport>
+
+    <taskdef resource="emma_ant.properties">
+      <classpath refid="classpath"/>
+    </taskdef>
+
+		<emma enabled="true">
+			<report sourcepath="${src-dir}">
+				<fileset dir="${build-dir}" includes="*.emma"/>
+				<html outfile="${report-dir}/emma/index.html"/>
+				<xml outfile="${report-dir}/emma/index.xml"/>
+			</report>
+		</emma>
+
+		<delete dir="${report-dir}/tmp"/>
+		<fail if="junit.failure" message="Unit test(s) failed. See reports!"/>
+	</target>
+
+</project>
