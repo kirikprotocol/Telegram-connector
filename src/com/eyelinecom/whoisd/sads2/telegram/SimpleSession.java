@@ -15,6 +15,14 @@ public class SimpleSession implements Session {
     private Map<String,Object> attributes = new HashMap<String, Object>();
     private Date startDate = new Date();
 
+    public SimpleSession(String id) {
+        this.id = id;
+    }
+
+    public SimpleSession() {
+
+    }
+
     @Override
     public String getId() {
         return id;

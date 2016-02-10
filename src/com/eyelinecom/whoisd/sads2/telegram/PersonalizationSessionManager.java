@@ -16,7 +16,7 @@ import java.util.Properties;
 /**
  * Created by jeck on 08/02/16
  */
-public class PersonalizationSessionManager {
+public class PersonalizationSessionManager implements SessionManager{
     private PersonalizationManager personalization;
 
     public PersonalizationSessionManager(PersonalizationManager personalization) {
@@ -24,8 +24,14 @@ public class PersonalizationSessionManager {
     }
 
     public Session getSession(String id) throws Exception {
-        String session = personalization.getString(id);
-        return string2session(session);
+        try {
+            String session = personalization.getString(id);
+            return string2session(session);
+        } catch (Exception e) {
+            Session session = new SimpleSession(id);
+            this.persist(session);
+            return session;
+        }
     }
 
     public void persist(Session session) throws Exception {
