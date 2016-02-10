@@ -6,19 +6,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * Hide the current custom keyboard and display the default one.
+ * Hide current custom keyboard and display the default one.
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DefaultKeyboard extends Keyboard<DefaultKeyboard> {
+public class ReplyKeyboardHide extends Keyboard<ReplyKeyboardHide> {
 
   @Override
-  protected Class<DefaultKeyboard> getEntityClass() { return DefaultKeyboard.class; }
+  protected Class<ReplyKeyboardHide> getEntityClass() { return ReplyKeyboardHide.class; }
 
   @XmlElement(name = "hide_keyboard")
   private Boolean hideKeyboard;
 
-  public DefaultKeyboard() {}
+  public ReplyKeyboardHide() {}
 
   public Boolean getHideKeyboard() {
     return hideKeyboard;

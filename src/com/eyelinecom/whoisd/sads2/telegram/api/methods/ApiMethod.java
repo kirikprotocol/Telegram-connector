@@ -11,29 +11,33 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
 
   protected static final String METHOD_FIELD = "method";
 
-  protected final Class<Self> entityClass;
+  protected final Class<Self> methodClass;
+  protected final Class<Response> responseClass;
 
   public ApiMethod() {
-    this.entityClass = getEntityClass();
+    this.methodClass = getEntityClass(0);
+    this.responseClass = getEntityClass(1);
   }
 
-  protected Class<Self> getEntityClass() {
+  protected <X> Class<X> getEntityClass(int argNo) {
     final ParameterizedType genericSuperclass =
         (ParameterizedType) getClass().getGenericSuperclass();
     //noinspection unchecked
-    return (Class<Self>) genericSuperclass.getActualTypeArguments()[0];
+    return (Class<X>) genericSuperclass.getActualTypeArguments()[argNo];
   }
 
   public abstract String getPath();
 
   /**
-   * Deserialize a json answer to the response type to a method.
+   * Deserialize a json answer to the response type of a method.
    */
-  public abstract Response toResponse(JSONObject answer) throws TelegramApiException;
+  public Response toResponse(JSONObject answer) throws TelegramApiException {
+    return ApiType.unmarshalResult(answer, responseClass);
+  }
 
   public String marshal() throws TelegramApiException {
     //noinspection unchecked
-    return marshal((Self) this, entityClass);
+    return marshal((Self) this, methodClass);
   }
 
   protected static <T extends ApiMethod> String marshal(T obj,

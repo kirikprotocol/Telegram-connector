@@ -1,10 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 
-import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -16,23 +13,31 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class SendMessage extends ApiMethod<SendMessage, Message> {
 
   /**
-   * Chat ID to send the message to, username for channels.
+   * Unique identifier for the target chat or username of the target channel
+   * (in the format {@code @channelusername}).
    */
-  @XmlElement(name = "chat_id")
+  @SuppressWarnings("SpellCheckingInspection")
+  @XmlElement(name = "chat_id", required = true)
   private String chatId;
 
   /**
-   * Text of the message to be sent
+   * Text of the message to be sent.
    */
-  @XmlElement(name = "text")
+  @XmlElement(name = "text", required = true)
   private String text;
 
   /**
-   * If the message is a reply, ID of the original message
+   * If the message is a reply, ID of the original message.
    */
   @XmlElement(name = "reply_to_message_id")
   private Integer replyToMessageId;
 
+  /**
+   * Additional interface options.
+   *
+   * A JSON-serialized object for a custom reply keyboard, instructions to hide keyboard
+   * or to force a reply from the user.
+   */
   @XmlElement(name = "reply_markup")
   private Keyboard replyMarkup;
 
@@ -75,16 +80,6 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
   @Override
   public String getPath() {
     return "sendmessage";
-  }
-
-  @Override
-  public Message toResponse(JSONObject answer) throws TelegramApiException {
-    try {
-      return Message.unmarshal(answer.getJSONObject("result"), Message.class);
-
-    } catch (JSONException e) {
-      throw new TelegramApiException("Unable to get response from [" + answer + "]", e);
-    }
   }
 
 }

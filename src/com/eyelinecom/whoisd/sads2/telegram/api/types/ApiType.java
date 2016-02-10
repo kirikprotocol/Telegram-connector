@@ -32,6 +32,17 @@ public abstract class ApiType<T extends ApiType> {
     }
   }
 
+  public static <T extends ApiType> T unmarshalResult(JSONObject obj,
+                                                      Class<T> clazz) throws TelegramApiException {
+
+    try {
+      return unmarshal(obj.getJSONObject("result"), clazz);
+
+    } catch (Exception e) {
+      throw new TelegramApiException("Unable to unmarshal API object [" + obj + "]", e);
+    }
+  }
+
   public String marshal() throws TelegramApiException {
     //noinspection unchecked
     return marshal((T) this, entityClass);

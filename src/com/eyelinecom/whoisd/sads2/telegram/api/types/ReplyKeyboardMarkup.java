@@ -9,10 +9,10 @@ import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CustomKeyboard extends Keyboard<CustomKeyboard> {
+public class ReplyKeyboardMarkup extends Keyboard<ReplyKeyboardMarkup> {
 
   @Override
-  protected Class<CustomKeyboard> getEntityClass() { return CustomKeyboard.class; }
+  protected Class<ReplyKeyboardMarkup> getEntityClass() { return ReplyKeyboardMarkup.class; }
 
   @XmlElement(name = "keyboard")
   private List<List<String>> keyboard = new ArrayList<List<String>>();
@@ -25,7 +25,7 @@ public class CustomKeyboard extends Keyboard<CustomKeyboard> {
   @XmlElement(name = "one_time_keyboard")
   private Boolean oneTimeKeyboard;
 
-  public CustomKeyboard() {}
+  public ReplyKeyboardMarkup() {}
 
   public List<List<String>> getKeyboard() {
     return keyboard;
