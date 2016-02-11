@@ -35,7 +35,7 @@ public class BotApiClient {
     final Loader.Entity response;
     try {
       response = loader.postMultipart(
-          url(PATH),
+          methodUrl(PATH),
           Collections.<String, String>emptyMap(),
           Collections.<String, String>emptyMap(),
           new HashMap<String, String>() {{
@@ -62,7 +62,7 @@ public class BotApiClient {
     final Loader.Entity response;
     try {
       response = loader.load(
-          url(method.getPath()),
+          methodUrl(method.getPath()),
           method.marshal(),
           "application/json",
           "UTF-8",
@@ -76,12 +76,11 @@ public class BotApiClient {
     return method.toResponse(rc);
   }
 
-
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   private JSONObject parse(Loader.Entity response) throws TelegramApiException {
     try {
-      return new JSONObject(new String(response.getBuffer(), "UTF-8"));
+      return MarshalUtils.parse(new String(response.getBuffer(), "UTF-8"));
 
     } catch (JSONException e) {
       throw new TelegramApiException("Unable to parse response JSON", response.toString());
@@ -107,7 +106,7 @@ public class BotApiClient {
     }
   }
 
-  private String url(String method) {
+  private String methodUrl(String method) {
     return apiRoot + "/" + token + "/" + method;
   }
 

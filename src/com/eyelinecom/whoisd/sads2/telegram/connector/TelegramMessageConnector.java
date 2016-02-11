@@ -2,6 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
@@ -9,6 +10,8 @@ import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector
 import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -30,7 +33,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
   private final static Log log = new Log4JLogger(Logger.getLogger(TelegramMessageConnector.class));
 
-  private MessageConnector<HttpServletRequest, SADSResponse> connector;
+  private MessageConnector<StoredHttpRequest, SADSResponse> connector;
 
   @Override
   public void destroy() {
@@ -42,7 +45,7 @@ public class TelegramMessageConnector extends HttpServlet {
   public void init(ServletConfig servletConfig) throws ServletException {
     connector = new TelegramMessageConnectorImpl();
 
-    try{
+    try {
       final Properties properties = AbstractHTTPPushConnector.buildProperties(servletConfig);
       connector.init(properties);
 
@@ -54,6 +57,9 @@ public class TelegramMessageConnector extends HttpServlet {
   @Override
   protected void service(HttpServletRequest req,
                          HttpServletResponse resp) throws ServletException, IOException {
+
+    final StoredHttpRequest request = new StoredHttpRequest(req);
+
 
 //    try {
 //      String serviceId = connector.getServiceId(req);
@@ -76,7 +82,7 @@ public class TelegramMessageConnector extends HttpServlet {
 //      log.warn("error", e);
 //    }
 
-    SADSResponse response = connector.process(req);
+    SADSResponse response = connector.process(request);
     this.fillHttpResponse(resp, response);
   }
 
@@ -99,11 +105,11 @@ public class TelegramMessageConnector extends HttpServlet {
   }
 
   private class TelegramMessageConnectorImpl
-      extends LazyMessageConnector<HttpServletRequest, SADSResponse> {
+      extends LazyMessageConnector<StoredHttpRequest, SADSResponse> {
 
-    public static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
+    private static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
 
-    String executorResourceName;
+    private String executorResourceName;
     private ScheduledExecutorService delayedExecutor;
 
     @Override
@@ -126,6 +132,7 @@ public class TelegramMessageConnector extends HttpServlet {
     @Override
     protected ExecutorService getExecutor(ServiceConfig config, String subscriber) {
       Log log = this.getLogger();
+
       if (this.delayedExecutor == null) {
 
         try {
@@ -146,91 +153,131 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected SADSResponse buildQueuedResponse(HttpServletRequest httpServletRequest, SADSRequest sadsRequest) {
-      // Response to webhook
-      return null;
+    protected SADSResponse buildQueuedResponse(StoredHttpRequest httpServletRequest,
+                                               SADSRequest sadsRequest) {
+      // Response to WebHook update.
+      final SADSResponse rc = new SADSResponse();
+      rc.setStatus(200);
+      rc.setMimeType("application/json");
+      rc.setData(new byte[] {});
+      return rc;
     }
 
     @Override
-    protected SADSResponse buildQueueErrorResponse(Exception e, HttpServletRequest httpServletRequest, SADSRequest sadsRequest) {
-      return null;
+    protected SADSResponse buildQueueErrorResponse(Exception e,
+                                                   StoredHttpRequest httpServletRequest,
+                                                   SADSRequest sadsRequest) {
+      final SADSResponse rc = new SADSResponse();
+      rc.setStatus(500);
+      rc.setMimeType("application/json");
+      rc.setData(new byte[] {});
+      return rc;
     }
 
     @Override
     protected Log getLogger() {
-      return null;
+      return TelegramMessageConnector.log;
     }
 
     @Override
     protected boolean isUSSDInitiator() {
-      // Always FALSE
+      // Always FALSE.
       return false;
     }
 
     @Override
-    protected String getSubscriberId(HttpServletRequest httpServletRequest) throws Exception {
-      // 1. Parse
-      // 2. extract user id
-      return null;
+    protected String getSubscriberId(StoredHttpRequest req) throws Exception {
+      // Chat ID
+      final Update update = getClient().readUpdate(req.getContent());
+      return String.valueOf(update.getMessage().getChat().getId());
     }
 
     @Override
-    protected String getServiceId(HttpServletRequest httpServletRequest) throws Exception {
-      // from webhook url
-      return null;
+    protected String getServiceId(StoredHttpRequest req) throws Exception {
+      // Extract service ID as a part of registered WebHook URL.
+      final String[] parts = req.getRequestURI().split("/");
+      return parts[parts.length - 2];
     }
 
     @Override
     protected String getGateway() {
-      // Arbitrary description, "Telegram"
-      // Passed to content Provider via headers
-      return null;
+      // Arbitrary description, passed to content Provider via headers (brief)
+      return "Telegram";
     }
 
     @Override
-    protected String getGatewayRequestDescription(HttpServletRequest httpServletRequest) {
-      // Detailed arbitrary description
-      // Passed to content Provider via header
-      return null;
+    protected String getGatewayRequestDescription(StoredHttpRequest httpServletRequest) {
+      // Arbitrary description, passed to content Provider via headers (detailed)
+      return "Telegram";
     }
 
     @Override
-    protected Protocol getRequestProtocol(ServiceConfig config, String subscriberId, HttpServletRequest httpServletRequest) {
+    protected Protocol getRequestProtocol(ServiceConfig config,
+                                          String subscriberId,
+                                          StoredHttpRequest httpServletRequest) {
       return Protocol.TELEGRAM;
     }
 
     @Override
-    protected String getRequestUri(ServiceConfig config, String subscriberId, HttpServletRequest message) throws Exception {
+    protected String getRequestUri(ServiceConfig config,
+                                   String subscriberId,
+                                   StoredHttpRequest message) throws Exception {
       // All the processing
+      // TODO
       return super.getRequestUri(config, subscriberId, message);
     }
 
-
-
     @Override
-    protected SADSResponse getSavedSADSResponse(HttpServletRequest httpServletRequest) {
-      return null;  // Always NULL.
+    protected SADSResponse getSavedSADSResponse(StoredHttpRequest httpServletRequest) {
+      // Always NULL.
+      return null;
     }
 
     @Override
-    protected SADSResponse getOuterResponse(HttpServletRequest httpServletRequest, SADSRequest request, SADSResponse response) {
+    protected SADSResponse getOuterResponse(StoredHttpRequest httpServletRequest,
+                                            SADSRequest request,
+                                            SADSResponse response) {
+
       // Stuff to push to the user.
+      // TODO
       return null;
     }
 
     @Override
-    protected SADSResponse sadsRequestBuildError(Exception e, HttpServletRequest httpServletRequest) {
+    protected SADSResponse sadsRequestBuildError(Exception e,
+                                                 StoredHttpRequest req) {
+      getLog(req).error("SADSRequest build error", e);
       return null;
     }
 
     @Override
-    protected SADSResponse sadsResponseBuildError(Exception e, HttpServletRequest httpServletRequest, SADSRequest sadsRequest) {
+    protected SADSResponse sadsResponseBuildError(Exception e,
+                                                  StoredHttpRequest req,
+                                                  SADSRequest sadsRequest) {
+      getLog(req).error("SADSResponse build error", e);
       return null;
     }
 
     @Override
-    protected SADSResponse messageProcessingError(Exception e, HttpServletRequest httpServletRequest, SADSRequest sadsRequest, SADSResponse response) {
+    protected SADSResponse messageProcessingError(Exception e,
+                                                  StoredHttpRequest req,
+                                                  SADSRequest sadsRequest,
+                                                  SADSResponse response) {
+      getLog(req).error("Message processing error", e);
       return null;
+    }
+
+    private TelegramApi getClient() throws NotFoundResourceException {
+      return (TelegramApi) getResource("telegram-api");
+    }
+
+    private Log getLog(StoredHttpRequest req) {
+      try{
+        return SADSLogger.getLogger(getServiceId(req), getSubscriberId(req), getClass());
+
+      } catch (Exception e) {
+        return getLogger();
+      }
     }
   }
 

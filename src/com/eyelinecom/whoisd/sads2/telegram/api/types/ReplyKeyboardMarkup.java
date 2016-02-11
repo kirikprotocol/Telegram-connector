@@ -4,8 +4,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -14,8 +12,8 @@ public class ReplyKeyboardMarkup extends Keyboard<ReplyKeyboardMarkup> {
   @Override
   protected Class<ReplyKeyboardMarkup> getEntityClass() { return ReplyKeyboardMarkup.class; }
 
-  @XmlElement(name = "keyboard")
-  private List<List<String>> keyboard = new ArrayList<List<String>>();
+  @XmlElement(name = "keyboard", type = String[][].class)
+  private String[][] keyboard;
 
   /** Resize vertically for optimal fit. */
   @XmlElement(name = "resize_keyboard")
@@ -27,11 +25,11 @@ public class ReplyKeyboardMarkup extends Keyboard<ReplyKeyboardMarkup> {
 
   public ReplyKeyboardMarkup() {}
 
-  public List<List<String>> getKeyboard() {
+  public String[][] getKeyboard() {
     return keyboard;
   }
 
-  public void setKeyboard(List<List<String>> keyboard) {
+  public void setKeyboard(String[][] keyboard) {
     this.keyboard = keyboard;
   }
 

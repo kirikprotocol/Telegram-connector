@@ -16,7 +16,7 @@ public class ReplyKeyboardHide extends Keyboard<ReplyKeyboardHide> {
   protected Class<ReplyKeyboardHide> getEntityClass() { return ReplyKeyboardHide.class; }
 
   @XmlElement(name = "hide_keyboard")
-  private Boolean hideKeyboard;
+  private Boolean hideKeyboard = true;
 
   public ReplyKeyboardHide() {}
 
