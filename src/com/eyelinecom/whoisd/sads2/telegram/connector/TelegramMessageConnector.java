@@ -2,9 +2,11 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
+import com.eyelinecom.whoisd.sads2.connector.SADSResponseUtils;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
 import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
@@ -16,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.Logger;
+import org.dom4j.Document;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -237,7 +240,7 @@ public class TelegramMessageConnector extends HttpServlet {
     protected SADSResponse getOuterResponse(StoredHttpRequest httpServletRequest,
                                             SADSRequest request,
                                             SADSResponse response) {
-
+      //Document telegramDocument = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
       // Stuff to push to the user.
       // TODO
       return null;

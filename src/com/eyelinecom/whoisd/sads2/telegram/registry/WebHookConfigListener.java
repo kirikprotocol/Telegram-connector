@@ -1,28 +1,32 @@
 package com.eyelinecom.whoisd.sads2.telegram.registry;
 
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.exception.ConfigurationException;
-import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.registry.Config;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfigListener;
-import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
+import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class WebHookConfigListener extends ServiceConfigListener {
 
   public static final String CONF_TOKEN = "telegram.token";
 
-  private final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
-
   private final Map<String, String> serviceToToken = new HashMap<>();
+  private TelegramApi client;
 
-  @Override
+    public WebHookConfigListener(TelegramApi client) {
+        this.client = client;
+    }
+
+    @Override
   protected void process(Config config) throws ConfigurationException {
     final String serviceId = config.getId();
 
@@ -45,10 +49,10 @@ public class WebHookConfigListener extends ServiceConfigListener {
                                String token) throws ConfigurationException {
 
     try {
-      getApiClient().registerWebHook(token, getApiClient().getServiceUrl(serviceId, token));
+      client.registerWebHook(token, client.getServiceUrl(serviceId, token));
       serviceToToken.put(serviceId, token);
 
-    } catch (TelegramApiException | NotFoundResourceException e) {
+    } catch (TelegramApiException e) {
       throw new ConfigurationException(serviceId, e.getMessage());
     }
   }
@@ -57,16 +61,28 @@ public class WebHookConfigListener extends ServiceConfigListener {
     try {
       final String token = serviceToToken.get(serviceId);
       if (token != null) {
-        getApiClient().unRegisterWebHook(token);
+        client.unRegisterWebHook(token);
         serviceToToken.remove(token);
       }
 
-    } catch (TelegramApiException | NotFoundResourceException e) {
+    } catch (TelegramApiException e) {
       throw new ConfigurationException(serviceId, e.getMessage());
     }
   }
 
-  private TelegramApi getApiClient() throws NotFoundResourceException {
-    return (TelegramApi) resourceStorage.get("telegram-api");
+
+
+  public static class Factory implements ResourceFactory {
+
+      @Override
+      public WebHookConfigListener build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
+          TelegramApi api = (TelegramApi) SADSInitUtils.getResource("telegram-api", properties);
+          return new WebHookConfigListener(api);
+      }
+
+      @Override
+      public boolean isHeavyResource() {
+          return false;
+      }
   }
 }

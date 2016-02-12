@@ -1,6 +1,8 @@
 package com.eyelinecom.whoisd.sads2.telegram.resource;
 
 import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
+import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
+import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
@@ -8,6 +10,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONException;
@@ -105,4 +108,24 @@ public class TelegramApiImpl implements TelegramApi {
 
     return getClient(token).call(method);
   }
+
+    public static class Factory implements ResourceFactory {
+
+      @Override
+      public TelegramApi build(String id,
+                               Properties properties,
+                               HierarchicalConfiguration config) throws Exception {
+
+        final HttpDataLoader loader =
+            (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
+
+        final String publicKey =
+            config.getString("pubkey").replaceAll("\n\\s+", "\n");
+
+
+        return new TelegramApiImpl(loader, publicKey, properties);
+      }
+
+      @Override public boolean isHeavyResource() { return false; }
+    }
 }
