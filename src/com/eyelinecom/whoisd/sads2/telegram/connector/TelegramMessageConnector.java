@@ -2,23 +2,23 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
-import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
-import com.eyelinecom.whoisd.sads2.connector.SADSResponseUtils;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
 import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
+import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
+import com.eyelinecom.whoisd.sads2.registry.ServiceChainConfig;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.Logger;
-import org.dom4j.Document;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -159,22 +160,14 @@ public class TelegramMessageConnector extends HttpServlet {
     protected SADSResponse buildQueuedResponse(StoredHttpRequest httpServletRequest,
                                                SADSRequest sadsRequest) {
       // Response to WebHook update.
-      final SADSResponse rc = new SADSResponse();
-      rc.setStatus(200);
-      rc.setMimeType("application/json");
-      rc.setData(new byte[] {});
-      return rc;
+      return buildWebhookResponse(200);
     }
 
     @Override
     protected SADSResponse buildQueueErrorResponse(Exception e,
                                                    StoredHttpRequest httpServletRequest,
                                                    SADSRequest sadsRequest) {
-      final SADSResponse rc = new SADSResponse();
-      rc.setStatus(500);
-      rc.setMimeType("application/json");
-      rc.setData(new byte[] {});
-      return rc;
+      return buildWebhookResponse(500);
     }
 
     @Override
@@ -200,6 +193,12 @@ public class TelegramMessageConnector extends HttpServlet {
       // Extract service ID as a part of registered WebHook URL.
       final String[] parts = req.getRequestURI().split("/");
       return parts[parts.length - 2];
+    }
+
+    protected String getServiceToken(StoredHttpRequest req) throws Exception {
+      // Extract service token as a part of registered WebHook URL.
+      final String[] parts = req.getRequestURI().split("/");
+      return parts[parts.length - 1];
     }
 
     @Override
@@ -237,13 +236,35 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected SADSResponse getOuterResponse(StoredHttpRequest httpServletRequest,
+    protected SADSResponse getOuterResponse(StoredHttpRequest req,
                                             SADSRequest request,
                                             SADSResponse response) {
       //Document telegramDocument = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
-      // Stuff to push to the user.
+      // Stuff to push to the user. request - request to the content provider, response - response from content provider
       // TODO
-      return null;
+
+      try {
+        final ServiceChainConfig serviceConfig = SADSInitializer.getServiceRegistry()
+            .getServiceConfig(request.getServiceId(), request.getScenarioId());
+        final String token =
+            serviceConfig.getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+
+        getClient().sendMessage(token, request.getAbonent(), "Hello!");
+
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      return buildWebhookResponse(200);
+    }
+
+    private SADSResponse buildWebhookResponse(int statusCode) {
+      final SADSResponse rc = new SADSResponse();
+      rc.setStatus(statusCode);
+      rc.setHeaders(Collections.<String, String>emptyMap());
+      rc.setMimeType("application/json");
+      rc.setData(new byte[] {});
+      return rc;
     }
 
     @Override

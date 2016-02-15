@@ -11,12 +11,9 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
 import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
@@ -25,13 +22,14 @@ import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
 public class TelegramApiImpl implements TelegramApi {
 
   private final HttpDataLoader loader;
-  private final String publicKey;
+  private final String publicKeyPath;
   private final String baseUrl;
   private final String connectorBaseUrl;
 
-  public TelegramApiImpl(HttpDataLoader loader, String publicKey, Properties properties) {
+  public TelegramApiImpl(HttpDataLoader loader, Properties properties) throws Exception {
     this.loader = loader;
-    this.publicKey = publicKey;
+
+    this.publicKeyPath = SADSInitUtils.getFilename("certificate.pem", properties);
     this.baseUrl = properties.getProperty("base.url");
     this.connectorBaseUrl = properties.getProperty("connector.url");
   }
@@ -47,24 +45,7 @@ public class TelegramApiImpl implements TelegramApi {
 
   @Override
   public void registerWebHook(String token, String url) throws TelegramApiException {
-    File certTmp = null;
-    try {
-      certTmp = File.createTempFile("tg", "pem");
-      certTmp.deleteOnExit();
-
-      FileUtils.writeStringToFile(certTmp, publicKey);
-
-      getClient(token).setWebhook(url, certTmp.getAbsolutePath());
-
-    } catch (IOException e) {
-      throw new TelegramApiException("Registering WebHook failed", e);
-
-    } finally {
-      if (certTmp != null) {
-        //noinspection ResultOfMethodCallIgnored
-        certTmp.delete();
-      }
-    }
+    getClient(token).setWebhook(url, publicKeyPath);
   }
 
   @Override
@@ -119,11 +100,7 @@ public class TelegramApiImpl implements TelegramApi {
         final HttpDataLoader loader =
             (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
 
-        final String publicKey =
-            config.getString("pubkey").replaceAll("\n\\s+", "\n");
-
-
-        return new TelegramApiImpl(loader, publicKey, properties);
+        return new TelegramApiImpl(loader, properties);
       }
 
       @Override public boolean isHeavyResource() { return false; }

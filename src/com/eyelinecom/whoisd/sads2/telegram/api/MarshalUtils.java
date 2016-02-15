@@ -29,10 +29,13 @@ public class MarshalUtils {
   public static <T> T unmarshal(JSONObject obj, Class<T> clazz)
       throws JAXBException, JSONException, XMLStreamException {
 
+    final JSONObject wrapper = new JSONObject();
+    wrapper.put(getRootElementName(clazz), obj);
+
     final JAXBContext jc = JAXBContext.newInstance(clazz);
     final MappedNamespaceConvention con = new MappedNamespaceConvention(new Configuration());
 
-    final XMLStreamReader xmlStreamReader = new MappedXMLStreamReader(obj, con);
+    final XMLStreamReader xmlStreamReader = new MappedXMLStreamReader(wrapper, con);
 
     //noinspection unchecked
     return (T) jc.createUnmarshaller().unmarshal(xmlStreamReader);
@@ -64,7 +67,11 @@ public class MarshalUtils {
     unwrapArrays("item", root);
 
     // Unwrap root element.
-    return root.get(uncapitalize(clazz.getSimpleName())).toString();
+    return root.get(getRootElementName(clazz)).toString();
+  }
+
+  private static <T> String getRootElementName(Class<T> clazz) {
+    return uncapitalize(clazz.getSimpleName());
   }
 
   private static JSONArray coerceArray(String itemName,

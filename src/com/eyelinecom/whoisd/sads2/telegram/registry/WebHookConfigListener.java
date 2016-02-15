@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+@SuppressWarnings("unused")
 public class WebHookConfigListener extends ServiceConfigListener {
 
   public static final String CONF_TOKEN = "telegram.token";
@@ -22,11 +23,11 @@ public class WebHookConfigListener extends ServiceConfigListener {
   private final Map<String, String> serviceToToken = new HashMap<>();
   private TelegramApi client;
 
-    public WebHookConfigListener(TelegramApi client) {
-        this.client = client;
-    }
+  public WebHookConfigListener(TelegramApi client) {
+    this.client = client;
+  }
 
-    @Override
+  @Override
   protected void process(Config config) throws ConfigurationException {
     final String serviceId = config.getId();
 
@@ -71,18 +72,18 @@ public class WebHookConfigListener extends ServiceConfigListener {
   }
 
 
-
+  @SuppressWarnings("unused")
   public static class Factory implements ResourceFactory {
 
-      @Override
-      public WebHookConfigListener build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
-          TelegramApi api = (TelegramApi) SADSInitUtils.getResource("telegram-api", properties);
-          return new WebHookConfigListener(api);
-      }
+    @Override
+    public WebHookConfigListener build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
+      TelegramApi api = (TelegramApi) SADSInitUtils.getResource("telegram-api", properties);
+      return new WebHookConfigListener(api);
+    }
 
-      @Override
-      public boolean isHeavyResource() {
-          return false;
-      }
+    @Override
+    public boolean isHeavyResource() {
+      return false;
+    }
   }
 }

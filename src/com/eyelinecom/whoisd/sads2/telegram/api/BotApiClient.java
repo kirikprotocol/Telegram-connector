@@ -21,7 +21,7 @@ public class BotApiClient {
 
   public BotApiClient(String token, String apiRoot, HttpDataLoader loader) {
     this.token = token;
-    this.apiRoot = fixUrl(apiRoot);
+    this.apiRoot = apiRoot;
     this.loader = loader;
   }
 
@@ -66,7 +66,7 @@ public class BotApiClient {
           method.marshal(),
           "application/json",
           "UTF-8",
-          "POST");
+          HttpDataLoader.METHOD_POST);
 
     } catch (Exception e) {
       throw new TelegramApiException("Unable to call sendMessage", e);
@@ -108,12 +108,5 @@ public class BotApiClient {
 
   private String methodUrl(String method) {
     return apiRoot + "/" + token + "/" + method;
-  }
-
-  private static String fixUrl(String url) {
-    if (!url.endsWith("/")) {
-      url = url + "/";
-    }
-    return url;
   }
 }
