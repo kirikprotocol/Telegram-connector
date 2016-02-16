@@ -26,13 +26,22 @@ public class InMemorySessionManager implements SessionManager {
 
   @Override
   public Session getSession(final String id) throws ExecutionException {
-    return storage.get(id, new Callable<Session>() {
-      @Override
-      public Session call() throws Exception {
-        return new MemorySession(id, InMemorySessionManager.this.storage);
-      }
-    });
+    return getSession(id, true);
+  }
 
+  @Override
+  public Session getSession(final String id, boolean createIfMissing) throws ExecutionException {
+    if (!createIfMissing) {
+      return storage.getIfPresent(id);
+
+    } else {
+      return storage.get(id, new Callable<Session>() {
+        @Override
+        public Session call() throws Exception {
+          return new MemorySession(id, InMemorySessionManager.this.storage);
+        }
+      });
+    }
   }
 
   @SuppressWarnings("unused")

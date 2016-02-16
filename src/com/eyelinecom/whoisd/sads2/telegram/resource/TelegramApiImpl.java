@@ -2,7 +2,9 @@ package com.eyelinecom.whoisd.sads2.telegram.resource;
 
 import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
+import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
+import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
@@ -12,6 +14,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 
 import java.util.Properties;
@@ -21,17 +24,27 @@ import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
 
 public class TelegramApiImpl implements TelegramApi {
 
+  private static final Logger log = Logger.getLogger(TelegramApiImpl.class);
+
   private final HttpDataLoader loader;
+  private final SessionManager sessionManager;
   private final String publicKeyPath;
   private final String baseUrl;
   private final String connectorBaseUrl;
 
-  public TelegramApiImpl(HttpDataLoader loader, Properties properties) throws Exception {
+  private final float limitChatMessagesPerSecond;
+
+  public TelegramApiImpl(HttpDataLoader loader,
+                         SessionManager sessionManager,
+                         Properties properties) throws Exception {
     this.loader = loader;
+    this.sessionManager = sessionManager;
 
     this.publicKeyPath = SADSInitUtils.getFilename("certificate.pem", properties);
     this.baseUrl = properties.getProperty("base.url");
     this.connectorBaseUrl = properties.getProperty("connector.url");
+    this.limitChatMessagesPerSecond =
+        Float.parseFloat(properties.getProperty("telegram.limit.chat.messages.per.second", "1"));
   }
 
   @Override
@@ -59,6 +72,8 @@ public class TelegramApiImpl implements TelegramApi {
                           String text,
                           Keyboard keyboard) throws TelegramApiException {
 
+    acquireChatLimit(chatId);
+
     final SendMessage method = new SendMessage();
     method.setChatId(chatId);
     method.setText(text);
@@ -84,6 +99,24 @@ public class TelegramApiImpl implements TelegramApi {
     }
   }
 
+  private void acquireChatLimit(String chatId) {
+    try {
+      final Session session = sessionManager.getSession(chatId, false);
+      if (session != null) {
+        RateLimiter rateLimiter = (RateLimiter) session.getAttribute("rate-limiter");
+        if (rateLimiter == null) {
+          rateLimiter = RateLimiter.create(limitChatMessagesPerSecond);
+          session.setAttribute("rate-limiter", rateLimiter);
+        }
+
+        rateLimiter.acquire();
+      }
+
+    } catch (Exception e) {
+      log.error("Telegram chat messages-per-second limit enforcing failed", e);
+    }
+  }
+
   private <R extends ApiType, M extends ApiMethod<M, R>> R call(
       String token, M method) throws TelegramApiException {
 
@@ -101,7 +134,10 @@ public class TelegramApiImpl implements TelegramApi {
       final HttpDataLoader loader =
           (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
 
-      return new TelegramApiImpl(loader, properties);
+      final SessionManager sessionManager =
+          (SessionManager) SADSInitUtils.getResource("session-manager", properties);
+
+      return new TelegramApiImpl(loader, sessionManager, properties);
     }
 
     @Override public boolean isHeavyResource() { return false; }
