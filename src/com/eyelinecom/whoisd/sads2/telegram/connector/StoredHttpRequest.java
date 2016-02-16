@@ -5,13 +5,11 @@ import org.apache.commons.io.IOUtils;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
+/**
+ * Request wrapper with re-entrant input stream.
+ */
 public class StoredHttpRequest extends HttpServletRequestWrapper {
   private ByteArrayOutputStream body;
 
@@ -43,7 +41,7 @@ public class StoredHttpRequest extends HttpServletRequestWrapper {
     return buf;
   }
 
-  private class CachedServletInputStream extends ServletInputStream {
+  private static class CachedServletInputStream extends ServletInputStream {
     private final InputStream in;
 
     public CachedServletInputStream(byte[] bytes) {

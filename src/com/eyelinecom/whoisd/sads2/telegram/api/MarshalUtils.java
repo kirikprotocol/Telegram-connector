@@ -60,11 +60,13 @@ public class MarshalUtils {
         }
       }
     };
+
     jc.createMarshaller().marshal(obj, xmlStreamWriter);
 
     // Support for anonymous two-dimensional arrays.
     final JSONObject root = new JSONObject(writer.toString());
-    unwrapArrays("item", root);
+    unwrapArrays2d("item", root);
+    unwrapArrays1d("item", root);
 
     // Unwrap root element.
     return root.get(getRootElementName(clazz)).toString();
@@ -91,13 +93,13 @@ public class MarshalUtils {
     return new JSONArray() {{ for (JSONArray innerArray : nested) put(innerArray); }};
   }
 
-  private static void unwrapArrays(String itemName,
-                                   JSONObject parent) throws JSONException {
+  private static void unwrapArrays2d(String itemName,
+                                     JSONObject parent) throws JSONException {
     for (Object keyItem : IteratorUtils.toList(parent.keys())) {
       final String key = (String) keyItem;
 
       if (parent.optJSONObject(key) != null) {
-        unwrapArrays(itemName, parent.getJSONObject(key));
+        unwrapArrays2d(itemName, parent.getJSONObject(key));
 
       } else if (parent.optJSONArray(key) != null) {
         final JSONArray coerced = coerceArray(itemName, parent.getJSONArray(key));
@@ -106,6 +108,38 @@ public class MarshalUtils {
         }
       }
 
+    }
+  }
+
+  private static void unwrapArrays1d(String itemName,
+                                     JSONObject parent) throws JSONException {
+    for (Object keyItem : IteratorUtils.toList(parent.keys())) {
+      final String key = (String) keyItem;
+
+      final JSONObject obj = parent.optJSONObject(key);
+      if (obj != null) {
+        if (IteratorUtils.toList(obj.keys()).size() == 1 &&
+            obj.keys().next().equals(itemName)) {
+
+          final JSONArray coerced = new JSONArray();
+
+          if (obj.optJSONArray(itemName) != null) {
+            coerced.put(obj.getJSONArray(itemName));
+            parent.put(key, coerced);
+
+          } else {
+            // Single item.
+            final JSONArray wrapper = new JSONArray();
+            wrapper.put(obj.get(itemName));
+
+            coerced.put(wrapper);
+            parent.put(key, coerced);
+          }
+
+        } else {
+          unwrapArrays1d(itemName, obj);
+        }
+      }
     }
   }
 

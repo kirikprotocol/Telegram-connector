@@ -20,7 +20,7 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
   public static final String CONF_TOKEN = "telegram.token";
 
-  private final Map<String, String> serviceToToken = new HashMap<>();
+  private final Map<String, String> serviceId2Token = new HashMap<>();
   private TelegramApi client;
 
   public WebHookConfigListener(TelegramApi client) {
@@ -41,6 +41,10 @@ public class WebHookConfigListener extends ServiceConfigListener {
         unRegisterWebHook(serviceId);
 
       } else {
+        if (!token.equals(serviceId2Token.get(serviceId))) {
+          // Token changed, unregister previous one first.
+          unRegisterWebHook(serviceId);
+        }
         registerWebHook(serviceId, token);
       }
     }
@@ -51,7 +55,7 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
     try {
       client.registerWebHook(token, client.getServiceUrl(serviceId, token));
-      serviceToToken.put(serviceId, token);
+      serviceId2Token.put(serviceId, token);
 
     } catch (TelegramApiException e) {
       throw new ConfigurationException(serviceId, e.getMessage());
@@ -60,10 +64,10 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
   private void unRegisterWebHook(String serviceId) throws ConfigurationException {
     try {
-      final String token = serviceToToken.get(serviceId);
+      final String token = serviceId2Token.get(serviceId);
       if (token != null) {
         client.unRegisterWebHook(token);
-        serviceToToken.remove(token);
+        serviceId2Token.remove(token);
       }
 
     } catch (TelegramApiException e) {

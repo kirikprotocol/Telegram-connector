@@ -6,6 +6,8 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
 import static org.junit.Assert.assertEquals;
 
@@ -31,14 +33,23 @@ public class TypeMarshallingTest {
     method.setReplyMarkup(kbd);
 
     kbd.setResizeKeyboard(true);
+
+    // 1. Several rows.
     kbd.setKeyboard(new String[][] {
         new String[] { "a", "b" },
         new String[] { "c", "d" },
     });
 
     final String json = method.marshal();
-
     assertEquals("{\"chat_id\":123456,\"text\":\"Hello\",\"reply_markup\":{\"keyboard\":[[\"a\",\"b\"],[\"c\",\"d\"]],\"resize_keyboard\":true}}", json);
+
+    // 2. Single row
+    kbd.setKeyboard(new String[][]{Arrays.asList("q", "w").toArray(new String[0])});
+    assertEquals("{\"chat_id\":123456,\"text\":\"Hello\",\"reply_markup\":{\"keyboard\":[[\"q\",\"w\"]],\"resize_keyboard\":true}}", method.marshal());
+
+    // 3. Single element
+    kbd.setKeyboard(new String[][]{Arrays.asList("q").toArray(new String[0])});
+    assertEquals("{\"chat_id\":123456,\"text\":\"Hello\",\"reply_markup\":{\"keyboard\":[[\"q\"]],\"resize_keyboard\":true}}", method.marshal());
   }
 
   @Test

@@ -90,19 +90,20 @@ public class TelegramApiImpl implements TelegramApi {
     return getClient(token).call(method);
   }
 
-    public static class Factory implements ResourceFactory {
+  @SuppressWarnings("unused")
+  public static class Factory implements ResourceFactory {
 
-      @Override
-      public TelegramApi build(String id,
-                               Properties properties,
-                               HierarchicalConfiguration config) throws Exception {
+    @Override
+    public TelegramApi build(String id,
+                             Properties properties,
+                             HierarchicalConfiguration config) throws Exception {
 
-        final HttpDataLoader loader =
-            (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
+      final HttpDataLoader loader =
+          (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
 
-        return new TelegramApiImpl(loader, properties);
-      }
-
-      @Override public boolean isHeavyResource() { return false; }
+      return new TelegramApiImpl(loader, properties);
     }
+
+    @Override public boolean isHeavyResource() { return false; }
+  }
 }

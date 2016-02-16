@@ -3,6 +3,7 @@ package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.lang.reflect.ParameterizedType;
@@ -26,7 +27,17 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
     return (Class<X>) genericSuperclass.getActualTypeArguments()[argNo];
   }
 
+  /**
+   * @return Method path as in API_ROOT/token/METHOD_PATH.
+   */
   public abstract String getPath();
+
+  /**
+   * @return Method name, as should be passed in {@code method} parameter of a WebHook response.
+   */
+  public String getMethod() {
+    return getPath();
+  }
 
   /**
    * Deserialize a json answer to the response type of a method.
@@ -40,8 +51,19 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
     return marshal((Self) this, methodClass);
   }
 
-  protected static <T extends ApiMethod> String marshal(T obj,
-                                                        Class<T> clazz) throws TelegramApiException {
+  public String marshalAsWebHookResponse() throws TelegramApiException {
+    try {
+      final JSONObject json = new JSONObject(marshal());
+      json.put(METHOD_FIELD, getMethod());
+      return json.toString();
+
+    } catch (JSONException e) {
+      throw new TelegramApiException("Unable to marshal API method [" + this + "]", e);
+    }
+  }
+
+  private static <T extends ApiMethod> String marshal(T obj,
+                                                      Class<T> clazz) throws TelegramApiException {
     try {
       return MarshalUtils.marshal(obj, clazz);
 

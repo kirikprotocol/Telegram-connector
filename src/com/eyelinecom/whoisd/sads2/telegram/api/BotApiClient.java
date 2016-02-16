@@ -39,7 +39,7 @@ public class BotApiClient {
           Collections.<String, String>emptyMap(),
           Collections.<String, String>emptyMap(),
           new HashMap<String, String>() {{
-            put(URL_FIELD, webHookURL);
+            put(URL_FIELD, webHookURL == null ? "" : webHookURL);
           }},
           new HashMap<String, File>() {{
             if (publicCertificatePath != null) {
@@ -69,7 +69,7 @@ public class BotApiClient {
           HttpDataLoader.METHOD_POST);
 
     } catch (Exception e) {
-      throw new TelegramApiException("Unable to call sendMessage", e);
+      throw new TelegramApiException("Call failed, method = [" + method + "]", e);
     }
 
     final JSONObject rc = validate(parse(response));

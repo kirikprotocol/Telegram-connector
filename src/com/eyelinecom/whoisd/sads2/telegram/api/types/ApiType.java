@@ -14,6 +14,9 @@ public abstract class ApiType<T extends ApiType> {
     this.entityClass = getEntityClass();
   }
 
+  /**
+   * Note: should be overridden for indirect subclasses.
+   */
   protected Class<T> getEntityClass() {
     final ParameterizedType genericSuperclass =
         (ParameterizedType) getClass().getGenericSuperclass();
@@ -36,7 +39,13 @@ public abstract class ApiType<T extends ApiType> {
                                                       Class<T> clazz) throws TelegramApiException {
 
     try {
-      return unmarshal(obj.getJSONObject("result"), clazz);
+      if (clazz == VoidType.class) {
+        //noinspection unchecked
+        return (T) new VoidType();
+
+      } else {
+        return unmarshal(obj.getJSONObject("result"), clazz);
+      }
 
     } catch (Exception e) {
       throw new TelegramApiException("Unable to unmarshal API object [" + obj + "]", e);

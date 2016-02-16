@@ -9,7 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Chat extends ApiType<Chat> {
 
-  enum Type {
+  public enum Type {
     PRIVATE("private"),
     GROUP("group"),
     CHANNEL("channel"),

@@ -1,17 +1,20 @@
 package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
-import com.eyelinecom.whoisd.sads2.common.InitUtils;
-import com.eyelinecom.whoisd.sads2.common.SADSLogger;
+import com.eyelinecom.whoisd.sads2.common.*;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
+import com.eyelinecom.whoisd.sads2.connector.Session;
+import com.eyelinecom.whoisd.sads2.content.ContentRequestUtils;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
-import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector;
-import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
-import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
+import com.eyelinecom.whoisd.sads2.executors.connector.*;
 import com.eyelinecom.whoisd.sads2.registry.ServiceChainConfig;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
+import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
+import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
@@ -19,6 +22,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.Logger;
+import org.dom4j.Document;
+import org.dom4j.Element;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -26,9 +31,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -112,6 +115,7 @@ public class TelegramMessageConnector extends HttpServlet {
       extends LazyMessageConnector<StoredHttpRequest, SADSResponse> {
 
     private static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
+    public static final String ATTR_SESSION_PREVIOUS_PAGE_URI = "SADS-previous-page-uri";
 
     private String executorResourceName;
     private ScheduledExecutorService delayedExecutor;
@@ -156,11 +160,24 @@ public class TelegramMessageConnector extends HttpServlet {
       }
     }
 
+    /**
+     * Response to a WebHook update.
+     */
     @Override
-    protected SADSResponse buildQueuedResponse(StoredHttpRequest httpServletRequest,
+    protected SADSResponse buildQueuedResponse(StoredHttpRequest req,
                                                SADSRequest sadsRequest) {
-      // Response to WebHook update.
-      return buildWebhookResponse(200);
+      try {
+        return buildWebhookResponse(
+            200,
+            new SendChatAction(
+                sadsRequest.getAbonent(),
+                SendChatAction.ChatAction.TYPING).marshalAsWebHookResponse()
+        );
+
+      } catch (TelegramApiException e) {
+        getLog(req).error(e.getMessage(), e);
+        return buildQueueErrorResponse(e, req, sadsRequest);
+      }
     }
 
     @Override
@@ -224,9 +241,63 @@ public class TelegramMessageConnector extends HttpServlet {
     protected String getRequestUri(ServiceConfig config,
                                    String subscriberId,
                                    StoredHttpRequest message) throws Exception {
-      // All the processing
-      // TODO
-      return super.getRequestUri(config, subscriberId, message);
+
+      final String incoming =
+          getClient().readUpdate(message.getContent()).getMessage().getText();
+
+      Session session = getSessionManager().getSession(subscriberId);
+
+      if ("/reset".equals(incoming)) {
+        // Invalidate the current session.
+        session.close();
+        session = getSessionManager().getSession(subscriberId);
+      }
+
+      final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
+      if (prevUri == null) {
+        // No previous page means this is an initial request, thus serve the start page.
+        return super.getRequestUri(config, subscriberId, message);
+
+      } else {
+        final Document prevPage =
+            (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
+
+        String href = null;
+        String inputName = null;
+
+        // Look for a button with a corresponding label.
+        //noinspection unchecked
+        for (Element e : (List<Element>) prevPage.getRootElement().elements("button")) {
+          if (StringUtils.equals(e.getTextTrim(), incoming)) {
+            final String btnHref = e.attributeValue("href");
+            href = btnHref != null ? btnHref : e.attributeValue("target");
+          }
+        }
+
+        // Look for input field if any.
+        if (href == null) {
+          final Element input = prevPage.getRootElement().element("input");
+          if (input != null) {
+            href = input.attributeValue("href");
+            inputName = input.attributeValue("name");
+          }
+        }
+
+        // Nothing suitable to handle user input found, consider it a bad command.
+        if (href == null) {
+          final String badCommandPage =
+              InitUtils.getString("bad-command-page", "", config.getAttributes());
+          href = UrlUtils.merge(prevUri, badCommandPage);
+          href = UrlUtils.addParameter(href, "bad_command", incoming);
+        }
+
+        href = SADSUrlUtils.processUssdForm(href, StringUtils.trim(incoming));
+        if (inputName != null) {
+          href = UrlUtils.addParameter(href, inputName, incoming);
+        }
+
+        return UrlUtils.merge(prevUri, href);
+      }
     }
 
     @Override
@@ -235,13 +306,38 @@ public class TelegramMessageConnector extends HttpServlet {
       return null;
     }
 
+    /**
+     * @param request   Request to the content provider
+     * @param response  Response from content provider
+     */
     @Override
     protected SADSResponse getOuterResponse(StoredHttpRequest req,
                                             SADSRequest request,
                                             SADSResponse response) {
-      //Document telegramDocument = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
-      // Stuff to push to the user. request - request to the content provider, response - response from content provider
-      // TODO
+
+      final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
+
+      final String text = getText(doc);
+      final Keyboard keyboard = getKeyboard(doc);
+
+      final boolean hasInputs = !doc.getRootElement().elements("input").isEmpty();
+      try {
+        final Session session = getSessionManager().getSession(request.getAbonent());
+
+        if (keyboard != null || hasInputs) {
+          session.setAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE, doc);
+          session.setAttribute(
+              ATTR_SESSION_PREVIOUS_PAGE_URI,
+              response.getAttributes().get(ContentRequestUtils.ATTR_REQUEST_URI));
+
+        } else {
+          // No inputs mean that the dialog is over.
+          session.close();
+        }
+
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
 
       try {
         final ServiceChainConfig serviceConfig = SADSInitializer.getServiceRegistry()
@@ -249,7 +345,7 @@ public class TelegramMessageConnector extends HttpServlet {
         final String token =
             serviceConfig.getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
-        getClient().sendMessage(token, request.getAbonent(), "Hello!");
+        getClient().sendMessage(token, request.getAbonent(), text, keyboard);
 
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -258,12 +354,49 @@ public class TelegramMessageConnector extends HttpServlet {
       return buildWebhookResponse(200);
     }
 
+    private String getText(final Document doc) {
+      final Collection<String> messages = new ArrayList<String>() {{
+        //noinspection unchecked
+        for (Element e : (List<Element>) doc.getRootElement().elements("message")) {
+          add(e.getTextTrim());
+        }
+      }};
+
+      final String messageText = StringUtils.join(messages, "\n").trim();
+      return messageText.isEmpty() ? "." : messageText;
+    }
+
+    private Keyboard getKeyboard(final Document doc) {
+      final List<String> buttons = new ArrayList<String>() {{
+        //noinspection unchecked
+        for (Element e : (List<Element>) doc.getRootElement().elements("button")) {
+          add(e.getTextTrim());
+        }
+      }};
+
+      if (buttons.isEmpty()) {
+        return null;
+
+      } else {
+        final ReplyKeyboardMarkup kbd = new ReplyKeyboardMarkup();
+        kbd.setOneTimeKeyboard(true);
+        kbd.setResizeKeyboard(true);
+        kbd.setKeyboard(new String[][]{buttons.toArray(new String[buttons.size()])});
+
+        return kbd;
+      }
+    }
+
     private SADSResponse buildWebhookResponse(int statusCode) {
+      return buildWebhookResponse(statusCode, "{}");
+    }
+
+    private SADSResponse buildWebhookResponse(int statusCode, String body) {
       final SADSResponse rc = new SADSResponse();
       rc.setStatus(statusCode);
       rc.setHeaders(Collections.<String, String>emptyMap());
       rc.setMimeType("application/json");
-      rc.setData(new byte[] {});
+      rc.setData(body.getBytes());
       return rc;
     }
 
@@ -293,6 +426,10 @@ public class TelegramMessageConnector extends HttpServlet {
 
     private TelegramApi getClient() throws NotFoundResourceException {
       return (TelegramApi) getResource("telegram-api");
+    }
+
+    private SessionManager getSessionManager() throws NotFoundResourceException {
+      return (SessionManager) getResource("telegram-session-manager");
     }
 
     private Log getLog(StoredHttpRequest req) {
