@@ -7,7 +7,7 @@
 
 	<property name="src-dir" location="${basedir}/src"/>
 	<property name="test-dir" location="${basedir}/test"/>
-	<property name="test-src" location="${test-dir}/src"/>
+	<property name="test-src" location="${test-dir}"/>
 	<property name="report-dir" location="${build-dir}/report"/>
 
 	<condition property="resolver" value="eyeline" else="snapshot">
@@ -43,8 +43,8 @@
 		<javac destdir="${build-dir}/out"
 			   optimize="off"
 			   debug="on"
-			   source="1.6"
-			   target="1.6"
+			   source="1.7"
+			   target="1.7"
 			   encoding="UTF-8"
 			   nowarn="true"
 			   includeantruntime="false">
@@ -79,8 +79,8 @@
 		<javac destdir="${build-dir}/test"
 			   optimize="off"
 			   debug="on"
-			   source="1.6"
-			   target="1.6"
+			   source="1.7"
+			   target="1.7"
 			   encoding="UTF-8"
 			   nowarn="true"
 			   includeantruntime="false">
@@ -91,30 +91,13 @@
 		</javac>
 	</target>
 
-	<target name="instrument" depends="compile-test">
-		<mkdir dir="${build-dir}/instrumented"/>
-
-    <taskdef resource="emma_ant.properties">
-      <classpath refid="classpath"/>
-    </taskdef>
-
-		<emma>
-			<instr instrpath="${build-dir}/out"
-				   destdir="${build-dir}/instrumented"
-				   metadatafile="${build-dir}/metadata.emma"
-				   merge="true"/>
-		</emma>
-	</target>
-
-	<target name="test" description="Execute unit tests" depends="instrument">
+	<target name="test" description="Execute unit tests" depends="compile-test">
 		<mkdir dir="${report-dir}/tmp/test"/>
 		<mkdir dir="${report-dir}/junit"/>
-		<mkdir dir="${report-dir}/emma"/>
 
 		<junit printsummary="true" failureproperty="junit.failure" fork="true" dir="${basedir}">
 			<classpath>
 				<pathelement location="${build-dir}/test"/>
-				<pathelement location="${build-dir}/instrumented"/>
 				<pathelement location="${build-dir}/out"/>
 			</classpath>
 			<classpath refid="classpath"/>
@@ -123,27 +106,12 @@
 				<fileset dir="${test-src}"/>
 				<formatter type="xml"/>
 			</batchtest>
-
-			<jvmarg value="-Demma.coverage.out.file=${build-dir}/coverage.emma"/>
-			<jvmarg value="-Demma.coverage.out.merge=true"/>
 		</junit>
 
 		<junitreport todir="${report-dir}/tmp">
 			<fileset dir="${report-dir}/tmp/test"/>
 			<report todir="${report-dir}/junit"/>
 		</junitreport>
-
-    <taskdef resource="emma_ant.properties">
-      <classpath refid="classpath"/>
-    </taskdef>
-
-		<emma enabled="true">
-			<report sourcepath="${src-dir}">
-				<fileset dir="${build-dir}" includes="*.emma"/>
-				<html outfile="${report-dir}/emma/index.html"/>
-				<xml outfile="${report-dir}/emma/index.xml"/>
-			</report>
-		</emma>
 
 		<delete dir="${report-dir}/tmp"/>
 		<fail if="junit.failure" message="Unit test(s) failed. See reports!"/>
