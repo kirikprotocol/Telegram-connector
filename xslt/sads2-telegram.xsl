@@ -40,11 +40,14 @@
 <xsl:template match="link" mode="command">
 	<xsl:variable name="formId" select="//*/@navigationId" />
 	<xsl:if test="count(//*[@navigationId])=0 or count(parent::navigation[@id])=0 or count(parent::navigation[@id])!=0 and parent::navigation/@id!=$formId ">
-		<button href="{@pageId}">
-			<xsl:if test="string-length(text()) > 0" >
+		<xsl:if test="string-length(text()) > 0" >
+			<button href="{@pageId}">
+				<xsl:if test="count(child::div)>0">
+					<xsl:apply-templates select="div" mode="icon" /><xsl:text> </xsl:text>
+				</xsl:if>
 				<xsl:value-of select='text()'/>
-			</xsl:if>
-		</button>
+			</button>
+		</xsl:if>
 	</xsl:if>
 </xsl:template>
 
@@ -58,6 +61,10 @@
 	</xsl:if>	
 </xsl:template>
 
+<xsl:template match="div" mode="icon">
+	<xsl:apply-templates />
+</xsl:template>
+
 <xsl:template match="input">
 		<xsl:if test="count(@type)=0 or @type != 'hidden'">
         		<xsl:value-of select="@title" /><xsl:text>:</xsl:text><xsl:text>
@@ -65,7 +72,7 @@
 		</xsl:if>
 </xsl:template>
 
-<!--xsl:template match="input" mode="command">
+<xsl:template match="input" mode="command">
 	<xsl:if test="count(@type)=0 or @type!='hidden'">
 	<xsl:variable name="formId" select="@navigationId" />
 	<xsl:variable name="actionId" select="/page/navigation[@id=$formId]/link/@pageId" />
@@ -83,20 +90,16 @@
 		</xsl:for-each>
 	</xsl:variable>
 	<xsl:variable name="paramName" select="@name" />
-	<command name="*">
-		<xsl:attribute name="target">
-			<xsl:choose>
-				<xsl:when test="contains($formPageId,'?')" >
-					<xsl:value-of select='concat($formPageId,"&amp;","sadsUssdForm","=",$paramName)'/>
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select='concat($formPageId,"?","sadsUssdForm","=",$paramName)'/>
-				</xsl:otherwise>
-			</xsl:choose>
+	<input name="$paramName" href="$formPageId">
+		<xsl:attribute name="href">
+				<xsl:value-of select='$formPageId'/>
 		</xsl:attribute>
-	</command>
+		<xsl:attribute name="name">
+				<xsl:value-of select='$paramName'/>
+		</xsl:attribute>
+	</input>
 	</xsl:if>
-</xsl:template -->
+</xsl:template>
 
 
 <xsl:template match="select">
@@ -123,7 +126,7 @@
 	<xsl:variable name="paramName" select="@name" />
 	<xsl:for-each select="option">
 		<button>
-			<xsl:attribute name="target">
+			<xsl:attribute name="href">
 				<xsl:choose>
 					<xsl:when test="contains($formPageId,'?')" >
 						<xsl:value-of select='concat($formPageId,"&amp;",$paramName,"=",@value)'/>
@@ -134,6 +137,9 @@
 				</xsl:choose>
 			</xsl:attribute>
 			<xsl:if test="string-length(text()) > 0" >
+				<xsl:if test="count(child::div)>0">
+					<xsl:apply-templates select="div" mode="icon" /><xsl:text> </xsl:text>
+				</xsl:if>
 				<xsl:value-of select='text()'/>
 			</xsl:if>
 		</button>
@@ -156,7 +162,7 @@
 		<message>
 			<xsl:apply-templates select="/page/title" />
 			<xsl:apply-templates select="/page/div[(count(@type)=0 or @type!='sms')]" />
-			<xsl:apply-templates select="//input"/>
+			<!-- xsl:apply-templates select="//input"/ -->
 		</message>
 		<xsl:if test="count(/page/div[@type='sms'])!=0">
 			<message>
@@ -164,6 +170,7 @@
 			</message>
 		</xsl:if>
 		<xsl:apply-templates select="//select" mode="command" />
+		<xsl:apply-templates select="//input" mode="command" />
 		<xsl:apply-templates select="/page/navigation/link" mode="command" />
 	</page>
 </xsl:template>
