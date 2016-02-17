@@ -1,4 +1,4 @@
-package com.eyelinecom.whoisd.sads2.telegram.resource;
+package com.eyelinecom.whoisd.sads2.telegram.util;
 
 public abstract class RateLimiter {
 

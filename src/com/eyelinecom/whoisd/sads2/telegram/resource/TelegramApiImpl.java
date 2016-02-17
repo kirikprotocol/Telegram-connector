@@ -12,6 +12,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.util.RateLimiter;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -22,6 +23,7 @@ import java.util.Properties;
 import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
 
+@SuppressWarnings("unused")
 public class TelegramApiImpl implements TelegramApi {
 
   private static final Logger log = Logger.getLogger(TelegramApiImpl.class);
@@ -32,7 +34,17 @@ public class TelegramApiImpl implements TelegramApi {
   private final String baseUrl;
   private final String connectorBaseUrl;
 
+  /**
+   * Maximal allowed messages per second in a single chat.
+   */
   private final float limitChatMessagesPerSecond;
+
+  /**
+   * Maximal allowed messages per second, overall.
+   */
+  private final RateLimiter messagesPerSecondLimit;
+
+  private final int maxRateLimitRetries;
 
   public TelegramApiImpl(HttpDataLoader loader,
                          SessionManager sessionManager,
@@ -43,8 +55,16 @@ public class TelegramApiImpl implements TelegramApi {
     this.publicKeyPath = SADSInitUtils.getFilename("certificate.pem", properties);
     this.baseUrl = properties.getProperty("base.url");
     this.connectorBaseUrl = properties.getProperty("connector.url");
+
     this.limitChatMessagesPerSecond =
         Float.parseFloat(properties.getProperty("telegram.limit.chat.messages.per.second", "1"));
+
+    final float limitMessagesPerSecond =
+        Float.parseFloat(properties.getProperty("telegram.limit.messages.per.second", "30"));
+    this.messagesPerSecondLimit = RateLimiter.create(limitChatMessagesPerSecond);
+
+    this.maxRateLimitRetries =
+        Integer.parseInt(properties.getProperty("telegram.max.rate.limit.retries", "5"));
   }
 
   @Override
@@ -53,7 +73,7 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   private BotApiClient getClient(String token) {
-    return new BotApiClient(token, baseUrl, loader);
+    return new BotApiClient(token, baseUrl, maxRateLimitRetries, loader);
   }
 
   @Override
@@ -117,9 +137,14 @@ public class TelegramApiImpl implements TelegramApi {
     }
   }
 
+  private void acquireOverallLimit() {
+    messagesPerSecondLimit.acquire();
+  }
+
   private <R extends ApiType, M extends ApiMethod<M, R>> R call(
       String token, M method) throws TelegramApiException {
 
+    acquireOverallLimit();
     return getClient(token).call(method);
   }
 
