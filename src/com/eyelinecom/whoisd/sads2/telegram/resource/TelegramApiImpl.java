@@ -8,20 +8,17 @@ import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 import com.eyelinecom.whoisd.sads2.telegram.util.RateLimiter;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
 
 import java.util.Properties;
-
-import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
-import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
 
 @SuppressWarnings("unused")
 public class TelegramApiImpl implements TelegramApi {
@@ -110,13 +107,8 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public Update readUpdate(String json) throws TelegramApiException {
-    try {
-      return unmarshal(parse(json), Update.class);
-
-    } catch (JSONException e) {
-      throw new TelegramApiException("Unable to read update message", e);
-    }
+  public User getMe(String token) throws TelegramApiException {
+    return call(token, new GetMe());
   }
 
   private void acquireChatLimit(String chatId) {

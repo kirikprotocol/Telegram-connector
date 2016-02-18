@@ -2,7 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.resource;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 
 public interface TelegramApi {
 
@@ -14,5 +14,5 @@ public interface TelegramApi {
   void sendMessage(String token, String chatId, String text, Keyboard keyboard) throws TelegramApiException;
   void sendMessage(String token, String chatId, String text) throws TelegramApiException;
 
-  Update readUpdate(String json) throws TelegramApiException;
+  User getMe(String token) throws TelegramApiException;
 }
