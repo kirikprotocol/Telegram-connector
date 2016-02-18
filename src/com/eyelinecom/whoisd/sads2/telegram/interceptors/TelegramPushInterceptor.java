@@ -4,6 +4,7 @@ import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
+import com.eyelinecom.whoisd.sads2.connector.SADSMessage;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
@@ -16,10 +17,12 @@ import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -55,7 +58,12 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     try {
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
-      sendTelegramMessage(request, response);
+      if (CollectionUtils.isNotEmpty(response.getMessages())) {
+        sendTelegramMessage(request, response.getMessages());
+
+      } else {
+        sendTelegramMessage(request, response);
+      }
 
       dispatcher.stop(response);
 
@@ -91,6 +99,25 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
     client.sendMessage(token, request.getAbonent(), text, keyboard);
+  }
+
+  private void sendTelegramMessage(SADSRequest request,
+                                   final List<SADSMessage> messages) throws Exception {
+
+    final String token =
+        request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+
+    final List<String> textMessages = new ArrayList<String>() {{
+      for (SADSMessage message : messages) {
+        add(message.getText());
+      }
+    }};
+
+    client.sendMessage(
+        token,
+        request.getAbonent(),
+        StringUtils.join(textMessages, "\n"),
+        new ReplyKeyboardHide());
   }
 
   private String getText(final Document doc) {
