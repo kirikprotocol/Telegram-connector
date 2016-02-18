@@ -6,6 +6,7 @@ import com.eyelinecom.whoisd.sads2.exception.DataLoadException;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
+import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.telegram.util.Reiterator;
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;

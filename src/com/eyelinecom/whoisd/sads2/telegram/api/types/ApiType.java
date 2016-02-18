@@ -1,7 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
-import com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils;
+import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.lang.reflect.ParameterizedType;

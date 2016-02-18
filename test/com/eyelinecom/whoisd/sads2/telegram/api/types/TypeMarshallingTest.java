@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static org.junit.Assert.assertEquals;
 
 public class TypeMarshallingTest {

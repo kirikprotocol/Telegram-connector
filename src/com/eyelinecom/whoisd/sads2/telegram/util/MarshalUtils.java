@@ -1,4 +1,4 @@
-package com.eyelinecom.whoisd.sads2.telegram.api;
+package com.eyelinecom.whoisd.sads2.telegram.util;
 
 import org.apache.commons.collections.IteratorUtils;
 import org.codehaus.jettison.json.JSONArray;

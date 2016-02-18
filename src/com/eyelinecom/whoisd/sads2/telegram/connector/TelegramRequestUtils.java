@@ -4,8 +4,8 @@ import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
 import org.codehaus.jettison.json.JSONException;
 
-import static com.eyelinecom.whoisd.sads2.telegram.api.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 
 public class TelegramRequestUtils {
 
