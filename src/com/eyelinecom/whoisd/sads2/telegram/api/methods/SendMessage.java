@@ -41,6 +41,9 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
   @XmlElement(name = "reply_markup")
   private Keyboard replyMarkup;
 
+  @XmlElement(name = "parse_mode")
+  private String parseMode;
+
   public SendMessage() {
     super();
   }
@@ -75,6 +78,14 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
 
   public void setReplyMarkup(Keyboard replyMarkup) {
     this.replyMarkup = replyMarkup;
+  }
+
+  public String getParseMode() {
+    return parseMode;
+  }
+
+  public void setParseMode(String parseMode) {
+    this.parseMode = parseMode;
   }
 
   @Override

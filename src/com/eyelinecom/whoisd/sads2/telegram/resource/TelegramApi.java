@@ -6,6 +6,8 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 
 public interface TelegramApi {
 
+  String START_MESSAGE = "/start";
+
   String getServiceUrl(String serviceId, String token);
 
   void registerWebHook(String token, String url) throws TelegramApiException;

@@ -94,6 +94,8 @@ public class TelegramApiImpl implements TelegramApi {
     final SendMessage method = new SendMessage();
     method.setChatId(chatId);
     method.setText(text);
+    // Always using HTML seems quite safe.
+    method.setParseMode("HTML");
     if (keyboard != null) {
       method.setReplyMarkup(keyboard);
     }
