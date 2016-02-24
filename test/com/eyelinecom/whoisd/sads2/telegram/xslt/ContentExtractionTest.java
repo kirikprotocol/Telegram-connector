@@ -13,7 +13,7 @@ import static junit.framework.Assert.assertEquals;
 public class ContentExtractionTest {
 
   @Test
-  public void test() throws Exception {
+  public void test1() throws Exception {
     final String text = "<message>Text 1 <b>bold</b> text2</message>";
     final Document rawDocument =
         new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
@@ -22,6 +22,83 @@ public class ContentExtractionTest {
         TelegramPushInterceptor.getContent(rawDocument.getRootElement());
 
     assertEquals("Text 1 <b>bold</b> text2", content);
+  }
+
+  @Test
+  public void test2() throws Exception {
+    final String text =
+        "<message>" +
+            " Text 1 <b>bold</b> text2\n" +
+            " Text3" +
+            "</message>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+        "Text 1 <b>bold</b> text2\n" +
+        "Text3", content);
+  }
+
+  @Test
+  public void test3() throws Exception {
+    final String text =
+        "<message>" +
+            " Text 1\n" +
+            " <pre>\n" +
+            "    Text\n" +
+            "      Pre\n" +
+            "</pre>\n" +
+            "</message>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+      "Text 1\n" +
+          "<pre>\n" +
+          "    Text\n" +
+          "      Pre\n" +
+          "</pre>",
+        content);
+  }
+
+  @Test
+  public void test4() throws Exception {
+    final String text =
+      "<message>Welcome to Telegram formatting test! \n" +
+          " This is a <b>bold</b> and <i>italic</i> text. \n" +
+          " You can also use <strong>strong</strong> and <em>em</em> tags. \n" +
+          " \n" +
+          " This is an <code>inline code block</code>. And this is a pre-formatted block: \n" +
+          " <pre>\n" +
+          "      pre {\n" +
+          "        white-space: pre-wrap;\n" +
+          "      }\n" +
+          "    </pre> \n" +
+          "</message>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+        "Welcome to Telegram formatting test! \n" +
+            "This is a <b>bold</b> and <i>italic</i> text. \n" +
+            "You can also use <strong>strong</strong> and <em>em</em> tags. \n" +
+            "\n" +
+            "This is an <code>inline code block</code>. And this is a pre-formatted block: \n" +
+            "<pre>\n" +
+            "      pre {\n" +
+            "        white-space: pre-wrap;\n" +
+            "      }\n" +
+            "    </pre>",
+        content);
   }
 
 }

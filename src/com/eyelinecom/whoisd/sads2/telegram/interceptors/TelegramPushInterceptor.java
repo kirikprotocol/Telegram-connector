@@ -27,9 +27,13 @@ import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
 
+import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -122,7 +126,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
         new ReplyKeyboardHide());
   }
 
-  private String getText(final Document doc) {
+  private String getText(final Document doc) throws DocumentException {
     final Collection<String> messages = new ArrayList<String>() {{
       //noinspection unchecked
       for (Element e : (List<Element>) doc.getRootElement().elements("message")) {
@@ -134,14 +138,30 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     return messageText.isEmpty() ? "." : messageText;
   }
 
-  public static String getContent(Element element) {
-    final StringBuilder builder = new StringBuilder();
+  public static String getContent(Element element) throws DocumentException {
+    final StringBuilder buf = new StringBuilder();
 
-    //noinspection unchecked
-    for (Node e : (Collection<Node>) IteratorUtils.toList(element.nodeIterator())) {
-      builder.append(e.asXML());
+    try {
+      final Element messageElement = new SAXReader()
+          .read(new ByteArrayInputStream(element.asXML().getBytes("UTF-8")))
+          .getRootElement();
+
+      //noinspection unchecked
+      for (Node e : (List<Node>) messageElement.selectNodes("//text()")) {
+        if (!"pre".equals(e.getParent().getName())) {
+          e.setText(e.getText().replaceAll("\\n\\s+", "\n"));
+        }
+      }
+
+      //noinspection unchecked
+      for (Node e : (Collection<Node>) IteratorUtils.toList(messageElement.nodeIterator())) {
+        buf.append(e.asXML());
+      }
+      return buf.toString().trim();
+
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
     }
-    return builder.toString();
   }
 
   private Keyboard getKeyboard(final Document doc) {
