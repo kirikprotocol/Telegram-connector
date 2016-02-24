@@ -163,6 +163,6 @@ public class BotApiClient {
   }
 
   private String methodUrl(String method) {
-    return apiRoot + "/" + token + "/" + method;
+    return apiRoot + "/bot" + token + "/" + method;
   }
 }
