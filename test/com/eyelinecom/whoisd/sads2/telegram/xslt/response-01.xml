@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page><message> Welcome to Telegram formatting demo!
+ This is a <b>bold</b> and <i>italic</i> text.
+ You can also use <strong>strong</strong> and <em>em</em> tags.
+
+ This is an <code>inline code block</code>. And this is a pre-formatted block:
+ <pre>
+      pre {
+      white-space: pre-wrap;
+      }
+    </pre>
+</message><button href="index_formatting.xml">Show again</button></page>

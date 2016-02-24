@@ -1,0 +1,25 @@
+<page version="2.0" style="category">
+  <attributes>
+    <attribute name="keywords" value="kw1,kw2,kw3"/>
+  </attributes>
+  <div protocol="telegram">
+    Welcome to Telegram formatting demo!
+    <br/>
+    This is a <b>bold</b> and <i>italic</i> text.
+    <br/>
+    You can also use <strong>strong</strong> and <em>em</em> tags.
+    <br/>
+  </div>
+  <div protocol="telegram">
+    This is an <code>inline code block</code>. And this is a pre-formatted block:
+    <br/>
+    <pre>
+      pre {
+      white-space: pre-wrap;
+      }
+    </pre>
+  </div>
+  <navigation>
+    <link pageId="index_formatting.xml" accesskey="1">Show again</link>
+  </navigation>
+</page>
