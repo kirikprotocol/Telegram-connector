@@ -101,4 +101,21 @@ public class ContentExtractionTest {
         content);
   }
 
+  @Test
+  public void test5() throws Exception {
+    final String text =
+        "<message>\n" +
+            "Link example: <a href=\"http://google.com\">Google</a>\n" +
+            "</message>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+        "Link example: <a href=\"http://google.com\">Google</a>",
+        content);
+  }
+
 }
