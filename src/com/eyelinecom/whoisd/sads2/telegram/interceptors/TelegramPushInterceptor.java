@@ -23,10 +23,12 @@ import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,12 +126,22 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     final Collection<String> messages = new ArrayList<String>() {{
       //noinspection unchecked
       for (Element e : (List<Element>) doc.getRootElement().elements("message")) {
-        add(e.getTextTrim());
+        add(getContent(e));
       }
     }};
 
     final String messageText = StringUtils.join(messages, "\n").trim();
     return messageText.isEmpty() ? "." : messageText;
+  }
+
+  public static String getContent(Element element) {
+    final StringBuilder builder = new StringBuilder();
+
+    //noinspection unchecked
+    for (Node e : (Collection<Node>) IteratorUtils.toList(element.nodeIterator())) {
+      builder.append(e.asXML());
+    }
+    return builder.toString();
   }
 
   private Keyboard getKeyboard(final Document doc) {
