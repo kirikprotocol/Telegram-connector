@@ -37,7 +37,9 @@ public class TransformTest {
     Assert.assertThat(
         "Transformation result of [" + resourceRaw + "] differs from [" + resourceExpected + "]",
         actual,
-        Matchers.equalToIgnoringWhiteSpace(expected));
+        Matchers.equalToIgnoringWhiteSpace(true, expected));
+//
+//    Assert.assertEquals(actual, expected);
   }
 
   @Test
@@ -45,4 +47,13 @@ public class TransformTest {
     checkTransform("content-01.xml", "response-01.xml");
   }
 
+  @Test
+  public void test2() throws Exception {
+    checkTransform("content-02.xml", "response-02.xml");
+  }
+
+  @Test
+  public void test3() throws Exception {
+    checkTransform("content-03.xml", "response-03.xml");
+  }
 }

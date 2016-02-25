@@ -118,4 +118,73 @@ public class ContentExtractionTest {
         content);
   }
 
+  @Test
+  public void test6() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<page>\n" +
+        "  <message>Multiple navigation blocks.</message>\n" +
+        "  <button href=\"page.xml\" row=\"1\">Page 1</button>\n" +
+        "  <button href=\"page.xml\" row=\"1\">Page 2</button>\n" +
+        "  <button href=\"page.xml\" row=\"2\">Page 3</button>\n" +
+        "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    @SuppressWarnings("ConstantConditions")
+    final String kbd =
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+
+    assertEquals(
+        "{\"keyboard\":[[\"Page 1\",\"Page 2\"],[\"Page 3\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        kbd);
+  }
+
+  @Test
+  public void test7() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Multiple navigation blocks.</message>\n" +
+            "  <button href=\"page.xml\" row=\"1\">Page 1</button>\n" +
+            "  <button href=\"page.xml\" row=\"2\">Page 2</button>\n" +
+            "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    @SuppressWarnings("ConstantConditions")
+    final String kbd =
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+
+    assertEquals(
+        "{\"keyboard\":[[\"Page 1\"],[\"Page 2\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        kbd);
+  }
+
+  @Test
+  public void testSparseRows() throws Exception {
+    final String text =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+          "<page>\n" +
+          "  <message>\n" +
+          "    Enter PIN:\n" +
+          "\n" +
+          "  </message>\n" +
+          "  <input href=\"_1.jsp\" name=\"pin\"/>\n" +
+          "  <button href=\"_2.jsp\" row=\"2\">Back</button>\n" +
+          "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    @SuppressWarnings("ConstantConditions")
+    final String kbd =
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+
+    assertEquals(
+        "{\"keyboard\":[[\"Back\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        kbd);
+  }
 }

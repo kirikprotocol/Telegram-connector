@@ -66,10 +66,22 @@
 
   <xsl:template match="link" mode="command">
     <xsl:variable name="formId" select="//*/@navigationId"/>
+
+    <xsl:variable name="totalRows" select="count(//navigation)"/>
+    <xsl:variable name="row" select="count(../preceding-sibling::navigation) + 1"/>
+
     <xsl:if
         test="count(//*[@navigationId])=0 or count(parent::navigation[@id])=0 or count(parent::navigation[@id])!=0 and parent::navigation/@id!=$formId ">
       <xsl:if test="string-length(text()) > 0">
         <button href="{@pageId}">
+
+          <!-- Add a row number in case of multiple `navigation' blocks. -->
+          <xsl:if test="$totalRows > 1">
+            <xsl:attribute name="row">
+              <xsl:value-of select="$row"/>
+            </xsl:attribute>
+          </xsl:if>
+
           <xsl:if test="count(child::div)>0">
             <xsl:apply-templates select="div" mode="icon"/>
             <xsl:text> </xsl:text>

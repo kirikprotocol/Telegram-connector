@@ -36,7 +36,11 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 @SuppressWarnings("unused")
@@ -164,27 +168,56 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }
   }
 
-  private Keyboard getKeyboard(final Document doc) {
-    final List<String> buttons = new ArrayList<String>() {{
-      //noinspection unchecked
-      for (Element e : (List<Element>) doc.getRootElement().elements("button")) {
-        add(e.getTextTrim());
+  public static Keyboard getKeyboard(final Document doc) {
+
+    @SuppressWarnings("unchecked")
+    final List<Element> buttons = (List<Element>) doc.getRootElement().elements("button");
+    if (CollectionUtils.isEmpty(buttons)) {
+      return null;
+    }
+
+    final Map<Integer, List<String>> keyTable = new HashMap<Integer, List<String>>() {{
+      for (Element button : buttons) {
+        final String rowAttr = button.attributeValue("row");
+        final int nRow = StringUtils.isBlank(rowAttr) ? 0 : Integer.valueOf(rowAttr) - 1;
+
+        List<String> rowButtons = get(nRow);
+        if (rowButtons == null) {
+          put(nRow, rowButtons = new ArrayList<>());
+        }
+
+        rowButtons.add(button.getTextTrim());
       }
     }};
 
-    if (buttons.isEmpty()) {
-      return null;
-
-    } else {
-      final ReplyKeyboardMarkup kbd = new ReplyKeyboardMarkup();
-      kbd.setOneTimeKeyboard(true);
-      kbd.setResizeKeyboard(true);
-      kbd.setKeyboard(new String[][]{buttons.toArray(new String[buttons.size()])});
-
-      return kbd;
-    }
+    final ReplyKeyboardMarkup kbd = new ReplyKeyboardMarkup();
+    kbd.setOneTimeKeyboard(true);
+    kbd.setResizeKeyboard(true);
+    kbd.setKeyboard(mapToTable(keyTable));
+    return kbd;
   }
 
+  private static String[][] mapToTable(Map<Integer, List<String>> keyTable) {
+    final String[][] keys = new String[keyTable.size()][];
+
+    final List<Map.Entry<Integer,List<String>>> rows = new ArrayList<>(keyTable.entrySet());
+    Collections.sort(
+        rows,
+        new Comparator<Map.Entry<Integer, ?>>() {
+      @Override
+      public int compare(Map.Entry<Integer, ?> _1, Map.Entry<Integer, ?> _2) {
+        return Integer.compare(_1.getKey(), _2.getKey());
+      }
+    });
+
+    int i = 0;
+    for (Map.Entry<Integer, List<String>> row : rows) {
+      final List<String> value = row.getValue();
+      keys[i++] = value.toArray(new String[value.size()]);
+    }
+
+    return keys;
+  }
 
   @Override
   public void init(Properties config) throws Exception {

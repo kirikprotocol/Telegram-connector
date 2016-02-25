@@ -84,8 +84,17 @@ public class MarshalUtils {
       final JSONObject obj = arr.optJSONObject(i);
       if (obj == null) { return null; }
 
-      final JSONArray array = obj.optJSONArray(itemName);
-      if (array == null) { return null; }
+      JSONArray array = obj.optJSONArray(itemName);
+      if (array == null) {
+        final String singleVal = obj.optString(itemName);
+        if (singleVal != null) {
+          array = new JSONArray();
+          array.put(singleVal);
+
+        } else {
+          return null;
+        }
+      }
 
       nested.add(array);
     }

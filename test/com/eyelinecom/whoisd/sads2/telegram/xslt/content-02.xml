@@ -1,0 +1,16 @@
+<page version="2.0">
+  <div protocol="telegram">
+    Multiple navigation blocks.
+  </div>
+
+  <!-- Row 1 -->
+  <navigation>
+    <link pageId="page.xml">Page 1</link>
+    <link pageId="page.xml">Page 2</link>
+  </navigation>
+
+  <!-- Row 2 -->
+  <navigation>
+    <link pageId="page.xml">Page 3</link>
+  </navigation>
+</page>

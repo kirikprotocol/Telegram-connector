@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message>Multiple navigation blocks.</message>
+  <button href="page.xml" row="1">Page 1</button>
+  <button href="page.xml" row="1">Page 2</button>
+  <button href="page.xml" row="2">Page 3</button>
+</page>

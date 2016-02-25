@@ -10,9 +10,4 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class GetMe extends ApiMethod<GetMe, User> {
 
-  @Override
-  public String getPath() {
-    return "getMe";
-  }
-
 }

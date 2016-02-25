@@ -45,11 +45,7 @@ public class SendChatAction extends ApiMethod<SendChatAction, VoidType> {
     this.action = action;
   }
 
-  @Override
-  public String getPath() {
-    return "sendChatAction";
-  }
-
+  @SuppressWarnings("unused")
   public enum ChatAction {
 
     TYPING("typing"),

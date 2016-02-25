@@ -88,9 +88,4 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
     this.parseMode = parseMode;
   }
 
-  @Override
-  public String getPath() {
-    return "sendmessage";
-  }
-
 }

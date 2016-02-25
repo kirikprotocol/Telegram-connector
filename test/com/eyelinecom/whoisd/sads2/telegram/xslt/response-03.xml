@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message>PIN menu:
+    Enter PIN (for demo enter 1111):
+
+  </message>
+  <input href="_ctrl_check_pin.jsp" name="pin"/>
+  <button href="_ctrl_register.jsp" row="2">Return to Main Menu</button>
+</page>

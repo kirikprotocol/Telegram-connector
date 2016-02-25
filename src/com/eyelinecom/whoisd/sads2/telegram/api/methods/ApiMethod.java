@@ -3,6 +3,7 @@ package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -30,7 +31,9 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
   /**
    * @return Method path as in API_ROOT/token/METHOD_PATH.
    */
-  public abstract String getPath();
+  public String getPath() {
+    return StringUtils.uncapitalize(methodClass.getSimpleName());
+  }
 
   /**
    * @return Method name, as should be passed in {@code method} parameter of a WebHook response.
