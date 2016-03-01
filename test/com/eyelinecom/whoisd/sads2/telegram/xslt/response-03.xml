@@ -4,6 +4,6 @@
     Enter PIN (for demo enter 1111):
 
   </message>
-  <input href="_ctrl_check_pin.jsp" name="pin"/>
+  <input name="pin" href="_ctrl_check_pin.jsp"/>
   <button href="_ctrl_register.jsp" row="2">Return to Main Menu</button>
 </page>
