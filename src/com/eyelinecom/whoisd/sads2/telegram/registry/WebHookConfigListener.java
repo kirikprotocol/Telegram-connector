@@ -10,6 +10,7 @@ import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,10 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
     } else if (config instanceof ServiceConfig) {
       final ServiceConfig serviceConfig = (ServiceConfig) config;
-      final String token = InitUtils.getString(CONF_TOKEN, null, serviceConfig.getAttributes());
+
+      String token = InitUtils.getString(CONF_TOKEN, null, serviceConfig.getAttributes());
+      token = StringUtils.trimToNull(token);
+
       if (token == null) {
         unRegisterWebHook(serviceId);
 
