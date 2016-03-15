@@ -82,8 +82,12 @@ public class BotApiClient {
           "UTF-8",
           HttpDataLoader.METHOD_POST);
 
+    } catch (DataLoadException e) {
+      throw new TelegramApiException("Call failed with HTTP code [" + e.getStatus() + "]," +
+          " API method = [" + method.getMethod() + "]", e);
+
     } catch (Exception e) {
-      throw new TelegramApiException("Call failed, method = [" + method + "]", e);
+      throw new TelegramApiException("Call failed, API method = [" + method + "]", e);
     }
 
     final JSONObject rc = validate(parse(response));
