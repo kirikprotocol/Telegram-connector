@@ -55,7 +55,8 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
     final Session session = sessionManager.getSession(chatId);
     final String rawSubscriberData = TelegramRequestUtils.getMessageText(outerRequest.getContent());
 
-    if (rawSubscriberData.startsWith(START_MESSAGE) &&
+    if (rawSubscriberData!=null &&
+        rawSubscriberData.startsWith(START_MESSAGE) &&
         rawSubscriberData.length() > START_MESSAGE.length() + 1) {
       // Got payload along with the start message.
 
@@ -76,9 +77,7 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
           session.setAttribute(SESSION_VAR_MSISDN, subscriberData);
         }
       }
-
     } else if (session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE) == null) {
-
       if (client.isExists(chatId, VAR_CHAT2MSISDN)) {
         final String msisdn = client.getString(chatId, VAR_CHAT2MSISDN);
         if (StringUtils.isNotBlank(msisdn)) {
