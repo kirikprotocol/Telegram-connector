@@ -1,12 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Chat extends ApiType<Chat> {
 
   public enum Type {
@@ -22,24 +17,21 @@ public class Chat extends ApiType<Chat> {
   }
 
   /** Unique identifier of this chat */
-  @XmlElement(name = "id")
   private Long id;
 
   /** Type of the chat, one of “private”, “group” or “channel” */
-  @XmlElement(name = "type")
   private String type;
 
   /** Title of the chat, only for channels and group chat */
-  @XmlElement(name = "title")
   private String title;
 
-  @XmlElement(name = "first_name")
+  @JsonProperty(value = "first_name")
   private String firstName;
 
-  @XmlElement(name = "last_name")
+  @JsonProperty(value = "last_name")
   private String lastName;
 
-  @XmlElement(name = "username")
+  @JsonProperty(value = "username")
   private String userName;
 
   public Chat() {}

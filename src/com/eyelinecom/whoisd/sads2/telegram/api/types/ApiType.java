@@ -2,7 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import org.codehaus.jettison.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.lang.reflect.ParameterizedType;
 
@@ -24,7 +24,7 @@ public abstract class ApiType<T extends ApiType> {
     return (Class<T>) genericSuperclass.getActualTypeArguments()[0];
   }
 
-  public static <T extends ApiType> T unmarshal(JSONObject obj,
+  public static <T extends ApiType> T unmarshal(JsonNode obj,
                                                 Class<T> clazz) throws TelegramApiException {
 
     try {
@@ -35,7 +35,7 @@ public abstract class ApiType<T extends ApiType> {
     }
   }
 
-  public static <T extends ApiType> T unmarshalResult(JSONObject obj,
+  public static <T extends ApiType> T unmarshalResult(JsonNode obj,
                                                       Class<T> clazz) throws TelegramApiException {
 
     try {
@@ -44,7 +44,7 @@ public abstract class ApiType<T extends ApiType> {
         return (T) new VoidType();
 
       } else {
-        return unmarshal(obj.getJSONObject("result"), clazz);
+        return unmarshal(obj.get("result"), clazz);
       }
 
     } catch (Exception e) {

@@ -15,6 +15,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
+import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
@@ -49,7 +50,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
   private static final Logger log = Logger.getLogger(TelegramPushInterceptor.class);
 
   private TelegramApi client;
-  private SessionManager sessionManager;
+  private ServiceSessionManager sessionManager;
 
   @Override
   public void afterResponseRender(SADSRequest request,
@@ -86,33 +87,41 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
   private void sendTelegramMessage(SADSRequest request,
                                    SADSResponse response) throws Exception {
 
+    final String serviceId = request.getServiceId();
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
     final String text = getText(doc);
     final Keyboard keyboard = getKeyboard(doc);
 
-    final boolean hasInputs = !doc.getRootElement().elements("input").isEmpty();
-    final Session session = sessionManager.getSession(request.getAbonent());
+    final boolean shouldCloseSession =
+        keyboard == null && doc.getRootElement().elements("input").isEmpty();
+    final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
+    final Session session =
+        sessionManager.getSession(request.getAbonent());
 
-    if (keyboard != null || hasInputs) {
+    if (!shouldCloseSession) {
       session.setAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE, doc);
       session.setAttribute(
           TelegramMessageConnector.ATTR_SESSION_PREVIOUS_PAGE_URI,
           response.getAttributes().get(ContentRequestUtils.ATTR_REQUEST_URI));
-
-    } else {
-      // No inputs mean that the dialog is over.
-      session.close();
     }
 
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
-    client.sendMessage(token, request.getAbonent(), text, keyboard);
+    client.sendMessage(sessionManager, token, request.getAbonent(), text, keyboard);
+
+    if (shouldCloseSession) {
+      // No inputs mean that the dialog is over.
+      session.close();
+    }
   }
 
   private void sendTelegramMessage(SADSRequest request,
                                    final List<SADSMessage> messages) throws Exception {
+    final String serviceId = request.getServiceId();
+    final SessionManager sessionManager =
+        this.sessionManager.getSessionManager(serviceId);
 
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
@@ -124,6 +133,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }};
 
     client.sendMessage(
+        sessionManager,
         token,
         request.getAbonent(),
         StringUtils.join(textMessages, "\n"),
@@ -222,7 +232,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
   @Override
   public void init(Properties config) throws Exception {
     client = (TelegramApi) SADSInitUtils.getResource("client", config);
-    sessionManager = (SessionManager) SADSInitUtils.getResource("session-manager", config);
+    sessionManager = (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
   }
 
   @Override

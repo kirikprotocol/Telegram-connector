@@ -7,51 +7,36 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+
+import static java.util.Collections.unmodifiableSet;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * Created by jeck on 10/02/16
  */
 @SuppressWarnings("unused")
-public class InMemorySessionManager implements SessionManager {
-
-  private final Cache<String, Session> storage;
-
-  public InMemorySessionManager(Cache<String, Session> storage) {
-    this.storage = storage;
-  }
-
-  @Override
-  public Session getSession(final String id) throws ExecutionException {
-    return getSession(id, true);
-  }
-
-  @Override
-  public Session getSession(final String id, boolean createIfMissing) throws ExecutionException {
-    if (!createIfMissing) {
-      return storage.getIfPresent(id);
-
-    } else {
-      return storage.get(id, new Callable<Session>() {
-        @Override
-        public Session call() throws Exception {
-          return new MemorySession(id, InMemorySessionManager.this.storage);
-        }
-      });
-    }
-  }
+public class InMemorySessionManager {
 
   @SuppressWarnings("unused")
   public static class Factory implements ResourceFactory {
+
     @Override
-    public InMemorySessionManager build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
-      final Cache<String, Session> cache = CacheBuilder.newBuilder()
-          .expireAfterAccess(InitUtils.getLong("life-time", 1000*60*15, properties), TimeUnit.MILLISECONDS)
-          .build();
-      return new InMemorySessionManager(cache);
+    public ServiceSessionManager build(String id,
+                                       Properties properties,
+                                       HierarchicalConfiguration config) throws Exception {
+
+      return new ServiceSessionManagerImpl(
+          InitUtils.getLong("life-time", MINUTES.toMillis(15), properties)
+      );
     }
 
     @Override
@@ -60,15 +45,63 @@ public class InMemorySessionManager implements SessionManager {
     }
   }
 
-  private static class MemorySession implements Session {
-    private String id;
-    private final Map<String,Object> attributes = new HashMap<>();
-    private Date startDate = new Date();
-    private Cache<String,Session> storage;
+  private static class ServiceSessionManagerImpl
+      extends ExpiringCacheBase<String, SessionManager>
+      implements ServiceSessionManager {
 
-    public MemorySession(String id, Cache<String,Session> storage) {
+    private final long expireAfterAccessMillis;
+
+    public ServiceSessionManagerImpl(long expireAfterAccessMillis) {
+      super(expireAfterAccessMillis);
+      this.expireAfterAccessMillis = expireAfterAccessMillis;
+    }
+
+    @Override
+    protected SessionManager init(String key) {
+      return new SessionManagerImpl(expireAfterAccessMillis);
+    }
+
+    @Override
+    public SessionManager getSessionManager(String serviceId) throws ExecutionException {
+      return get(serviceId, true);
+    }
+  }
+
+  private static class SessionManagerImpl
+      extends ExpiringCacheBase<String, Session>
+      implements SessionManager {
+
+    public SessionManagerImpl(long expireAfterAccessMillis) {
+      super(expireAfterAccessMillis);
+    }
+
+    @Override
+    protected Session init(final String id) {
+      return new MemorySession(id) {
+        @Override public void close() { storage.invalidate(id); }
+      };
+    }
+
+    @Override
+    public Session getSession(final String id) throws ExecutionException {
+      return getSession(id, true);
+    }
+
+    @Override
+    public Session getSession(final String id,
+                              boolean createIfMissing) throws ExecutionException {
+      return get(id, createIfMissing);
+    }
+
+  }
+
+  private static abstract class MemorySession implements Session {
+    private final String id;
+    private final Map<String,Object> attributes = new HashMap<>();
+    private final Date startDate = new Date();
+
+    public MemorySession(String id) {
       this.id = id;
-      this.storage = storage;
     }
 
     @Override
@@ -88,7 +121,7 @@ public class InMemorySessionManager implements SessionManager {
 
     @Override
     public Collection<String> getAttributesNames() {
-      return attributes.keySet();
+      return unmodifiableSet(new HashSet<>(attributes.keySet()));
     }
 
     @Override
@@ -100,18 +133,32 @@ public class InMemorySessionManager implements SessionManager {
     public Date getStartDate() {
       return startDate;
     }
+  }
 
-    @Override
-    public void close() {
-      storage.invalidate(this.id);
+  private static abstract class ExpiringCacheBase<K, V> {
+    protected final Cache<K, V> storage;
+
+    public ExpiringCacheBase(long expireAfterAccessMillis) {
+      storage = CacheBuilder.newBuilder()
+          .expireAfterAccess(expireAfterAccessMillis, MILLISECONDS)
+          .build();
     }
 
-    public void setId(String id) {
-      this.id = id;
+    protected abstract V init(K key);
+
+    protected V get(final K key,
+                    boolean createIfMissing) throws ExecutionException {
+      return createIfMissing ?
+          storage.get(key, initWrapper(key)) : storage.getIfPresent(key);
     }
 
-    public void setStartDate(Date startDate) {
-      this.startDate = startDate;
+    private Callable<V> initWrapper(final K key) {
+      return new Callable<V>() {
+        @Override
+        public V call() throws Exception {
+          return init(key);
+        }
+      };
     }
   }
 

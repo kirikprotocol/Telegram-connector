@@ -26,7 +26,6 @@ public class TelegramApiImpl implements TelegramApi {
   private static final Logger log = Logger.getLogger(TelegramApiImpl.class);
 
   private final HttpDataLoader loader;
-  private final SessionManager sessionManager;
   private final String publicKeyPath;
   private final String baseUrl;
   private final String connectorBaseUrl;
@@ -44,10 +43,8 @@ public class TelegramApiImpl implements TelegramApi {
   private final int maxRateLimitRetries;
 
   public TelegramApiImpl(HttpDataLoader loader,
-                         SessionManager sessionManager,
                          Properties properties) throws Exception {
     this.loader = loader;
-    this.sessionManager = sessionManager;
 
     this.publicKeyPath = SADSInitUtils.getFilename("certificate.pem", properties);
     this.baseUrl = properties.getProperty("base.url");
@@ -84,12 +81,13 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public void sendMessage(String token,
+  public void sendMessage(SessionManager sessionManager,
+                          String token,
                           String chatId,
                           String text,
                           Keyboard keyboard) throws TelegramApiException {
 
-    acquireChatLimit(chatId);
+    acquireChatLimit(sessionManager, chatId);
 
     final SendMessage method = new SendMessage();
     method.setChatId(chatId);
@@ -104,8 +102,11 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public void sendMessage(String token, String chatId, String text) throws TelegramApiException {
-    sendMessage(token, chatId, text, null);
+  public void sendMessage(SessionManager sessionManager,
+                          String token,
+                          String chatId,
+                          String text) throws TelegramApiException {
+    sendMessage(sessionManager, token, chatId, text, null);
   }
 
   @Override
@@ -113,7 +114,7 @@ public class TelegramApiImpl implements TelegramApi {
     return call(token, new GetMe());
   }
 
-  private void acquireChatLimit(String chatId) {
+  private void acquireChatLimit(SessionManager sessionManager, String chatId) {
     try {
       final Session session = sessionManager.getSession(chatId, false);
       if (session != null) {
@@ -153,10 +154,7 @@ public class TelegramApiImpl implements TelegramApi {
       final HttpDataLoader loader =
           (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
 
-      final SessionManager sessionManager =
-          (SessionManager) SADSInitUtils.getResource("session-manager", properties);
-
-      return new TelegramApiImpl(loader, sessionManager, properties);
+      return new TelegramApiImpl(loader, properties);
     }
 
     @Override public boolean isHeavyResource() { return false; }

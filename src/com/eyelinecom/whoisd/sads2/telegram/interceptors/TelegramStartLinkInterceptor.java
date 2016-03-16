@@ -10,7 +10,7 @@ import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
+import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.adaptors.LinkToTelegramAdaptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.StoredHttpRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
@@ -32,13 +32,13 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
 
   private PersonalizationManager personalization;
   private PersonalizationClient client;
-  private SessionManager sessionManager;
+  private ServiceSessionManager sessionManager;
 
   @Override
   public void init(Properties config) throws Exception {
     personalization = (PersonalizationManager) SADSInitUtils.getResource("personalization-service", config);
     client = (PersonalizationClient) SADSInitUtils.getResource("personalization-client", config);
-    sessionManager = (SessionManager) SADSInitUtils.getResource("session-manager", config);
+    sessionManager = (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
   }
 
   @Override
@@ -52,7 +52,8 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
                                  StoredHttpRequest outerRequest) throws Exception {
 
     final String chatId = request.getAbonent();
-    final Session session = sessionManager.getSession(chatId);
+    final Session session =
+        sessionManager.getSessionManager(request.getServiceId()).getSession(chatId);
     final String rawSubscriberData = TelegramRequestUtils.getMessageText(outerRequest.getContent());
 
     if (rawSubscriberData!=null &&

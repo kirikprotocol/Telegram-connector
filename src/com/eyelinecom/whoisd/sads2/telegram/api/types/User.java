@@ -1,24 +1,18 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class User extends ApiType<User> {
 
-  @XmlElement(name = "id")
   private Integer id;
 
-  @XmlElement(name = "first_name")
+  @JsonProperty(value = "first_name")
   private String firstName;
 
-  @XmlElement(name = "last_name")
+  @JsonProperty(value = "last_name")
   private String lastName;
 
-  @XmlElement(name = "username")
+  @JsonProperty(value = "username")
   private String userName;
 
   public User() {

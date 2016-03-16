@@ -8,11 +8,11 @@ import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.telegram.util.Reiterator;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,7 +90,7 @@ public class BotApiClient {
       throw new TelegramApiException("Call failed, API method = [" + method + "]", e);
     }
 
-    final JSONObject rc = validate(parse(response));
+    final JsonNode rc = validate(parse(response));
     return method.toResponse(rc);
   }
 
@@ -138,31 +138,29 @@ public class BotApiClient {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  private JSONObject parse(Loader.Entity response) throws TelegramApiException {
+  private JsonNode parse(Loader.Entity response) throws TelegramApiException {
     try {
       return MarshalUtils.parse(new String(response.getBuffer(), "UTF-8"));
 
-    } catch (JSONException e) {
-      throw new TelegramApiException("Unable to parse response JSON", response.toString());
-
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
+
+    } catch (IOException e) {
+      throw new TelegramApiException("Unable to parse response JSON", response.toString());
     }
   }
 
-  private JSONObject validate(JSONObject json) throws TelegramApiException {
+  private JsonNode validate(JsonNode json) throws TelegramApiException {
     return validate(json, null);
   }
 
-  private JSONObject validate(JSONObject json, String message) throws TelegramApiException {
-    try {
-      if (!json.getBoolean("ok")) {
-        throw new TelegramApiException(message, json.toString());
-      }
+  private JsonNode validate(JsonNode json, String message) throws TelegramApiException {
+    JsonNode ok = json.get("ok");
+    if (ok != null && ok.isBoolean() && ok.asBoolean()) {
       return json;
 
-    } catch (JSONException e) {
-      throw new TelegramApiException(message, e);
+    } else {
+      throw new TelegramApiException(message, json.toString());
     }
   }
 

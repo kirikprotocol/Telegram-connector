@@ -1,26 +1,20 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class ReplyKeyboardMarkup extends Keyboard<ReplyKeyboardMarkup> {
 
   @Override
   protected Class<ReplyKeyboardMarkup> getEntityClass() { return ReplyKeyboardMarkup.class; }
 
-  @XmlElement(name = "keyboard", type = String[][].class)
   private String[][] keyboard;
 
   /** Resize vertically for optimal fit. */
-  @XmlElement(name = "resize_keyboard")
+  @JsonProperty(value = "resize_keyboard")
   private Boolean resizeKeyboard;
 
   /** Hide the keyboard as soon as it's been used. */
-  @XmlElement(name = "one_time_keyboard")
+  @JsonProperty(value = "one_time_keyboard")
   private Boolean oneTimeKeyboard;
 
   public ReplyKeyboardMarkup() {}

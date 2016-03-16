@@ -1,23 +1,19 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * This object represents an incoming update.
  * Only one of the optional parameters can be present in any given update.
  */
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({"update_id", "message"})
 public class Update extends ApiType<Update> {
 
-  @XmlElement(name = "update_id")
+  @JsonProperty(value = "update_id")
   private Integer updateId;
 
   // Optional. New incoming message of any kind — text, photo, sticker, etc.
-  @XmlElement(name = "message")
   private Message message;
 
   public Update() {}

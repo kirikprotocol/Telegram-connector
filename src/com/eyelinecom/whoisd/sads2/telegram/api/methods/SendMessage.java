@@ -2,14 +2,12 @@ package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
+import com.eyelinecom.whoisd.sads2.telegram.util.StringAsNumericSerializer;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({"chat_id", "text", "replyToMessageId", "replyMarkup", "parseMode"})
 public class SendMessage extends ApiMethod<SendMessage, Message> {
 
   /**
@@ -17,19 +15,20 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
    * (in the format {@code @channelusername}).
    */
   @SuppressWarnings("SpellCheckingInspection")
-  @XmlElement(name = "chat_id", required = true)
+  @JsonProperty(value = "chat_id", required = true)
+  @JsonSerialize(using = StringAsNumericSerializer.class)
   private String chatId;
 
   /**
    * Text of the message to be sent.
    */
-  @XmlElement(name = "text", required = true)
+  @JsonProperty(required = true)
   private String text;
 
   /**
    * If the message is a reply, ID of the original message.
    */
-  @XmlElement(name = "reply_to_message_id")
+  @JsonProperty(value = "reply_to_message_id")
   private Integer replyToMessageId;
 
   /**
@@ -38,10 +37,10 @@ public class SendMessage extends ApiMethod<SendMessage, Message> {
    * A JSON-serialized object for a custom reply keyboard, instructions to hide keyboard
    * or to force a reply from the user.
    */
-  @XmlElement(name = "reply_markup")
+  @JsonProperty(value = "reply_markup")
   private Keyboard replyMarkup;
 
-  @XmlElement(name = "parse_mode")
+  @JsonProperty(value = "parse_mode")
   private String parseMode;
 
   public SendMessage() {

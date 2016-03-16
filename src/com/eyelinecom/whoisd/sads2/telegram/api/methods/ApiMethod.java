@@ -3,10 +3,12 @@ package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
+import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 
 public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType> {
@@ -31,6 +33,7 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
   /**
    * @return Method path as in API_ROOT/token/METHOD_PATH.
    */
+  @JsonIgnore
   public String getPath() {
     return StringUtils.uncapitalize(methodClass.getSimpleName());
   }
@@ -38,6 +41,7 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
   /**
    * @return Method name, as should be passed in {@code method} parameter of a WebHook response.
    */
+  @JsonIgnore
   public String getMethod() {
     return getPath();
   }
@@ -45,7 +49,7 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
   /**
    * Deserialize a json answer to the response type of a method.
    */
-  public Response toResponse(JSONObject answer) throws TelegramApiException {
+  public Response toResponse(JsonNode answer) throws TelegramApiException {
     return ApiType.unmarshalResult(answer, responseClass);
   }
 
@@ -56,11 +60,11 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
 
   public String marshalAsWebHookResponse() throws TelegramApiException {
     try {
-      final JSONObject json = new JSONObject(marshal());
+      final ObjectNode json = (ObjectNode) MarshalUtils.parse(marshal());
       json.put(METHOD_FIELD, getMethod());
       return json.toString();
 
-    } catch (JSONException e) {
+    } catch (IOException e) {
       throw new TelegramApiException("Unable to marshal API method [" + this + "]", e);
     }
   }

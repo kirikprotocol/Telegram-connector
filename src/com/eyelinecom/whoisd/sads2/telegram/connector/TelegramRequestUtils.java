@@ -2,7 +2,8 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
-import org.codehaus.jettison.json.JSONException;
+
+import java.io.IOException;
 
 import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
@@ -13,7 +14,7 @@ public class TelegramRequestUtils {
     try {
       return unmarshal(parse(webHookRequest), Update.class);
 
-    } catch (JSONException e) {
+    } catch (IOException e) {
       throw new TelegramApiException("Unable to read update message", e);
     }
   }

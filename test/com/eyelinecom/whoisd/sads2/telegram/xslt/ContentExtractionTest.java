@@ -187,4 +187,26 @@ public class ContentExtractionTest {
         "{\"keyboard\":[[\"Back\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
         kbd);
   }
+
+  @Test
+  public void test8() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Message</message>\n" +
+            "  <button href=\"/link-1\">123456</button>\n" +
+            "  <button href=\"/link-2\">Text</button>\n" +
+            "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    @SuppressWarnings("ConstantConditions")
+    final String kbd =
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+
+    assertEquals(
+        "{\"keyboard\":[[\"123456\",\"Text\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        kbd);
+  }
 }

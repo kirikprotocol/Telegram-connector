@@ -14,6 +14,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
+import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
@@ -37,10 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getChatId;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 public class TelegramMessageConnector extends HttpServlet {
 
@@ -76,7 +77,7 @@ public class TelegramMessageConnector extends HttpServlet {
     final StoredHttpRequest request = new StoredHttpRequest(req);
 
     SADSResponse response = connector.process(request);
-    this.fillHttpResponse(resp, response);
+    fillHttpResponse(resp, response);
   }
 
   private void fillHttpResponse(HttpServletResponse httpResponse,
@@ -84,7 +85,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     httpResponse.setStatus(sadsResponse.getStatus());
     String contentType = sadsResponse.getMimeType();
-    if (sadsResponse.getEncoding() != null && contentType.indexOf("charset=") == -1) {
+    if (sadsResponse.getEncoding() != null && !contentType.contains("charset=")) {
       contentType += "; charset=" + sadsResponse.getEncoding();
     }
     httpResponse.setContentType(contentType);
@@ -116,30 +117,39 @@ public class TelegramMessageConnector extends HttpServlet {
       }
 
       if (StringUtils.isBlank(executorResourceName)) {
-        this.delayedExecutor = Executors.newScheduledThreadPool(InitUtils.getInt("pool-size", DEFAULT_DELAYED_JOBS_POLL_SIZE, config));
+        this.delayedExecutor =
+            newScheduledThreadPool(InitUtils.getInt("pool-size", DEFAULT_DELAYED_JOBS_POLL_SIZE, config));
         getLogger().debug("created a new delayed executor");
       }
     }
 
     @Override
     protected ExecutorService getExecutor(ServiceConfig config, String subscriber) {
-      Log log = this.getLogger();
+      final Log log = getLogger();
 
-      if (this.delayedExecutor == null) {
-
+      if (delayedExecutor == null) {
         try {
-          String executorResource = InitUtils.getString("executor", executorResourceName, config.getAttributes());
-          ScheduledExecutorService executorService = (ScheduledExecutorService) this.getResource(executorResource);
-          if (log.isDebugEnabled()) log.debug("Used resource executor: " + executorResource);
+          final String executorResource =
+              InitUtils.getString("executor", executorResourceName, config.getAttributes());
+          final ScheduledExecutorService executorService =
+              (ScheduledExecutorService) getResource(executorResource);
+
+          if (log.isDebugEnabled()) {
+            log.debug("Used resource executor: " + executorResource);
+          }
           return executorService;
 
         } catch (NotFoundResourceException e) {
-          if (log.isDebugEnabled()) log.debug("Used internal executor",e);
+          if (log.isDebugEnabled()) {
+            log.debug("Used internal executor",e);
+          }
           return delayedExecutor;
         }
 
       } else {
-        if (log.isDebugEnabled()) log.debug("Used internal executor (it's not null)");
+        if (log.isDebugEnabled()) {
+          log.debug("Used internal executor (it's not null)");
+        }
         return delayedExecutor;
       }
     }
@@ -224,19 +234,25 @@ public class TelegramMessageConnector extends HttpServlet {
                                    String subscriberId,
                                    StoredHttpRequest message) throws Exception {
 
+      final String serviceId = config.getId();
       final String incoming = TelegramRequestUtils.getMessageText(message.getContent());
 
-      Session session = getSessionManager().getSession(subscriberId);
+      Session session = getSessionManager(serviceId).getSession(subscriberId);
 
       if ("/reset".equals(incoming)) {
         // Invalidate the current session.
         session.close();
-        session = getSessionManager().getSession(subscriberId);
+        session = getSessionManager(serviceId).getSession(subscriberId);
 
       } else if ("/who".equals(incoming)) {
         final String serviceToken = getServiceToken(message);
         final User me = getClient().getMe(serviceToken);
-        getClient().sendMessage(serviceToken, subscriberId, "Hello from " + me.getUserName() + "!");
+        getClient().sendMessage(
+            getSessionManager(serviceId),
+            serviceToken,
+            subscriberId,
+            "Hello from " + me.getUserName() + "!"
+        );
       }
 
       final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
@@ -344,8 +360,10 @@ public class TelegramMessageConnector extends HttpServlet {
       return (TelegramApi) getResource("telegram-api");
     }
 
-    private SessionManager getSessionManager() throws NotFoundResourceException {
-      return (SessionManager) getResource("telegram-session-manager");
+    private SessionManager getSessionManager(String serviceId) throws Exception {
+      final ServiceSessionManager serviceSessionManager =
+          (ServiceSessionManager) getResource("telegram-session-manager");
+      return serviceSessionManager.getSessionManager(serviceId);
     }
 
     private Log getLog(StoredHttpRequest req) {

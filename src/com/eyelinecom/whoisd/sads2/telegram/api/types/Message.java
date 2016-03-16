@@ -1,57 +1,48 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Message extends ApiType<Message> {
 
-  @XmlElement(name = "message_id")
+  @JsonProperty(value = "message_id")
   private Integer messageId;
 
-  @XmlElement(name = "from")
   private User from;
 
   /** Epoch */
-  @XmlElement(name = "date")
   private Integer date;
 
-  @XmlElement(name = "chat")
   private Chat chat;
 
   /** For text messages, the actual UTF-8 text of the message. */
-  @XmlElement(name = "text")
   private String text;
 
-  @XmlElement(name = "new_chat_participant")
+  @JsonProperty(value = "new_chat_participant")
   private User newChatParticipant;
 
-  @XmlElement(name = "left_chat_participant")
+  @JsonProperty(value = "left_chat_participant")
   private User leftChatParticipant;
 
-  @XmlElement(name = "group_chat_created")
+  @JsonProperty(value = "group_chat_created")
   private Boolean groupchatCreated;
 
-  @XmlElement(name = "reply_to_message")
+  @JsonProperty(value = "reply_to_message")
   private Message replyToMessage;
 
   /** Informs that the supergroup has been created */
-  @XmlElement(name = "supergroup_chat_created")
+  @JsonProperty(value = "supergroup_chat_created")
   private Boolean superGroupCreated;
 
   /** Informs that the channel has been created */
-  @XmlElement(name = "channel_chat_created")
+  @JsonProperty(value = "channel_chat_created")
   private Boolean channelChatCreated;
 
   /** The chat has been migrated to a chat with specified identifier */
-  @XmlElement(name = "migrate_to_chat_id")
+  @JsonProperty(value = "migrate_to_chat_id")
   private Long migrateToChatId;
 
   /** The chat has been migrated from a chat with specified identifier */
-  @XmlElement(name = "migrate_from_chat_id")
+  @JsonProperty(value = "migrate_from_chat_id")
   private Long migrateFromChatId;
 
   public Message() {}

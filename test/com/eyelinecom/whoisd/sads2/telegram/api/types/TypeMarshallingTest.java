@@ -2,10 +2,10 @@ package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
@@ -79,13 +79,23 @@ public class TypeMarshallingTest {
     final String json = update.marshal();
     assertEquals("{\"update_id\":657656097,\"message\":{\"message_id\":38}}", json);
 
-    final Update obj = Update.unmarshal(new JSONObject(json), Update.class);
+    final Update obj = Update.unmarshal(new ObjectMapper().readTree(json), Update.class);
     assertEquals(json, obj.marshal());
   }
 
   @Test
-  public void test4() throws JSONException, TelegramApiException {
-    final String updateJson = "{\"update_id\":657656097,\"message\":{\"message_id\":38,\"from\":{\"id\":58403748,\"first_name\":\"vit\",\"username\":\"VitNote\"},\"chat\":{\"id\":58403748,\"first_name\":\"vit\",\"username\":\"VitNote\",\"type\":\"private\"},\"date\":1455522117,\"text\":\"\\/start\"}}";
+  public void test4() throws TelegramApiException, IOException {
+    final String updateJson =
+        "{" +
+            "\"update_id\":657656097," +
+              "\"message\":{" +
+                "\"message_id\":38," +
+                "\"from\":{\"id\":58403748,\"first_name\":\"vit\",\"username\":\"VitNote\"}," +
+                "\"chat\":{\"id\":58403748,\"first_name\":\"vit\",\"username\":\"VitNote\",\"type\":\"private\"}," +
+                "\"date\":1455522117," +
+                "\"text\":\"\\/start\"" +
+              "}" +
+            "}";
 
     final Update update = ApiType.unmarshal(parse(updateJson), Update.class);
     assertEquals(657656097, (long) update.getUpdateId());

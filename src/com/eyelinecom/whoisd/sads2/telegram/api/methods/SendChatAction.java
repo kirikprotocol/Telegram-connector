@@ -1,25 +1,18 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 
 import com.eyelinecom.whoisd.sads2.telegram.api.types.VoidType;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Tell the user that something is happening on the bot's side.
  * The status is set for 5 seconds or less (once the next message arrives, Telegram clients clear
  * the typing status).
  */
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class SendChatAction extends ApiMethod<SendChatAction, VoidType> {
 
-  @XmlElement(name = "chat_id")
+  @JsonProperty(value = "chat_id")
   private String chatId;
 
-  @XmlElement(name = "action")
   private String action;
 
   public SendChatAction() {}
