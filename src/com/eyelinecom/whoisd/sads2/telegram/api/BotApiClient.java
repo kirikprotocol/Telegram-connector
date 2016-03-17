@@ -87,7 +87,7 @@ public class BotApiClient {
           " API method = [" + method.getMethod() + "]", e);
 
     } catch (Exception e) {
-      throw new TelegramApiException("Call failed, API method = [" + method + "]", e);
+      throw new TelegramApiException("Call failed, API method = [" + method.getMethod() + "]", e);
     }
 
     final JsonNode rc = validate(parse(response));
