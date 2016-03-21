@@ -13,6 +13,7 @@
     final String kbd = "[[\"Продолжить\"]]";
     final String message = "Ваш номер телефона подтвержден.";
 
+    // TODO: call `default' scenario on another page to avoid PUSH here.
     sendGet("http://devel.globalussd.mobi/push?" +
         "service=" + serviceId +
         "&subscriber=" + chatId +
