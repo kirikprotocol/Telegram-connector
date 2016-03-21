@@ -72,6 +72,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
       if (StringUtils.isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
+        // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
             request,
             request.getParameters().get("sadsSmsMessage"),
