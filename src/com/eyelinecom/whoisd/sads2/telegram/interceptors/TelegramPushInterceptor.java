@@ -4,7 +4,6 @@ import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
-import com.eyelinecom.whoisd.sads2.connector.SADSMessage;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
@@ -44,6 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
+
 @SuppressWarnings("unused")
 public class TelegramPushInterceptor extends BlankInterceptor implements Initable {
 
@@ -69,8 +71,11 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     try {
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
-      if (CollectionUtils.isNotEmpty(response.getMessages())) {
-        sendTelegramMessage(request, response.getMessages());
+      if (StringUtils.isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
+        sendTelegramMessage(
+            request,
+            request.getParameters().get("sadsSmsMessage"),
+            request.getParameters().get("keyboard"));
 
       } else {
         sendTelegramMessage(request, response);
@@ -118,7 +123,8 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
   }
 
   private void sendTelegramMessage(SADSRequest request,
-                                   final List<SADSMessage> messages) throws Exception {
+                                   String message,
+                                   String keyboard) throws Exception {
     final String serviceId = request.getServiceId();
     final SessionManager sessionManager =
         this.sessionManager.getSessionManager(serviceId);
@@ -126,18 +132,29 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
-    final List<String> textMessages = new ArrayList<String>() {{
-      for (SADSMessage message : messages) {
-        add(message.getText());
+    Keyboard kbd = new ReplyKeyboardHide();
+    try {
+      if (StringUtils.isNotBlank(keyboard)) {
+        final String[][] buttons = unmarshal(parse(keyboard), String[][].class);
+        if (buttons != null) {
+          final ReplyKeyboardMarkup replyKeyboard = new ReplyKeyboardMarkup();
+          replyKeyboard.setOneTimeKeyboard(true);
+          replyKeyboard.setResizeKeyboard(true);
+          replyKeyboard.setKeyboard(buttons);
+          kbd = replyKeyboard;
+        }
       }
-    }};
+
+    } catch (Exception e) {
+      log.error("Keyboard construction failed for value = [" + keyboard + "]", e);
+    }
 
     client.sendMessage(
         sessionManager,
         token,
         request.getAbonent(),
-        StringUtils.join(textMessages, "\n"),
-        new ReplyKeyboardHide());
+        message,
+        kbd);
   }
 
   private String getText(final Document doc) throws DocumentException {

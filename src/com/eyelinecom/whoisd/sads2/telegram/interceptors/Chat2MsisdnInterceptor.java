@@ -37,6 +37,7 @@ public class Chat2MsisdnInterceptor extends BlankInterceptor implements Initable
           (String) session.getAttribute(TelegramStartLinkInterceptor.SESSION_VAR_MSISDN);
 
       if (isNotBlank(msisdn)) {
+        contentRequest.getParameters().put("chatId", contentRequest.getAbonent());
         contentRequest.setAbonent(msisdn);
       }
     } catch (Exception e) {
