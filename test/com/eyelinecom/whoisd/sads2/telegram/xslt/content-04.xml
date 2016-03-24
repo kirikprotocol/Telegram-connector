@@ -1,0 +1,14 @@
+<page version="2.0">
+
+  <div>
+    <input navigationId="submit" name="input" title="Q?!"/>
+  </div>
+  <navigation id="submit">
+    <link accesskey="0" pageId="/test/index.jsp?foo=baz">OK</link>
+  </navigation>
+  <navigation>
+    <link type="exit"
+          accesskey="1"
+          pageId="/test/index.jsp?foo=bar">OK</link>
+  </navigation>
+</page>

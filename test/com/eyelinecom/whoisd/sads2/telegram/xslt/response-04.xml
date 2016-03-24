@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message> Q?!: </message>
+  <input href="/test/index.jsp?foo=baz" name="input"/>
+  <button href="/test/index.jsp?foo=bar" row="2">OK</button>
+</page>
