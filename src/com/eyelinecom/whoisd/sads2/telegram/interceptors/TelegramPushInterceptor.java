@@ -96,8 +96,14 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     final String serviceId = request.getServiceId();
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
-    final String text = getText(doc);
+    String text = getText(doc);
     final Keyboard keyboard = getKeyboard(doc);
+
+    final boolean shouldPass = StringUtils.isBlank(text) && keyboard == null;
+    if (!shouldPass) {
+      // Empty message text is not allowed by Telegram Bot API.
+      text = text.isEmpty() ? "." : text;
+    }
 
     final boolean shouldCloseSession =
         keyboard == null && doc.getRootElement().elements("input").isEmpty();
@@ -112,10 +118,11 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
           response.getAttributes().get(ContentRequestUtils.ATTR_REQUEST_URI));
     }
 
-    final String token =
-        request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
-
-    client.sendMessage(sessionManager, token, request.getAbonent(), text, keyboard);
+    if (!shouldPass) {
+      final String token =
+          request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+      client.sendMessage(sessionManager, token, request.getAbonent(), text, keyboard);
+    }
 
     if (shouldCloseSession) {
       // No inputs mean that the dialog is over.
@@ -166,8 +173,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
       }
     }};
 
-    final String messageText = StringUtils.join(messages, "\n").trim();
-    return messageText.isEmpty() ? "." : messageText;
+    return StringUtils.join(messages, "\n").trim();
   }
 
   public static String getContent(Element element) throws DocumentException {
