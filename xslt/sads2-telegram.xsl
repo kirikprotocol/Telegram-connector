@@ -110,8 +110,7 @@
 
   <xsl:template match="input">
     <xsl:if test="count(@type)=0 or @type != 'hidden'">
-      <xsl:value-of select="@title"/><xsl:text>:</xsl:text><xsl:text>
-</xsl:text>
+      <xsl:value-of select="@title"/><xsl:text>&#xa;</xsl:text>
     </xsl:if>
   </xsl:template>
 
@@ -133,7 +132,7 @@
         </xsl:for-each>
       </xsl:variable>
       <xsl:variable name="paramName" select="@name"/>
-      <input name="$paramName" href="$formPageId">
+      <input>
         <xsl:attribute name="href">
           <xsl:value-of select='$formPageId'/>
         </xsl:attribute>

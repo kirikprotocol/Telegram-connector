@@ -8,7 +8,6 @@ import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -59,7 +58,6 @@ public class TransformTest {
   }
 
   @Test
-  @Ignore
   public void test4() throws Exception {
     checkTransform("content-04.xml", "response-04.xml");
   }
