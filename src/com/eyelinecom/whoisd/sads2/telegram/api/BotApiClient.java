@@ -2,12 +2,12 @@ package com.eyelinecom.whoisd.sads2.telegram.api;
 
 import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
 import com.eyelinecom.whoisd.sads2.common.Loader;
+import com.eyelinecom.whoisd.sads2.common.Reiterator;
 import com.eyelinecom.whoisd.sads2.exception.DataLoadException;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import com.eyelinecom.whoisd.sads2.telegram.util.Reiterator;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.log4j.Logger;
 
