@@ -45,7 +45,17 @@ public class Message extends ApiType<Message> {
   @JsonProperty(value = "migrate_from_chat_id")
   private Long migrateFromChatId;
 
-  public Message() {}
+    private PhotoSize[] photo;
+    private Audio audio;
+    private Document document;
+    private Sticker sticker;
+    private Video video;
+    private Voice voice;
+    private Contact contact;
+    private Location location;
+
+
+    public Message() {}
 
   public Integer getMessageId() {
     return messageId;
@@ -150,4 +160,68 @@ public class Message extends ApiType<Message> {
   public void setMigrateFromChatId(Long migrateFromChatId) {
     this.migrateFromChatId = migrateFromChatId;
   }
+
+    public PhotoSize[] getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(PhotoSize[] photo) {
+        this.photo = photo;
+    }
+
+    public Audio getAudio() {
+        return audio;
+    }
+
+    public void setAudio(Audio audio) {
+        this.audio = audio;
+    }
+
+    public Sticker getSticker() {
+        return sticker;
+    }
+
+    public void setSticker(Sticker sticker) {
+        this.sticker = sticker;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
+    }
+
+    public Video getVideo() {
+        return video;
+    }
+
+    public void setVideo(Video video) {
+        this.video = video;
+    }
+
+    public Voice getVoice() {
+        return voice;
+    }
+
+    public void setVoice(Voice voice) {
+        this.voice = voice;
+    }
+
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
 }
