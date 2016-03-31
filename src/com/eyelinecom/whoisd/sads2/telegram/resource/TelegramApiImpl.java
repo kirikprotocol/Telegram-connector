@@ -8,7 +8,7 @@ import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.getFile;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
@@ -118,7 +118,7 @@ public class TelegramApiImpl implements TelegramApi {
 
     @Override
     public File getFile(String token, String fileId) throws TelegramApiException {
-        final File file =  call(token, new getFile(fileId));
+        final File file =  call(token, new GetFile(fileId));
         String url = StringUtils.join(new String[]{baseUrl, "file", "bot"+token, file.getFilePath()}, "/");
         file.setUrl(url);
         return file;

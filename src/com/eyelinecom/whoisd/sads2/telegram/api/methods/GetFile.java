@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Created by jeck on 30/03/16
  */
-public class getFile extends ApiMethod<getFile, File> {
+public class GetFile extends ApiMethod<GetFile, File> {
     @JsonProperty(value = "file_id", required = true)
     private String fileId;
 
@@ -18,10 +18,10 @@ public class getFile extends ApiMethod<getFile, File> {
         this.fileId = fileId;
     }
 
-    public getFile() {
+    public GetFile() {
     }
 
-    public getFile(String fileId) {
+    public GetFile(String fileId) {
         this.fileId = fileId;
     }
 }
