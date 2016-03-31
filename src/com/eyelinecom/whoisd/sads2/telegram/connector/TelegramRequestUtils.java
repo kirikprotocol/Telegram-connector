@@ -10,7 +10,7 @@ import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 
 public class TelegramRequestUtils {
 
-  private static Update parseUpdate(String webHookRequest) throws TelegramApiException {
+  public static Update parseUpdate(String webHookRequest) throws TelegramApiException {
     try {
       return unmarshal(parse(webHookRequest), Update.class);
 
