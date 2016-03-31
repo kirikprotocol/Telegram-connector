@@ -8,9 +8,11 @@ import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 import com.eyelinecom.whoisd.sads2.telegram.util.RateLimiter;
@@ -114,7 +116,15 @@ public class TelegramApiImpl implements TelegramApi {
     return call(token, new GetMe());
   }
 
-  private void acquireChatLimit(SessionManager sessionManager, String chatId) {
+    @Override
+    public File getFile(String token, String fileId) throws TelegramApiException {
+        final File file =  call(token, new GetFile(fileId));
+        String url = StringUtils.join(new String[]{baseUrl, "file", "bot"+token, file.getFilePath()}, "/");
+        file.setUrl(url);
+        return file;
+    }
+
+    private void acquireChatLimit(SessionManager sessionManager, String chatId) {
     try {
       final Session session = sessionManager.getSession(chatId, false);
       if (session != null) {
