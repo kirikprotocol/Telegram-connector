@@ -5,9 +5,7 @@
     <attribute name="msisdn-required" value="true"/>
   </attributes>
   <div>
-    А вот теперь мы абсоолютно уверены, что твой номер: <b><%= request.getParameter("subscriber") %></b>.
-    <br/>
-    И да начнется <b>СПАМ</b>!
+    Ваш номер телефона подтвержден: <b><%= request.getParameter("subscriber") %></b>.
   </div>
   <navigation>
     <link pageId="index.jsp">Начать сначала</link>

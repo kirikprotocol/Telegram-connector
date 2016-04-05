@@ -1,38 +1,17 @@
-<%@ page import="com.eyelinecom.whoisd.personalization.helpers.Personalization2SubscriberClient" %>
-<%@ page import="com.eyelinecom.whoisd.personalization.helpers.PersonalizationClient" %>
-<%@ page import="com.eyelinecom.whoisd.pvss.core.client.Client" %>
-<%@ page import="com.eyelinecom.whoisd.pvss.core.client.ClientConfig" %>
-<%@ page import="com.eyelinecom.whoisd.pvss.core.client.ClientCore" %>
-<%@ page import="com.eyelinecom.whoisd.pvss.pvap.protocol.PvapProtocol" %>
-<%@ page import="java.util.Properties" %>
+<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="org.apache.commons.logging.Log" %>
+<%@ page import="org.apache.commons.logging.impl.Log4JLogger" %>
+<%@ page import="org.apache.log4j.Logger" %>
 <%@ page language="java" %>
 
 <%!
-
-  PersonalizationClient getClient() {
-    try {
-      final ClientConfig clientConfig;
-      {
-        final Properties props = new Properties();
-        props.load(getClass().getResourceAsStream("/personalization.properties"));
-
-        clientConfig = new ClientConfig(props, "pvss");
-      }
-
-      final Client client;
-      {
-        client = new ClientCore(clientConfig, new PvapProtocol());
-        client.startup();
-        try {
-          Thread.sleep(1000);
-        } catch (Exception ignored) {
-        }
-      }
-
-      return new Personalization2SubscriberClient(client);
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  Log getLog() {
+    return new Log4JLogger(Logger.getLogger("msisdn-confirmation-sample"));
   }
+
+  public static String getWnumber(HttpServletRequest req) {
+    final String wnumber = req.getParameter("wnumber");
+    return StringUtils.isBlank(wnumber) ? req.getParameter("subscriber") : wnumber;
+  }
+
 %>

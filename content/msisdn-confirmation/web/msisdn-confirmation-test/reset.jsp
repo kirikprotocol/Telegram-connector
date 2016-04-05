@@ -1,41 +1,26 @@
+<%@ page import="com.eyelinecom.whoisd.sads2.telegram.confirmation.Context" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
 <%!
 
-  public static final String VAR_MSISDN2CHAT = "telegram-chat-id";
-  public static final String VAR_CHAT2MSISDN = "telegram-msisdn";
-
-  private void clearMsisdn(HttpServletRequest request,
-                           PersonalizationClient client) throws Exception {
-
-    final String msisdn = request.getParameter("subscriber");
-
-    if (client.isExists(msisdn, VAR_MSISDN2CHAT)) {
-      final String chatId = client.getString(msisdn, VAR_MSISDN2CHAT);
-      clearChat(client, chatId);
-
-      client.remove(msisdn, VAR_MSISDN2CHAT);
-    }
-
-    final String chatId = request.getParameter("chatId");
-    if (chatId != null) {
-      clearChat(client, chatId);
-    }
-  }
-
-  private void clearChat(PersonalizationClient client,
-                         String chatId) throws Exception {
-
-    if (client.isExists(chatId, VAR_CHAT2MSISDN)) {
-      client.remove(chatId, VAR_CHAT2MSISDN);
-    }
-  }
-
   private void handle(HttpServletRequest request) throws Exception {
-    final PersonalizationClient client = getClient();
+    final ProfileStorage storage = Context.getInstance().getProfileStorage();
+    final String wnumber = getWnumber(request);
 
-    clearMsisdn(request, client);
+    getLog().debug("Clearing profile wnumber = [" + wnumber + "]");
+
+    final PropertyQuery mobileData = storage
+        .find(wnumber)
+        .query()
+        .property("mobile");
+
+    if (mobileData != null) {
+      mobileData.delete();
+    }
   }
 
 %>

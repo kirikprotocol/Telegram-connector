@@ -1,24 +1,42 @@
-<%@ page import="com.eyelinecom.whoisd.personalization.helpers.PersonalizationClient" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.telegram.confirmation.Context" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery" %>
+<%@ page import="static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.*" %>
+<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
 <%!
+  private final ProfileStorage storage = Context.getInstance().getProfileStorage();
 
   private String handle(HttpServletRequest request) throws Exception {
-    final PersonalizationClient client = getClient();
-    final String chatId = request.getParameter("subscriber");
+    final String wnumber = getWnumber(request);
+    final Profile profile = storage.find(wnumber);
 
-    final String serviceId = request.getParameter("serviceId");
-    if (chatId != null && serviceId != null) {
-      client.set(chatId, VAR_CHAT2SERVICE, serviceId, LIFE_TIME);
+    String serviceId = request.getParameter("serviceId");
+    if (StringUtils.isNotBlank(serviceId)) {
+      profile
+          .query()
+          .property("services", "auth-" + serviceId, "service-id")
+          .set(serviceId);
+
+    } else {
+      serviceId = profile
+          .query()
+          .property("services", "auth-*", "service-id")
+          .getValue();
     }
 
-    if (!client.isExists(chatId, VAR_PHASE)) {
-      client.set(chatId, VAR_PHASE, PHASE_ASKED_FOR_MSISDN, LIFE_TIME);
+    PropertyQuery pq = profile
+        .query()
+        .property("services", "auth-" + serviceId, "phase");
+
+    if (pq.get() == null) {
+      pq.set(PHASE_ASKED_FOR_MSISDN);
       return "PAGE_REQUEST_MSISDN";
 
     } else {
-      final String stage = client.getString(chatId, VAR_PHASE);
+      final String stage = pq.getValue();
 
       if (PHASE_HAS_MSISDN.equals(stage)) {
         return "PAGE_REQUEST_CALLBACK";
@@ -33,8 +51,12 @@
           return "PAGE_REQUEST_MSISDN_INVALID";
 
         } else {
-          client.set(chatId, VAR_PHASE, PHASE_HAS_MSISDN, LIFE_TIME);
-          client.set(enteredMsisdn, VAR_MSISDN2CHAT, chatId, LIFE_TIME);
+          pq.set(PHASE_HAS_MSISDN);
+
+          profile
+              .query()
+              .property("services", "auth-" + serviceId, "entered-msisdn")
+              .set(enteredMsisdn);
 
           return "PAGE_REQUEST_CALLBACK";
         }
