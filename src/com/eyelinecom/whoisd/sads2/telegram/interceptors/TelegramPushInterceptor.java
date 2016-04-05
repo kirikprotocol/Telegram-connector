@@ -19,6 +19,7 @@ import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
+import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
@@ -69,17 +70,18 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }
 
     try {
+      final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
       if (StringUtils.isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
-            request,
+            tgRequest,
             request.getParameters().get("sadsSmsMessage"),
             request.getParameters().get("keyboard"));
 
       } else {
-        sendTelegramMessage(request, response);
+        sendTelegramMessage(tgRequest, response);
       }
 
       dispatcher.stop(response);
@@ -90,7 +92,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
   }
 
 
-  private void sendTelegramMessage(SADSRequest request,
+  private void sendTelegramMessage(ExtendedSadsRequest request,
                                    SADSResponse response) throws Exception {
 
     final String serviceId = request.getServiceId();
@@ -108,8 +110,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     final boolean shouldCloseSession =
         keyboard == null && doc.getRootElement().elements("input").isEmpty();
     final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
-    final Session session =
-        sessionManager.getSession(request.getAbonent());
+    final Session session = request.getSession();
 
     if (!shouldCloseSession) {
       session.setAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE, doc);
@@ -121,7 +122,11 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     if (!shouldPass) {
       final String token =
           request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
-      client.sendMessage(sessionManager, token, request.getAbonent(), text, keyboard);
+      final String chatId = request.getProfile()
+          .query()
+          .property("telegram-chats", token)
+          .getValue();
+      client.sendMessage(sessionManager, token, chatId, text, keyboard);
     }
 
     if (shouldCloseSession) {
@@ -130,7 +135,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }
   }
 
-  private void sendTelegramMessage(SADSRequest request,
+  private void sendTelegramMessage(ExtendedSadsRequest request,
                                    String message,
                                    String keyboard) throws Exception {
     final String serviceId = request.getServiceId();
@@ -139,6 +144,11 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
 
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+
+    final String chatId = request
+        .getProfile()
+        .query().property("telegram-chats", token)
+        .getValue();
 
     Keyboard kbd = new ReplyKeyboardHide();
     try {
@@ -160,7 +170,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     client.sendMessage(
         sessionManager,
         token,
-        request.getAbonent(),
+        chatId,
         message,
         kbd);
   }

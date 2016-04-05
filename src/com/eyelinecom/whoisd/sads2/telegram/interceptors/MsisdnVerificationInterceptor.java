@@ -1,149 +1,109 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
-import com.eyelinecom.whoisd.personalization.helpers.PersonalizationClient;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
-import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
-import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
+import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
-import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
-import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramStartLinkInterceptor.SESSION_VAR_MSISDN;
-import static com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramStartLinkInterceptor.VAR_CHAT2MSISDN;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
-
-public class MsisdnVerificationInterceptor extends BlankInterceptor implements Initable {
+public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor implements Initable {
 
   /**
    * request url must start with verify://msisdn?success_url=... to mark that verification is needed.
    */
   public static final String MSISDN_REQUIRED_SIGN = "verify://msisdn";
   public static final String SUCCESS_REDIRECT_URL_PARAM = "success_url";
-  public static final String VAR_MSISDN_VERIFICATION_REDIRECTED = "MSISDN_VERIFICATION_REDIRECTED";
-  public static final String MSISDN_CONFIRMATION_URI = "msisdn-confirmation-uri";
 
   public static final String CONF_MSISDN_CONFIRMATION_ENABLED = "telegram.msisdn.confirmation.enabled";
 
-  private PersonalizationClient client;
-  private ServiceSessionManager sessionManager;
 
   @Override
-  public void beforeContentRequest(SADSRequest request, ContentRequest contentRequest, RequestDispatcher dispatcher) throws InterceptionException {
+  public void afterContentResponse(SADSRequest request, ContentRequest contentRequest, ContentResponse content, RequestDispatcher dispatcher) throws InterceptionException {
+    // Nothing here.
+  }
+
+  @Override
+  public void beforeContentRequest(SADSRequest request,
+                                   ContentRequest contentRequest,
+                                   RequestDispatcher dispatcher) throws InterceptionException {
+
     final Log log = SADSLogger.getLogger(request.getServiceId(), getClass());
+    final String serviceId = request.getServiceId();
+    final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
 
-        if (!isEnabled(request)) {
-          return;
-        }
+    if (!isEnabled(request)) {
+      return;
+    }
 
-        try {
-          final String chatId = request.getAbonent();
-          final String msisdn = getMsisdn(chatId);
+    try {
+      final String wnumber = request.getAbonent();
+      final String msisdn = tgRequest.getProfile()
+          .query()
+          .property("mobile", "msisdn")
+          .getValue();
 
-          if (log.isDebugEnabled()) {
-            log.debug("Processing chatId = [" + chatId + "], stored msisdn = [" + msisdn + "]");
-          }
-
-          String requestUri = request.getResourceURI();
-          if ((requestUri != null && requestUri.startsWith(MSISDN_REQUIRED_SIGN)) && (msisdn == null)) {
-
-            redirectConfirmMsisdn(request, dispatcher, log);
-
-          } else if ((msisdn != null) &&
-              client.isExists(chatId, VAR_MSISDN_VERIFICATION_REDIRECTED)) {
-              redirectBack(msisdn, request, contentRequest, dispatcher, log);
-          }
-
-        } catch (Exception e) {
-          throw new InterceptionException(e);
-        }
+      if (log.isDebugEnabled()) {
+        log.debug("Processing wnumber = [" + wnumber + "], stored msisdn = [" + msisdn + "]");
       }
 
-      private boolean isEnabled(SADSRequest request) {
-        final ServiceConfig config = request.getServiceScenario();
-        return Boolean.parseBoolean(
+      String requestUri = request.getResourceURI();
+      if ((requestUri != null && requestUri.startsWith(MSISDN_REQUIRED_SIGN)) && (msisdn == null)) {
+        redirectConfirmMsisdn(tgRequest, dispatcher, log);
+
+      } else if ((msisdn != null) &&
+          tgRequest.getProfile()
+              .query()
+              .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
+        redirectBack(msisdn, tgRequest, contentRequest, dispatcher, log);
+      }
+
+    } catch (Exception e) {
+      throw new InterceptionException(e);
+    }
+  }
+
+  private boolean isEnabled(SADSRequest request) {
+    final ServiceConfig config = request.getServiceScenario();
+    return Boolean.parseBoolean(
         config.getAttributes().getProperty(CONF_MSISDN_CONFIRMATION_ENABLED, "false")
-        );
-      }
+    );
+  }
 
-      private String getMsisdn(String chatId) throws Exception {
-        if (client.isExists(chatId, VAR_CHAT2MSISDN)) {
-          final String msisdn = client.getString(chatId, VAR_CHAT2MSISDN);
-          if (isNotBlank(msisdn)) {
-            // Okay, MSISDN is known.
-            return msisdn;
-          }
-        }
-        return null;
-      }
+  private void redirectConfirmMsisdn(ExtendedSadsRequest request,
+                                     RequestDispatcher dispatcher,
+                                     Log log) throws Exception {
 
-      private void redirectConfirmMsisdn(SADSRequest request,
-                                         RequestDispatcher dispatcher,
-                                         Log log) throws Exception {
+    final String verificationForwardUri =
+        UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
 
-        final String chatId = request.getAbonent();
-        final String redirectUri = request.getServiceScenario().getAttributes().getProperty(MSISDN_CONFIRMATION_URI);
-        final String verificationForwardUri = UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
+    redirectTo(request, dispatcher, log, verificationForwardUri);
+  }
 
-        client.set(chatId, VAR_MSISDN_VERIFICATION_REDIRECTED, verificationForwardUri);
-        request.setResourceURI(redirectUri);
+  private void redirectBack(String msisdn,
+                            ExtendedSadsRequest request,
+                            ContentRequest contentRequest,
+                            RequestDispatcher dispatcher,
+                            Log log) throws Exception {
 
-        if (log.isDebugEnabled()) {
-          log.debug("Redirecting to MSISDN verification page:" +
-              " chatId = [" + chatId + "]," +
-              " redirect to = [" + redirectUri + "]," +
-              " from = [" + request.getResourceURI() + "]");
-        }
+    final String originalUrl = popOrigUrl(msisdn, request, log);
+    contentRequest.setResourceURI(originalUrl);
+    super.redirectBack(request, dispatcher, originalUrl);
+  }
 
-        dispatcher.processRequest(request);
-      }
+  @Override
+  public void init(Properties config) throws Exception {
+  }
 
-      private void redirectBack(String msisdn,
-                                SADSRequest request, ContentRequest contentRequest,
-                                RequestDispatcher dispatcher,
-                                Log log) throws Exception {
+  @Override
+  public void destroy() {
 
-        final String chatId = request.getAbonent();
-
-        final String originalUrl = client.getString(chatId, VAR_MSISDN_VERIFICATION_REDIRECTED);
-        client.remove(chatId, VAR_MSISDN_VERIFICATION_REDIRECTED);
-
-        if (log.isDebugEnabled()) {
-          log.debug("Redirecting back to content:" +
-              " chatId = [" + chatId + "]," +
-              " msisdn = [" + msisdn + "]," +
-              " redirect to = [" + originalUrl + "]," +
-              " from = [" + request.getResourceURI() + "]");
-        }
-
-        final Session session =
-            sessionManager.getSessionManager(request.getServiceId()).getSession(chatId);
-        if (session.getAttribute(SESSION_VAR_MSISDN) == null) {
-          session.setAttribute(SESSION_VAR_MSISDN, msisdn);
-        }
-
-    //    request.setAbonent(msisdn);
-        request.setResourceURI(originalUrl);
-        contentRequest.setResourceURI(originalUrl);
-        dispatcher.processRequest(request);
-      }
-
-      @Override
-      public void init(Properties config) throws Exception {
-        client = (PersonalizationClient) SADSInitUtils.getResource("personalization-client", config);
-        sessionManager = (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
-      }
-
-      @Override
-      public void destroy() {
-
-      }
+  }
 }

@@ -1,6 +1,5 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
-import com.eyelinecom.whoisd.personalization.helpers.PersonalizationClient;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
@@ -10,38 +9,67 @@ import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import org.apache.commons.lang.StringUtils;
+import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Property;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
+
+import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
 
 /**
  * Created by jeck on 18/02/16
  */
 public class Msisdn2ChatInterceptor extends BlankInterceptor implements Initable{
-    PersonalizationClient client;
-    @Override
-    public void afterResponseRender(SADSRequest request, ContentResponse content, SADSResponse response, RequestDispatcher dispatcher) throws InterceptionException {
-        Log log = SADSLogger.getLogger(request.getServiceId(), request.getServiceId(), this.getClass());
-        try {
-            if (client.isExists(request.getAbonent(), TelegramStartLinkInterceptor.VAR_MSISDN2CHAT, log)) {
-                String chatId = client.getString(request.getAbonent(), TelegramStartLinkInterceptor.VAR_MSISDN2CHAT, log);
-                if (StringUtils.isNotBlank(chatId)) {
-                    request.setAbonent(chatId);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("",e);
+  private ProfileStorage profileStorage;
+
+  @Override
+  public void afterResponseRender(SADSRequest request,
+                                  ContentResponse content,
+                                  SADSResponse response,
+                                  RequestDispatcher dispatcher) throws InterceptionException {
+
+    Log log = SADSLogger.getLogger(request.getServiceId(), request.getServiceId(), this.getClass());
+
+    try {
+
+      final String msisdn = request.getAbonent();
+
+      final Profile profile = profileStorage
+          .query()
+          .where(property("mobile", "msisdn").eq(msisdn))
+          .get();
+
+      if (profile != null) {
+        final String token =
+            request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+
+        if (token != null) {
+          final Property chatId = profile
+              .query()
+              .property("telegram-chats", token)
+              .get();
+
+          if (chatId != null) {
+            request.setAbonent(chatId.getValue());
+          }
         }
-    }
+      }
 
-    @Override
-    public void init(Properties config) throws Exception {
-        this.client = (PersonalizationClient) SADSInitUtils.getResource("personalization-client", config);
+    } catch (Exception e) {
+      log.warn("",e);
     }
+  }
 
-    @Override
-    public void destroy() {
+  @Override
+  public void init(Properties config) throws Exception {
+    profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+  }
 
-    }
+  @Override
+  public void destroy() {
+
+  }
 }

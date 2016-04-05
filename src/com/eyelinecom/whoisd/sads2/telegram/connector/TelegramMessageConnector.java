@@ -22,9 +22,22 @@ import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Audio;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Contact;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Location;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.PhotoSize;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Sticker;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Video;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -38,11 +51,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getChatId;
+import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.parseUpdate;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 public class TelegramMessageConnector extends HttpServlet {
@@ -166,11 +184,14 @@ public class TelegramMessageConnector extends HttpServlet {
         return buildWebhookResponse(
             200,
             new SendChatAction(
-                sadsRequest.getAbonent(),
+                getChatId(req.getContent()),
                 SendChatAction.ChatAction.TYPING).marshalAsWebHookResponse()
         );
 
       } catch (TelegramApiException e) {
+        getLog(req).error(e.getMessage(), e);
+        return buildQueueErrorResponse(e, req, sadsRequest);
+      } catch (IOException e) {
         getLog(req).error(e.getMessage(), e);
         return buildQueueErrorResponse(e, req, sadsRequest);
       }
@@ -196,7 +217,20 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected String getSubscriberId(StoredHttpRequest req) throws Exception {
-      return getChatId(req.getContent());
+      final String token = getServiceToken(req);
+
+      final Update update = parseUpdate(req.getContent());
+      final String chatId = String.valueOf(update.getMessage().getChat().getId());
+      final String userId = String.valueOf(update.getMessage().getFrom().getId());
+
+      final Profile profile = getProfileStorage()
+          .query()
+          .where(QueryRestrictions.property("telegram", "id").eq(userId))
+          .getOrCreate();
+
+      profile.query().property("telegram-chats", token).set(chatId);
+
+      return profile.getWnumber();
     }
 
     @Override
@@ -237,7 +271,7 @@ public class TelegramMessageConnector extends HttpServlet {
           try {
               TelegramApi api = (TelegramApi)getResource("telegram-api");
               final String serviceToken = getServiceToken(req);
-              Update update = TelegramRequestUtils.parseUpdate(req.getContent());
+              Update update = parseUpdate(req.getContent());
               Message message = update.getMessage();
 
               final List<AbstractInputType> mediaList = new ArrayList<AbstractInputType>();
@@ -342,18 +376,18 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected String getRequestUri(ServiceConfig config,
-                                   String subscriberId,
+                                   String wnumber,
                                    StoredHttpRequest message) throws Exception {
 
       final String serviceId = config.getId();
       final String incoming = TelegramRequestUtils.getMessageText(message.getContent());
 
-      Session session = getSessionManager(serviceId).getSession(subscriberId);
+      Session session = getSessionManager(serviceId).getSession(wnumber);
 
       if ("/reset".equals(incoming)) {
         // Invalidate the current session.
         session.close();
-        session = getSessionManager(serviceId).getSession(subscriberId);
+        session = getSessionManager(serviceId).getSession(wnumber);
 
       } else if ("/who".equals(incoming)) {
         final String serviceToken = getServiceToken(message);
@@ -361,7 +395,11 @@ public class TelegramMessageConnector extends HttpServlet {
         getClient().sendMessage(
             getSessionManager(serviceId),
             serviceToken,
-            subscriberId,
+            getProfileStorage()
+                .find(wnumber)
+                .query()
+                .property("telegram-chats", serviceToken)
+                .getValue(),
             "Hello from " + me.getUserName() + "!"
         );
       }
@@ -369,7 +407,7 @@ public class TelegramMessageConnector extends HttpServlet {
       final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
       if (prevUri == null) {
         // No previous page means this is an initial request, thus serve the start page.
-        return super.getRequestUri(config, subscriberId, message);
+        return super.getRequestUri(config, wnumber, message);
 
       } else {
         final Document prevPage =
@@ -475,6 +513,10 @@ public class TelegramMessageConnector extends HttpServlet {
       final ServiceSessionManager serviceSessionManager =
           (ServiceSessionManager) getResource("telegram-session-manager");
       return serviceSessionManager.getSessionManager(serviceId);
+    }
+
+    private ProfileStorage getProfileStorage() throws Exception {
+      return (ProfileStorage) getResource("profile-storage");
     }
 
     private Log getLog(StoredHttpRequest req) {
