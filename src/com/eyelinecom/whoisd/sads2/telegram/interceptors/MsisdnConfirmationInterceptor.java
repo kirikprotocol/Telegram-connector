@@ -4,7 +4,6 @@ import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
-import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
@@ -15,8 +14,6 @@ import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
-
-import static com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramStartLinkInterceptor.SESSION_VAR_MSISDN;
 
 public class MsisdnConfirmationInterceptor extends BlankInterceptor implements Initable {
 
@@ -148,10 +145,6 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
           " from = [" + request.getResourceURI() + "]");
     }
 
-    final Session session = request.getSession();
-    if (session.getAttribute(SESSION_VAR_MSISDN) == null) {
-      session.setAttribute(SESSION_VAR_MSISDN, msisdn);
-    }
     return originalUrl;
   }
 

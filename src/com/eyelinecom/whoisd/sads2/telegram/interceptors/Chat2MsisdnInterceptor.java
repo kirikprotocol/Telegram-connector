@@ -27,9 +27,11 @@ public class Chat2MsisdnInterceptor extends BlankInterceptor {
     final Log log = SADSLogger.getLogger(serviceId, serviceId, getClass());
 
     try {
-      final String msisdn = (String) tgRequest
-          .getSession()
-          .getAttribute(TelegramStartLinkInterceptor.SESSION_VAR_MSISDN);
+      final String msisdn = tgRequest
+          .getProfile()
+          .query()
+          .property("mobile", "msisdn")
+          .getValue();
 
       if (isNotBlank(msisdn)) {
         contentRequest.getParameters().put("wnumber", contentRequest.getAbonent());

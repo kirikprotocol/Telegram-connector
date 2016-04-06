@@ -5,7 +5,6 @@ import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.Session;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.adaptors.LinkToTelegramAdaptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
@@ -13,7 +12,6 @@ import com.eyelinecom.whoisd.sads2.telegram.connector.StoredHttpRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Property;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 
 import java.util.Properties;
@@ -25,8 +23,6 @@ import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.pro
  * Created by jeck on 18/02/16
  */
 public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor implements Initable {
-
-  public static final String SESSION_VAR_MSISDN = "msisdn";
 
   private ProfileStorage profileStorage;
 
@@ -72,19 +68,13 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
             .getValue();
 
         if (msisdn != null) {
-          request.getProfile().query().property("mobile", "msisdn").set(msisdn);
-          session.setAttribute(SESSION_VAR_MSISDN, msisdn);
+          request.getProfile()
+              .query()
+              .property("mobile", "msisdn")
+              .set(msisdn);
         }
       }
 
-    } else if (session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE) == null) {
-      final Property msisdn = request.getProfile()
-          .query()
-          .property("mobile", "msisdn")
-          .get();
-      if (msisdn != null) {
-        session.setAttribute(SESSION_VAR_MSISDN, msisdn.getValue());
-      }
     }
 
   }
