@@ -3,6 +3,7 @@
 <%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery" %>
 <%@ page import="static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.*" %>
 <%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage" %>
+<%@ page import="org.codehaus.jettison.json.JSONArray" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
@@ -44,8 +45,19 @@
       } else if (PHASE_ASKED_FOR_MSISDN.equals(stage)) {
         // Must be MSISDN.
 
-        String enteredMsisdn = request.getParameter("confirm_msisdn");
-        enteredMsisdn = normalize(enteredMsisdn);
+        final String payload = request.getParameter("confirm_msisdn");
+
+        String enteredMsisdn = null;
+        try {
+          enteredMsisdn = normalize(
+              "json".equals(request.getParameter("input_type")) ?
+                  new JSONArray(payload).getJSONObject(0).getString("msisdn") :
+                  payload
+          );
+
+        } catch (Exception e) {
+          getLog().warn("Failed parsing user input [" + payload + "]");
+        }
 
         if (enteredMsisdn == null) {
           return "PAGE_REQUEST_MSISDN_INVALID";

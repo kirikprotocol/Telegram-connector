@@ -1,7 +1,6 @@
 <%@ page import="com.eyelinecom.whoisd.sads2.telegram.confirmation.Context" %>
 <%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage" %>
-<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile" %>
-<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery" %>
+<%@ page import="static org.apache.commons.collections.CollectionUtils.isNotEmpty" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
@@ -13,14 +12,17 @@
 
     getLog().debug("Clearing profile wnumber = [" + wnumber + "]");
 
-    final PropertyQuery mobileData = storage
+    storage
         .find(wnumber)
         .query()
-        .property("mobile");
+        .property("mobile")
+        .delete();
 
-    if (mobileData != null) {
-      mobileData.delete();
-    }
+    storage
+        .find(wnumber)
+        .query()
+        .property("services")
+        .delete();
   }
 
 %>

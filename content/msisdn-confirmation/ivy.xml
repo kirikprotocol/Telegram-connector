@@ -3,8 +3,14 @@
   <dependencies>
     <dependency org="commons-collections" name="commons-collections" rev="3.2.1"/>
 
-    <dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.27,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-profile-storage" rev="[0.1,)" changing="true"/>
+
+    <dependency org="mobi.eyeline.utils" name="db-template" rev="[0.01,)" changing="true"/>
+    <dependency org="mobi.eyeline.mobilizer" name="sads-impl" rev="[0.158,)" changing="true"/>
+    <dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.29,)" changing="true"/>
+
+    <!--<dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.27,)" changing="true" conf="runtime->default"/>-->
+    <!--<dependency org="mobi.eyeline.mobilizer" name="sads-core" rev="[0.34,)" changing="true" conf="runtime->default"/>-->
 
   </dependencies>
 </ivy-module>
