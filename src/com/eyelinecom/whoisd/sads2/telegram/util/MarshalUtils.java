@@ -29,7 +29,7 @@ public class MarshalUtils {
     return (T) mapper.readerFor(clazz).readValue(obj);
   }
 
-  public static <T> String marshal(T obj, Class<T> clazz) throws JsonProcessingException {
+  public static <T> String marshal(T obj) throws JsonProcessingException {
     return mapper.writer().writeValueAsString(obj);
   }
 

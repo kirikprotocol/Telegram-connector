@@ -1,14 +1,18 @@
 package com.eyelinecom.whoisd.sads2.telegram.api;
 
 import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
-import com.eyelinecom.whoisd.sads2.common.Loader;
+import com.eyelinecom.whoisd.sads2.common.Loader.Entity;
 import com.eyelinecom.whoisd.sads2.common.Reiterator;
+import com.eyelinecom.whoisd.sads2.common.Reiterator.Action;
 import com.eyelinecom.whoisd.sads2.exception.DataLoadException;
+import com.eyelinecom.whoisd.sads2.multipart.MultipartObjectMapper;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -16,6 +20,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class BotApiClient {
@@ -46,7 +51,7 @@ public class BotApiClient {
     final String URL_FIELD = "url";
     final String CERTIFICATE_FIELD = "certificate";
 
-    final Loader.Entity response;
+    final Entity response;
     try {
       response = loader.postMultipart(
           methodUrl(PATH),
@@ -76,7 +81,7 @@ public class BotApiClient {
 
   public <T extends ApiType> T call(ApiMethod<?, T> method) throws TelegramApiException {
 
-    final Loader.Entity response;
+    final Entity response;
     try {
       response = callRetrying(
           methodUrl(method.getPath()),
@@ -97,51 +102,58 @@ public class BotApiClient {
     return method.toResponse(rc);
   }
 
-  /**
-   * Retry request on HTTP-429 "Too Many Requests" response.
-   * This error shouldn't actually occur due to rate limiting performed prior to API calls.
-   */
-  private Loader.Entity callRetrying(final String url,
-                                     final String content,
-                                     final String contentType,
-                                     final String encoding,
-                                     final String method) throws Exception {
+  public <T extends ApiType> T call(ApiSendMethod<?, T> method) throws TelegramApiException {
 
-    final long initialDelayMillis = TimeUnit.SECONDS.toMillis(1);
+    final Entity response;
+    try {
+      response = callRetrying(
+          methodUrl(method.getPath()),
+          new MultipartObjectMapper().map(method));
 
-    return new Reiterator(maxRateLimitRetries) {
+    } catch (DataLoadException e) {
+      throw new TelegramApiException("Call failed with HTTP code [" + e.getStatus() + "]," +
+          " API method = [" + method.getMethod() + "]", e);
 
+    } catch (Exception e) {
+      throw new TelegramApiException("Call failed, API method = [" + method.getMethod() + "]", e);
+    }
+
+    final JsonNode rc = validate(parse(response));
+    return method.toResponse(rc);
+  }
+
+  private Entity callRetrying(final String url,
+                              final String content,
+                              final String contentType,
+                              final String encoding,
+                              final String method) throws Exception {
+
+    return new ThrottlingReiterator(maxRateLimitRetries).call(new Action<Entity>() {
       @Override
-      protected boolean shouldIgnore(Exception e) {
-        return (e instanceof DataLoadException) &&
-            ((DataLoadException) e).getStatus() == 429;
-      }
-
-      @Override
-      protected void onBeforeCall(int nAttempt) {
-        if (nAttempt > 0) {
-          try {
-            Thread.sleep(initialDelayMillis * (long) Math.pow(2, nAttempt - 1));
-          } catch (InterruptedException ignored) {}
-        }
-      }
-
-      @Override
-      protected void onError(Exception e) {
-        log.warn("Got error on Telegram API method call", e);
-      }
-
-    }.call(new Reiterator.Action<Loader.Entity>() {
-      @Override
-      public Loader.Entity call() throws Exception {
+      public Entity call() throws Exception {
         return loader.load(url, content, contentType, encoding, method);
+      }
+    });
+  }
+
+  private Entity callRetrying(final String url,
+                              final List<Part> parts) throws Exception {
+
+    return new ThrottlingReiterator(maxRateLimitRetries).call(new Action<Entity>() {
+      @Override
+      public Entity call() throws Exception {
+        return loader.postMultipart(
+            url,
+            Collections.<String, String>emptyMap(),
+            Collections.<String, String>emptyMap(),
+            parts);
       }
     });
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  private JsonNode parse(Loader.Entity response) throws TelegramApiException {
+  private JsonNode parse(Entity response) throws TelegramApiException {
     try {
       return MarshalUtils.parse(new String(response.getBuffer(), "UTF-8"));
 
@@ -171,5 +183,39 @@ public class BotApiClient {
 
   private String methodUrl(String method) {
     return apiRoot + "/bot" + token + "/" + method;
+  }
+
+  /**
+   * Retries request on HTTP-429 "Too Many Requests" response.
+   * This error shouldn't actually occur due to rate limiting performed prior to API calls.
+   */
+  private static class ThrottlingReiterator extends Reiterator {
+
+    private final long initialDelayMillis = TimeUnit.SECONDS.toMillis(1);
+
+    ThrottlingReiterator(int maxRateLimitRetries) {
+      super(maxRateLimitRetries);
+    }
+
+    @Override
+    protected boolean shouldIgnore(Exception e) {
+      return (e instanceof DataLoadException) &&
+          ((DataLoadException) e).getStatus() == 429;
+    }
+
+    @Override
+    protected void onBeforeCall(int nAttempt) {
+      if (nAttempt > 0) {
+        try {
+          Thread.sleep(initialDelayMillis * (long) Math.pow(2, nAttempt - 1));
+        } catch (InterruptedException ignored) {}
+      }
+    }
+
+    @Override
+    protected void onError(Exception e) {
+      log.warn("Got error on Telegram API method call", e);
+    }
+
   }
 }

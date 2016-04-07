@@ -60,7 +60,7 @@ public abstract class ApiType<T extends ApiType> {
   protected static <T extends ApiType> String marshal(T obj,
                                                       Class<T> clazz) throws TelegramApiException {
     try {
-      return MarshalUtils.marshal(obj, clazz);
+      return MarshalUtils.marshal(obj);
 
     } catch (Exception e) {
       throw new TelegramApiException("Unable to marshal API object [" + obj + "]", e);

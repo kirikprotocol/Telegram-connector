@@ -347,7 +347,7 @@ public class TelegramMessageConnector extends HttpServlet {
                   mediaList.add(location);
               }
               if (mediaList.size() > 0) {
-                  String mediaParameter = MarshalUtils.marshal(mediaList, List.class);
+                  String mediaParameter = MarshalUtils.marshal(mediaList);
                   //todo remove this copy-paste. separarate get inputName to dedicated method
                   Session session = getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
                   final Document prevPage =
