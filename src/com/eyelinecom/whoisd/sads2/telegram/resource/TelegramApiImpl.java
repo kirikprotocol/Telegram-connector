@@ -74,11 +74,13 @@ public class TelegramApiImpl implements TelegramApi {
 
   @Override
   public void registerWebHook(String token, String url) throws TelegramApiException {
+    acquireOverallLimit();
     getClient(token).setWebhook(url, publicKeyPath);
   }
 
   @Override
   public void unRegisterWebHook(String token) throws TelegramApiException {
+    acquireOverallLimit();
     getClient(token).setWebhook(null, null);
   }
 

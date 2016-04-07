@@ -63,6 +63,9 @@ public class BotApiClient {
       );
 
     } catch (Exception e) {
+      log.warn("Failed setting webhook to [" + webHookURL + "]," +
+          " token = [" + token + "]", e);
+
       throw new TelegramApiException("Failed setting webhook to [" + webHookURL + "]," +
           " token = [" + token + "]", e);
     }
@@ -160,6 +163,8 @@ public class BotApiClient {
       return json;
 
     } else {
+      log.warn("Telegram response validation failed:" +
+          " json = [" + json.toString() + "], message = [" + message + "]");
       throw new TelegramApiException(message, json.toString());
     }
   }
