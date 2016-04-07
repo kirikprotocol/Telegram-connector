@@ -134,7 +134,7 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
 
     assertEquals(
         "{\"keyboard\":[[\"Page 1\",\"Page 2\"],[\"Page 3\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
@@ -156,7 +156,7 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
 
     assertEquals(
         "{\"keyboard\":[[\"Page 1\"],[\"Page 2\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
@@ -181,7 +181,7 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
 
     assertEquals(
         "{\"keyboard\":[[\"Back\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
@@ -203,7 +203,7 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
 
     assertEquals(
         "{\"keyboard\":[[\"123456\",\"Text\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
