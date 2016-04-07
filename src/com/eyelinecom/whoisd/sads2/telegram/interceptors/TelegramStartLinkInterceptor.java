@@ -4,7 +4,6 @@ import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
-import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.adaptors.LinkToTelegramAdaptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
@@ -44,7 +43,6 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
-    final Session session = request.getSession();
     final String rawSubscriberData = TelegramRequestUtils.getMessageText(outerRequest.getContent());
 
     if (rawSubscriberData!=null &&
