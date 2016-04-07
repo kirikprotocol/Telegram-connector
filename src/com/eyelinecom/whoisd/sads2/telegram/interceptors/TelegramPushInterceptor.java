@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
+import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
@@ -99,7 +100,9 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
     String text = getText(doc);
-    final Keyboard keyboard = getKeyboard(doc);
+    final boolean oneTimeKeyboard = InitUtils.getBoolean("telegram.keyboard-onetime", true, request.getServiceScenario().getAttributes());
+    final boolean resizeKeyboard = InitUtils.getBoolean("telegram.keyboard-resize", true, request.getServiceScenario().getAttributes());
+    final Keyboard keyboard = getKeyboard(doc, oneTimeKeyboard, resizeKeyboard);
 
     final boolean shouldPass = StringUtils.isBlank(text) && keyboard == null;
     if (!shouldPass) {
@@ -212,7 +215,7 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }
   }
 
-  public static Keyboard getKeyboard(final Document doc) {
+  public static Keyboard getKeyboard(final Document doc, final boolean onetime, final boolean resize) {
 
     @SuppressWarnings("unchecked")
     final List<Element> buttons = (List<Element>) doc.getRootElement().elements("button");
@@ -235,8 +238,8 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     }};
 
     final ReplyKeyboardMarkup kbd = new ReplyKeyboardMarkup();
-    kbd.setOneTimeKeyboard(true);
-    kbd.setResizeKeyboard(true);
+    kbd.setOneTimeKeyboard(onetime);
+    kbd.setResizeKeyboard(resize);
     kbd.setKeyboard(mapToTable(keyTable));
     return kbd;
   }
