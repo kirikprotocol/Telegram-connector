@@ -7,7 +7,8 @@ import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
@@ -114,19 +115,34 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
+  public void sendData(SessionManager sessionManager,
+                       String token,
+                       String chatId,
+                       ApiSendMethod method) throws TelegramApiException {
+
+    acquireChatLimit(sessionManager, chatId);
+
+    call(token, method);
+  }
+
+  @Override
   public User getMe(String token) throws TelegramApiException {
     return call(token, new GetMe());
   }
 
-    @Override
-    public File getFile(String token, String fileId) throws TelegramApiException {
-        final File file =  call(token, new GetFile(fileId));
-        String url = StringUtils.join(new String[]{baseUrl, "file", "bot"+token, file.getFilePath()}, "/");
-        file.setUrl(url);
-        return file;
-    }
+  @Override
+  public File getFile(String token, String fileId) throws TelegramApiException {
+    final File file = call(token, new GetFile(fileId));
+    file.setUrl(
+        StringUtils.join(
+            new String[]{baseUrl, "file", "bot" + token, file.getFilePath()},
+            "/"
+        )
+    );
+    return file;
+  }
 
-    private void acquireChatLimit(SessionManager sessionManager, String chatId) {
+  private void acquireChatLimit(SessionManager sessionManager, String chatId) {
     try {
       final Session session = sessionManager.getSession(chatId, false);
       if (session != null) {
@@ -148,7 +164,7 @@ public class TelegramApiImpl implements TelegramApi {
     messagesPerSecondLimit.acquire();
   }
 
-  private <R extends ApiType, M extends ApiMethod<M, R>> R call(
+  private <R extends ApiType, M extends BaseApiMethod<M, R>> R call(
       String token, M method) throws TelegramApiException {
 
     acquireOverallLimit();

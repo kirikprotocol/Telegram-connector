@@ -9,6 +9,7 @@ import com.eyelinecom.whoisd.sads2.multipart.MultipartObjectMapper;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -79,7 +80,14 @@ public class BotApiClient {
         "Failed setting webhook to [" + webHookURL + "], token = [" + token + "]");
   }
 
-  public <T extends ApiType> T call(ApiMethod<?, T> method) throws TelegramApiException {
+  public <T extends ApiType> T call(BaseApiMethod<?, T> method) throws TelegramApiException {
+    //noinspection unchecked
+    return method instanceof ApiMethod ?
+        call((ApiMethod<?, T>) method) :
+        call((ApiSendMethod<?, T>) method);
+  }
+
+  private <T extends ApiType> T call(ApiMethod<?, T> method) throws TelegramApiException {
 
     final Entity response;
     try {
@@ -102,7 +110,7 @@ public class BotApiClient {
     return method.toResponse(rc);
   }
 
-  public <T extends ApiType> T call(ApiSendMethod<?, T> method) throws TelegramApiException {
+  private <T extends ApiType> T call(ApiSendMethod<?, T> method) throws TelegramApiException {
 
     final Entity response;
     try {

@@ -2,6 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.resource;
 
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
@@ -26,8 +27,13 @@ public interface TelegramApi {
                    String chatId,
                    String text) throws TelegramApiException;
 
+  void sendData(SessionManager sessionManager,
+                String token,
+                String chatId,
+                ApiSendMethod method) throws TelegramApiException;
+
   User getMe(String token) throws TelegramApiException;
 
-    File getFile(String token, String fileId)  throws TelegramApiException;
+  File getFile(String token, String fileId)  throws TelegramApiException;
 
 }
