@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 public abstract class BaseApiMethod<Self extends BaseApiMethod, Response extends ApiType> {
 
@@ -14,8 +15,13 @@ public abstract class BaseApiMethod<Self extends BaseApiMethod, Response extends
   Class<Response> responseClass;
 
   static <X> Class<X> getEntityClass(Class<?> self, int argNo) {
+    Type generic = self.getGenericSuperclass();
+    if (generic instanceof Class) {
+      generic = ((Class) generic).getGenericSuperclass();
+    }
+
     final ParameterizedType genericSuperclass =
-        (ParameterizedType) self.getGenericSuperclass();
+        (ParameterizedType) generic;
     //noinspection unchecked
     return (Class<X>) genericSuperclass.getActualTypeArguments()[argNo];
   }

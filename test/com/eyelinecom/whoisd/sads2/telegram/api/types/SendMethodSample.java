@@ -23,12 +23,14 @@ public class SendMethodSample {
     final BotApiClient client =
         new BotApiClient(TOKEN, API_ROOT, 1, new HttpDataLoader());
 
-    final SendPhoto method = new SendPhoto();
-    method.setChatId("96622607");
-    method.setCaption("My photo caption");
-    method.setPhotoFile(new FileUpload.ByteFileUpload(
-        new java.io.File("/Users/andy/Downloads/IPK0MlK5JQo.jpg")
-    ));
+    final SendPhoto method = new SendPhoto() {{
+      setChatId("96622607");
+      setCaption("My photo caption");
+      setPhotoFile(new FileUpload.ByteFileUpload(
+          new java.io.File("/Users/andy/Downloads/IPK0MlK5JQo.jpg")
+      ));
+    }};
+
 
     method.setReplyMarkup(keyboard);
 

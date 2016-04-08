@@ -32,7 +32,6 @@ public class DataUriTest {
     } catch (ParseException ignored) {}
   }
 
-
   @Test
   public void test3() throws Exception {
     final DataUri uri =

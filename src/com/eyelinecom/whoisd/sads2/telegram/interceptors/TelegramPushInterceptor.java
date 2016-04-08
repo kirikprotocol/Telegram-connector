@@ -13,7 +13,6 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
-import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
@@ -24,7 +23,6 @@ import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -38,18 +36,14 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 
 @SuppressWarnings("unused")
-public class TelegramPushInterceptor extends BlankInterceptor implements Initable {
+public class TelegramPushInterceptor extends TelegramPushBase implements Initable {
 
   private static final Logger log = Logger.getLogger(TelegramPushInterceptor.class);
 
@@ -84,8 +78,6 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
       } else {
         sendTelegramMessage(tgRequest, response);
       }
-
-      dispatcher.stop(response);
 
     } catch (Exception e) {
       throw new InterceptionException(e);
@@ -213,57 +205,6 @@ public class TelegramPushInterceptor extends BlankInterceptor implements Initabl
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public static Keyboard getKeyboard(final Document doc, final boolean onetime, final boolean resize) {
-
-    @SuppressWarnings("unchecked")
-    final List<Element> buttons = (List<Element>) doc.getRootElement().elements("button");
-    if (CollectionUtils.isEmpty(buttons)) {
-      return null;
-    }
-
-    final Map<Integer, List<String>> keyTable = new HashMap<Integer, List<String>>() {{
-      for (Element button : buttons) {
-        final String rowAttr = button.attributeValue("row");
-        final int nRow = StringUtils.isBlank(rowAttr) ? 0 : Integer.valueOf(rowAttr) - 1;
-
-        List<String> rowButtons = get(nRow);
-        if (rowButtons == null) {
-          put(nRow, rowButtons = new ArrayList<>());
-        }
-
-        rowButtons.add(button.getTextTrim());
-      }
-    }};
-
-    final ReplyKeyboardMarkup kbd = new ReplyKeyboardMarkup();
-    kbd.setOneTimeKeyboard(onetime);
-    kbd.setResizeKeyboard(resize);
-    kbd.setKeyboard(mapToTable(keyTable));
-    return kbd;
-  }
-
-  private static String[][] mapToTable(Map<Integer, List<String>> keyTable) {
-    final String[][] keys = new String[keyTable.size()][];
-
-    final List<Map.Entry<Integer,List<String>>> rows = new ArrayList<>(keyTable.entrySet());
-    Collections.sort(
-        rows,
-        new Comparator<Map.Entry<Integer, ?>>() {
-      @Override
-      public int compare(Map.Entry<Integer, ?> _1, Map.Entry<Integer, ?> _2) {
-        return Integer.compare(_1.getKey(), _2.getKey());
-      }
-    });
-
-    int i = 0;
-    for (Map.Entry<Integer, List<String>> row : rows) {
-      final List<String> value = row.getValue();
-      keys[i++] = value.toArray(new String[value.size()]);
-    }
-
-    return keys;
   }
 
   @Override

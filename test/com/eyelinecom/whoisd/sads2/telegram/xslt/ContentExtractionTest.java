@@ -209,4 +209,19 @@ public class ContentExtractionTest {
         "{\"keyboard\":[[\"123456\",\"Text\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
         kbd);
   }
+
+  @Test
+  public void test9() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Test!</message>\n" +
+            "  <attachment type=\"location\" latitude=\"55.008353\" longitude=\"82.935733\"/>\n" +
+            "</page>";
+
+    final Document doc =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    assertEquals(1, doc.getRootElement().elements("attachment").size());
+  }
 }

@@ -39,7 +39,7 @@ public class TransformTest {
         actual,
         Matchers.equalToIgnoringWhiteSpace(true, expected));
 //
-//    Assert.assertEquals(actual, expected);
+//    Assert.assertEquals(expected, actual);
   }
 
   @Test
