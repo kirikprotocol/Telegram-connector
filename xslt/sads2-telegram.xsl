@@ -60,6 +60,10 @@
     <xsl:apply-templates/>
   </xsl:template>
 
+  <xsl:template match="attachment" mode="attachment">
+    <xsl:copy-of select="."/>
+  </xsl:template>
+
   <xsl:template match="meta:phone">
     <xsl:apply-templates/>
   </xsl:template>
@@ -221,6 +225,7 @@
       <xsl:apply-templates select="//select" mode="command"/>
       <xsl:apply-templates select="//input" mode="command"/>
       <xsl:apply-templates select="/page/navigation/link" mode="command"/>
+      <xsl:apply-templates select="//attachment" mode="attachment"/>
     </page>
   </xsl:template>
 

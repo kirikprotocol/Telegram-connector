@@ -1,0 +1,8 @@
+<page version="2.0" style="category">
+  <div>Test!</div>
+
+  <attachment
+    type="location"
+    latitude="55.008353"
+    longitude="82.935733"/>
+</page>
