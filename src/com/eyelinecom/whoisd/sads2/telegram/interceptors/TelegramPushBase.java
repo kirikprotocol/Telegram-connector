@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
@@ -16,18 +17,33 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public abstract class TelegramPushBase extends BlankInterceptor {
 
-  protected boolean isResizeKeyboard(ExtendedSadsRequest request, String property) {
-    return InitUtils.getBoolean(property, true, request.getServiceScenario().getAttributes());
+  protected boolean isResizeKeyboard(ExtendedSadsRequest request,
+                                     ContentResponse contentResponse) {
+
+    final Properties serviceAttrs = request.getServiceScenario().getAttributes();
+    final Object pageAttr = contentResponse.getAttributes().get("telegram.keyboard-resize");
+
+    return pageAttr != null ?
+        Boolean.parseBoolean(String.valueOf(pageAttr)) :
+        InitUtils.getBoolean("telegram.keyboard-resize", true, serviceAttrs);
   }
 
-  protected boolean isOneTimeKeyboard(ExtendedSadsRequest request, String property) {
-    return InitUtils.getBoolean(property, true, request.getServiceScenario().getAttributes());
+  protected boolean isOneTimeKeyboard(ExtendedSadsRequest request,
+                                      ContentResponse contentResponse) {
+
+    final Properties serviceAttrs = request.getServiceScenario().getAttributes();
+    final Object pageAttr = contentResponse.getAttributes().get("telegram.keyboard-onetime");
+
+    return pageAttr != null ?
+        Boolean.parseBoolean(String.valueOf(pageAttr)) :
+        InitUtils.getBoolean("telegram.keyboard-onetime", true, serviceAttrs);
   }
 
-  public static Keyboard getKeyboard(final Document doc, final boolean onetime, final boolean resize) {
+  public static Keyboard getKeyboard(Document doc, boolean onetime, boolean resize) {
 
     @SuppressWarnings("unchecked")
     final List<Element> buttons = (List<Element>) doc.getRootElement().elements("button");
@@ -55,7 +71,6 @@ public abstract class TelegramPushBase extends BlankInterceptor {
     kbd.setKeyboard(mapToTable(keyTable));
     return kbd;
   }
-
 
   private static String[][] mapToTable(Map<Integer, List<String>> keyTable) {
     final String[][] keys = new String[keyTable.size()][];

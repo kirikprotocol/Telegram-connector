@@ -1,7 +1,6 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
-import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
@@ -72,11 +71,12 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
             tgRequest,
+            content,
             request.getParameters().get("sadsSmsMessage"),
             request.getParameters().get("keyboard"));
 
       } else {
-        sendTelegramMessage(tgRequest, response);
+        sendTelegramMessage(tgRequest, content, response);
       }
 
     } catch (Exception e) {
@@ -84,17 +84,19 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
   }
 
-
   private void sendTelegramMessage(ExtendedSadsRequest request,
+                                   ContentResponse contentResponse,
                                    SADSResponse response) throws Exception {
 
     final String serviceId = request.getServiceId();
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
+    final Keyboard keyboard = getKeyboard(
+        doc,
+        isOneTimeKeyboard(request, contentResponse),
+        isResizeKeyboard(request, contentResponse));
+
     String text = getText(doc);
-    final boolean oneTimeKeyboard = InitUtils.getBoolean("telegram.keyboard-onetime", true, request.getServiceScenario().getAttributes());
-    final boolean resizeKeyboard = InitUtils.getBoolean("telegram.keyboard-resize", true, request.getServiceScenario().getAttributes());
-    final Keyboard keyboard = getKeyboard(doc, oneTimeKeyboard, resizeKeyboard);
 
     final boolean shouldPass = StringUtils.isBlank(text) && keyboard == null;
     if (!shouldPass) {
@@ -131,8 +133,10 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   }
 
   private void sendTelegramMessage(ExtendedSadsRequest request,
+                                   ContentResponse content,
                                    String message,
                                    String keyboard) throws Exception {
+
     final String serviceId = request.getServiceId();
     final SessionManager sessionManager =
         this.sessionManager.getSessionManager(serviceId);
@@ -151,8 +155,8 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         final String[][] buttons = unmarshal(parse(keyboard), String[][].class);
         if (buttons != null) {
           final ReplyKeyboardMarkup replyKeyboard = new ReplyKeyboardMarkup();
-          replyKeyboard.setOneTimeKeyboard(true);
-          replyKeyboard.setResizeKeyboard(true);
+          replyKeyboard.setOneTimeKeyboard(isOneTimeKeyboard(request, content));
+          replyKeyboard.setResizeKeyboard(isResizeKeyboard(request, content));
           replyKeyboard.setKeyboard(buttons);
           kbd = replyKeyboard;
         }

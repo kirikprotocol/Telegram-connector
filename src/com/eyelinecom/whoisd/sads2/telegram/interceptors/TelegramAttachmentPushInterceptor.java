@@ -58,7 +58,7 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
       if (StringUtils.isBlank(request.getParameters().get("sadsSmsMessage"))) {
-        sendTelegramMessage(tgRequest, response);
+        sendTelegramMessage(tgRequest, content, response);
       }
 
       dispatcher.stop(response);
@@ -68,8 +68,8 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     }
   }
 
-
   private void sendTelegramMessage(ExtendedSadsRequest request,
+                                   ContentResponse contentResponse,
                                    SADSResponse response) throws Exception {
 
     final String serviceId = request.getServiceId();
@@ -91,8 +91,8 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     // Resend keyboard along with the attachments so it stays on the screen.
     final Keyboard keyboard = getKeyboard(
         doc,
-        isOneTimeKeyboard(request, "telegram.keyboard-onetime"),
-        isResizeKeyboard(request, "telegram.keyboard-resize"));
+        isOneTimeKeyboard(request, contentResponse),
+        isResizeKeyboard(request, contentResponse));
 
     for (Attachment attachment : attachments) {
       final ApiSendMethod method =
