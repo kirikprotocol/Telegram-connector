@@ -51,15 +51,14 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
       // Got payload along with the start message.
 
       final String payload = rawSubscriberData.substring(START_MESSAGE.length() + 1);
-      final String var = LinkToTelegramAdaptor.PERS_VAR_TELEGRAM_HASH_PREFIX + payload;
 
       final Profile profile = profileStorage
           .query()
-          .where(property("telegram-hashes", token).eq(var))
-          .get();
+          .where(property("telegram-hashes", token).eq(payload))
+          .get();  //TODO filter by date (link life-time: 10 min)
 
       if (profile != null) {
-        // TODO: remove entry from telegram-hashes?
+        profile.query().property("telegram-hashes", token).delete();
         final String msisdn = profile
             .query()
             .property("mobile", "msisdn")
