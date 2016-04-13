@@ -65,6 +65,11 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
         redirectBack(msisdn, tgRequest, contentRequest, dispatcher, log);
       }
 
+      else if(msisdn!=null){
+        String originalUrl = UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
+        super.redirectBack(tgRequest,dispatcher,originalUrl);
+      }
+
     } catch (Exception e) {
       throw new InterceptionException(e);
     }
