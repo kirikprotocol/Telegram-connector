@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message/>
+  <button href="telegram://request-contact">Send my contact data</button>
+  <button href="telegram://request-location">Send my position</button>
+</page>

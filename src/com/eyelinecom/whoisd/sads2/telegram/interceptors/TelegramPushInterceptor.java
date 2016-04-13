@@ -16,8 +16,10 @@ import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
@@ -38,6 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 
@@ -132,8 +135,8 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
   }
 
-  private void sendTelegramMessage(ExtendedSadsRequest request,
-                                   ContentResponse content,
+  private void sendTelegramMessage(final ExtendedSadsRequest request,
+                                   final ContentResponse content,
                                    String message,
                                    String keyboard) throws Exception {
 
@@ -154,11 +157,12 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       if (StringUtils.isNotBlank(keyboard)) {
         final String[][] buttons = unmarshal(parse(keyboard), String[][].class);
         if (buttons != null) {
-          final ReplyKeyboardMarkup replyKeyboard = new ReplyKeyboardMarkup();
-          replyKeyboard.setOneTimeKeyboard(isOneTimeKeyboard(request, content));
-          replyKeyboard.setResizeKeyboard(isResizeKeyboard(request, content));
-          replyKeyboard.setKeyboard(buttons);
-          kbd = replyKeyboard;
+          kbd = new ReplyKeyboardMarkup() {{
+            setOneTimeKeyboard(isOneTimeKeyboard(request, content));
+            setResizeKeyboard(isResizeKeyboard(request, content));
+            setKeyboard(
+                transformArray(KeyboardButton.class, buttons, TextButton.FROM_STRING));
+          }};
         }
       }
 

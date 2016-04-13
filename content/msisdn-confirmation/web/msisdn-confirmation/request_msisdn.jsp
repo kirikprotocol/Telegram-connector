@@ -9,4 +9,7 @@
   <navigation id="submit">
     <link pageId="index.jsp">Готово</link>
   </navigation>
+  <navigation>
+    <link pageId="telegram://request-contact">Отправить контактные данные</link>
+  </navigation>
 </page>

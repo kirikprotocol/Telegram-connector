@@ -1,0 +1,7 @@
+<page version="2.0">
+
+  <navigation>
+    <link pageId="telegram://request-contact">Send my contact data</link>
+    <link pageId="telegram://request-location">Send my position</link>
+  </navigation>
+</page>

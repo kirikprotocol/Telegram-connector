@@ -240,4 +240,27 @@ public class ContentExtractionTest {
         "<b>Attention</b> this is very important task",
         content);
   }
+
+  @Test
+  public void test11() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Foo</message>" +
+            "  <button href=\"/link-1\">Ok</button>\n" +
+            "  <button href=\"telegram://request-contact\">Send my contact data</button>\n" +
+            "  <button href=\"telegram://request-location\">Send my position</button>\n" +
+            "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    @SuppressWarnings("ConstantConditions")
+    final String kbd =
+        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+
+    assertEquals(
+        "{\"keyboard\":[[\"Ok\",{\"text\":\"Send my contact data\",\"request_contact\":true},{\"text\":\"Send my position\",\"request_location\":true}]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        kbd);
+  }
 }
