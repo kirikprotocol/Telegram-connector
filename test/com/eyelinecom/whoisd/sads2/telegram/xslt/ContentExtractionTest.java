@@ -224,4 +224,20 @@ public class ContentExtractionTest {
 
     assertEquals(1, doc.getRootElement().elements("attachment").size());
   }
+
+  @Test
+  public void test10() throws Exception {
+    final String text =
+        "<message>  <b>Attention</b> this is very important task\n" +
+            "</message>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+        "<b>Attention</b> this is very important task",
+        content);
+  }
 }

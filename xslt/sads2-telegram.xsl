@@ -98,7 +98,7 @@
 
   <xsl:template match="div">
     <xsl:if
-        test="string-length(normalize-space(text())) > 0 or count(child::div)>0 or count(child::a)>0 or count(child::input)>0 or count(child::select)>0">
+        test="string-length(normalize-space(.)) > 0 or count(child::div)>0 or count(child::a)>0 or count(child::input)>0 or count(child::select)>0">
 
       <xsl:apply-templates/>
 
