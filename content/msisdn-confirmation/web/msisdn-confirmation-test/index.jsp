@@ -10,7 +10,7 @@
     Это либо внутренний идентификатор Mobilizer, либо действительно MSISDN (если он уже был получен ранее).
   </div>
   <navigation>
-    <link pageId="authorize.jsp">Авторизоваться</link>
+    <link pageId="app://verify-msisdn?success_url=authorize.jsp">Авторизоваться</link>
     <link pageId="reset.jsp">Сбросить профиль Telegram</link>
   </navigation>
 </page>
