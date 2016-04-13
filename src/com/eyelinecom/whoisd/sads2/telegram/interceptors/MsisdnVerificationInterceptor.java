@@ -21,27 +21,35 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
    */
   public static final String MSISDN_REQUIRED_SIGN = "verify://msisdn";
   public static final String SUCCESS_REDIRECT_URL_PARAM = "success_url";
+  public static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
 
   public static final String CONF_MSISDN_CONFIRMATION_ENABLED = "telegram.msisdn.confirmation.enabled";
 
 
   @Override
   public void afterContentResponse(SADSRequest request, ContentRequest contentRequest, ContentResponse content, RequestDispatcher dispatcher) throws InterceptionException {
-    // Nothing here.
+    if (!isEnabled(request)) {
+      return;
+    }
+    ExtendedSadsRequest extendedRequest = (ExtendedSadsRequest)request;
+    extendedRequest.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM,request.getResourceURI());
   }
 
   @Override
   public void beforeContentRequest(SADSRequest request,
                                    ContentRequest contentRequest,
                                    RequestDispatcher dispatcher) throws InterceptionException {
+    if (!isEnabled(request)) {
+      return;
+    }
+    String requestUri = request.getResourceURI();
+    if(requestUri == null || !requestUri.startsWith(MSISDN_REQUIRED_SIGN)){
+       return;
+    }
 
     final Log log = SADSLogger.getLogger(request.getServiceId(), getClass());
     final String serviceId = request.getServiceId();
     final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
-
-    if (!isEnabled(request)) {
-      return;
-    }
 
     try {
       final String wnumber = request.getAbonent();
@@ -54,19 +62,23 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
         log.debug("Processing wnumber = [" + wnumber + "], stored msisdn = [" + msisdn + "]");
       }
 
-      String requestUri = request.getResourceURI();
-      if ((requestUri != null && requestUri.startsWith(MSISDN_REQUIRED_SIGN)) && (msisdn == null)) {
+      if ((msisdn == null)) {
+        if(log.isDebugEnabled()){log.debug("redirect to confirm msisdn");}
         redirectConfirmMsisdn(tgRequest, dispatcher, log);
 
-      } else if ((msisdn != null) &&
+      } else if (
           tgRequest.getProfile()
               .query()
-              .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
+              .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null)
+      {
+        if(log.isDebugEnabled()){log.debug("redirect from confirm msisdn");}
         redirectBack(msisdn, tgRequest, contentRequest, dispatcher, log);
       }
 
-      else if(msisdn!=null){
+      else {
+        if(log.isDebugEnabled()){log.debug("already verified msisdn");}
         String originalUrl = UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
+        originalUrl = getForwardUrl(tgRequest,originalUrl);
         super.redirectBack(tgRequest,dispatcher,originalUrl);
       }
 
@@ -86,9 +98,8 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
                                      RequestDispatcher dispatcher,
                                      Log log) throws Exception {
 
-    final String verificationForwardUri =
-        UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
-
+    String verificationForwardUri = UrlUtils.getParameter(request.getResourceURI(),SUCCESS_REDIRECT_URL_PARAM);
+    verificationForwardUri = getForwardUrl(request,verificationForwardUri);
     redirectTo(request, dispatcher, log, verificationForwardUri);
   }
 
@@ -101,6 +112,21 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     final String originalUrl = popOrigUrl(msisdn, request, log);
     contentRequest.setResourceURI(originalUrl);
     super.redirectBack(request, dispatcher, originalUrl);
+  }
+
+  private String getForwardUrl(ExtendedSadsRequest request,String forwardUrl){
+    if(UrlUtils.isAbsoluteUrl(forwardUrl)){
+      return forwardUrl;
+    }
+    String previousUrl = (String)request.getSession().getAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM);
+    if(previousUrl!=null){
+      try {
+        return UrlUtils.merge(previousUrl,forwardUrl);
+      } catch (Exception e) {
+        return forwardUrl;
+      }
+    }
+    return forwardUrl;
   }
 
   @Override
