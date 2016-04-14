@@ -17,9 +17,9 @@ import java.util.Properties;
 public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor implements Initable {
 
   /**
-   * request url must start with app://verify-msisdn?success_url=... to mark that verification is needed.
+   * request url must start with verify://msisdn?success_url=... to mark that verification is needed.
    */
-  public static final String MSISDN_REQUIRED_SIGN = "app://verify-msisdn";
+  public static final String MSISDN_REQUIRED_SIGN = "verify://msisdn";
   public static final String SUCCESS_REDIRECT_URL_PARAM = "success_url";
   public static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
 
