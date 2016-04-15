@@ -1,0 +1,85 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="rest-client" basedir="." default="jar">
+
+	<property file="build.properties"/>
+
+	<property name="build-dir" location="${basedir}/.build"/>
+	<property name="distr-dir" location="${build-dir}/distr"/>
+
+	<property name="src-dir" location="${basedir}/src/main/java"/>
+
+  <property name="report-dir" location="${build-dir}/report"/>
+
+  <condition property="resolver" value="eyeline" else="snapshot">
+    <isset property="JENKINS_VERSION"/>
+  </condition>
+
+	<tstamp>
+		<format property="build-date" pattern="yyyy-MM-dd HH:mm:ss"/>
+	</tstamp>
+
+	<target name="clean" description="clean all">
+		<delete dir="${build-dir}"/>
+	</target>
+
+	<target name="resolve" description="Retrieve dependencies">
+		<ivy:settings file="${user.home}/.ivy2/ivysettings.xml"/>
+		<ivy:resolve transitive="true"/>
+
+    <delete dir="${build-dir}/lib" failonerror="false"/>
+		<mkdir dir="${build-dir}/lib"/>
+
+		<ivy:retrieve pattern="${build-dir}/lib/[artifact]-[revision].[ext]" type="jar,bundle"/>
+
+		<mkdir dir="${report-dir}/ivy"/>
+		<ivy:report todir="${report-dir}/ivy" graph="true"/>
+	</target>
+
+	<target name="copy-dependencies">
+		<jar jarfile="${build-dir}/dependencies-all.jar" compress="no">
+			<zipgroupfileset dir="${build-dir}/lib">
+				<include name="**/*.jar" />
+			</zipgroupfileset>
+		</jar>
+	</target>
+
+	<path id="classpath">
+		<fileset dir="${build-dir}/lib">
+			<include name="**/*.jar"/>
+		</fileset>
+  </path>
+
+	<target name="build" depends="clean, resolve">
+    <mkdir dir="${build-dir}/out"/>
+    <javac destdir="${build-dir}/out"
+           debug="on"
+           source="1.7"
+           target="1.7"
+           encoding="UTF-8"
+           includeantruntime="false">
+      <compilerarg value="-Xlint:all"/>
+      <src path="${src-dir}"/>
+      <classpath refid="classpath"/>
+    </javac>
+	</target>
+
+	<target name="jar" depends="build, copy-dependencies">
+		<mkdir dir="${distr-dir}"/>
+		<jar destfile="${distr-dir}/${module-name}.jar">
+			<manifest>
+				<attribute name="Module" value="${module-name}"/>
+				<attribute name="Vendor" value="Eyeline Communications"/>
+				<attribute name="Release-Version" value="${release-version}"/>
+				<attribute name="Build-Date" value="${build-date}"/>
+      </manifest>
+			<fileset dir="${build-dir}/out" includes="**/*"/>
+      <zipfileset src="${build-dir}/dependencies-all.jar"/>
+		</jar>
+	</target>
+
+  <target name="distr" depends="jar">
+    <ivy:publish resolver="${resolver}" pubrevision="${release-version}" overwrite="true" conf="default">
+      <artifacts pattern=".build/distr/[artifact].[ext]"/>
+    </ivy:publish>
+  </target>
+
+</project>

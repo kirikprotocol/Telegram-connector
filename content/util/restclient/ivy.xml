@@ -1,0 +1,6 @@
+<ivy-module version="2.0">
+<info organisation="mobi.eyeline.utils" module="rest-client"/>
+<dependencies>
+  <dependency org="org.json" name="json" rev="20160212"/>
+</dependencies>
+</ivy-module>
