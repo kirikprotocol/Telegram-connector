@@ -67,4 +67,15 @@ public abstract class ApiType<T extends ApiType> {
     }
   }
 
+  @Override
+  public String toString() {
+    try {
+      return "ApiType{" +
+          "entityClass=" + entityClass +
+          ",json=" + marshal() +
+          '}';
+    } catch (Exception e) {
+      return "ApiType{entityClass=" + entityClass + '}';
+    }
+  }
 }
