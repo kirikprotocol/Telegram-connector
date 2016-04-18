@@ -79,8 +79,7 @@ public class InMemorySessionManager {
 
     @Override
     public void removeSessionEventListener(SessionEventListener listener) {
-      if(listener==null)return;
-      eventListeners.remove(listener);
+      eventListeners.remove(checkNotNull(listener));
     }
 
     @Override

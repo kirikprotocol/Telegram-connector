@@ -15,6 +15,13 @@ public interface ServiceSessionManager {
    * the listener will be called some time in the future after the corresponding event occurs.
    */
   void addSessionEventListener(SessionEventListener listener);
+
+  /**
+   * Removes {@linkplain SessionEventListener event listener} set by
+   * {@linkplain #addSessionEventListener(SessionEventListener) addSessionEventListener}.
+   * <br/>
+   * Does nothing in case the specified listener was not found among the registered ones.
+   */
   void removeSessionEventListener(SessionEventListener listener);
 
 
