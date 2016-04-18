@@ -1,4 +1,4 @@
-package com.eyelinecom.whoisd.sads2.telegram;
+package com.eyelinecom.whoisd.sads2.telegram.session;
 
 import com.eyelinecom.whoisd.sads2.connector.Session;
 

@@ -9,7 +9,7 @@ import com.eyelinecom.whoisd.sads2.connector.SadsRequestFactoryResource;
 import com.eyelinecom.whoisd.sads2.executors.connector.SimpleSADSRequestFactory;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
-import com.eyelinecom.whoisd.sads2.telegram.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
