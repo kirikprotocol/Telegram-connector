@@ -73,6 +73,7 @@
 
     <xsl:variable name="totalRows" select="count(//navigation)"/>
     <xsl:variable name="row" select="count(../preceding-sibling::navigation) + 1"/>
+    <xsl:variable name="attributes" select="../@attributes"/>
 
     <xsl:if
         test="count(//*[@navigationId])=0 or count(parent::navigation[@id])=0 or count(parent::navigation[@id])!=0 and parent::navigation/@id!=$formId ">
@@ -83,6 +84,12 @@
           <xsl:if test="$totalRows > 1">
             <xsl:attribute name="row">
               <xsl:value-of select="$row"/>
+            </xsl:attribute>
+          </xsl:if>
+
+          <xsl:if test="$attributes">
+            <xsl:attribute name="attributes">
+              <xsl:value-of select="$attributes"/>
             </xsl:attribute>
           </xsl:if>
 
@@ -143,6 +150,11 @@
         <xsl:attribute name="name">
           <xsl:value-of select='$paramName'/>
         </xsl:attribute>
+        <xsl:if test="count(@type) != 0">
+          <xsl:attribute name="type">
+            <xsl:value-of select='@type'/>
+          </xsl:attribute>
+        </xsl:if>
       </input>
     </xsl:if>
   </xsl:template>

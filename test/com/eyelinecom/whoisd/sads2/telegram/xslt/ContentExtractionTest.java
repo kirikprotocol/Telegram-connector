@@ -1,14 +1,20 @@
 package com.eyelinecom.whoisd.sads2.telegram.xslt;
 
 
+import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor;
 import org.dom4j.Document;
+import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 public class ContentExtractionTest {
 
@@ -262,5 +268,48 @@ public class ContentExtractionTest {
     assertEquals(
         "{\"keyboard\":[[\"Ok\",{\"text\":\"Send my contact data\",\"request_contact\":true},{\"text\":\"Send my position\",\"request_location\":true}]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
         kbd);
+  }
+
+  @Test
+  public void test12() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Enter PIN</message>\n" +
+            "  <input href=\"submit.jsp\" name=\"input\" type=\"password\"/>\n" +
+            "  <button href=\"/cancel.jsp\" row=\"2\">Cancel</button>\n" +
+            "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+    final Element root = rawDocument.getRootElement();
+
+    assertNotNull(root.selectSingleNode("//input[@type='password']"));
+    assertNull(root.selectSingleNode("//input[@type='hidden']"));
+  }
+
+  @Test
+  public void testAttributes1() throws Exception {
+    final String text =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<page>\n" +
+            "  <message>Hello!</message>\n" +
+            "\n" +
+            "  <button href=\"/one.jsp\" attributes=\"telegram.inline: true;\">One</button>\n" +
+            "  <button href=\"/two.jsp\" attributes=\"telegram.inline: false;\">Two</button>\n" +
+            "</page>";
+
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+    final Element root = rawDocument.getRootElement();
+
+    final AttributeReader attributeReader = AttributeReader.forDocument(rawDocument);
+
+    final Element link1 = (Element) root.selectSingleNode("//button[@href='/one.jsp']");
+    assertTrue(attributeReader.getAttributes(link1).getBoolean("telegram.inline").or(false));
+    assertNull(attributeReader.getAttributes(link1).getBoolean("missing.property").orNull());
+
+    final Element link2 = (Element) root.selectSingleNode("//button[@href='/two.jsp']");
+    assertFalse(attributeReader.getAttributes(link2).getBoolean("telegram.inline").or(false));
   }
 }

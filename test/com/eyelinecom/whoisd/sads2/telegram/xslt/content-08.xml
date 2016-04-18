@@ -1,0 +1,12 @@
+<page version="2.0">
+
+  <div>
+    <input navigationId="submit" type="password" name="input" title="Enter PIN"/>
+  </div>
+  <navigation id="submit">
+    <link pageId="submit.jsp">OK</link>
+  </navigation>
+  <navigation>
+    <link pageId="/cancel.jsp">Cancel</link>
+  </navigation>
+</page>

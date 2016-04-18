@@ -1,0 +1,9 @@
+<page version="2.0">
+
+  <div>Hello!</div>
+
+  <navigation attributes="telegram.inline: true; skype.ubercool: false">
+    <link pageId="/one.jsp">One</link>
+    <link pageId="/two.jsp">Two</link>
+  </navigation>
+</page>

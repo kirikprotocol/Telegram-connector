@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message>Hello!</message>
+
+  <button href="/one.jsp" attributes="telegram.inline: true; skype.ubercool: false">One</button>
+  <button href="/two.jsp" attributes="telegram.inline: true; skype.ubercool: false">Two</button>
+</page>

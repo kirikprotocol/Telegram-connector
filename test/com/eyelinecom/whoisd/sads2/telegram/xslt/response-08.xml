@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page>
+  <message>Enter PIN</message>
+  <input href="submit.jsp" name="input" type="password"/>
+  <button href="/cancel.jsp" row="2">Cancel</button>
+</page>
