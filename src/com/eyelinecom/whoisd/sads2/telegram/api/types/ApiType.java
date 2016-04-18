@@ -2,9 +2,8 @@ package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.lang.reflect.ParameterizedType;
 
 public abstract class ApiType<T extends ApiType> {
 
@@ -14,14 +13,8 @@ public abstract class ApiType<T extends ApiType> {
     this.entityClass = getEntityClass();
   }
 
-  /**
-   * Note: should be overridden for indirect subclasses.
-   */
   protected Class<T> getEntityClass() {
-    final ParameterizedType genericSuperclass =
-        (ParameterizedType) getClass().getGenericSuperclass();
-    //noinspection unchecked
-    return (Class<T>) genericSuperclass.getActualTypeArguments()[0];
+    return TypeUtil.getGenericType(getClass(), 0);
   }
 
   public static <T extends ApiType> T unmarshal(JsonNode obj,

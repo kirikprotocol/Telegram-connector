@@ -3,6 +3,7 @@ package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
@@ -13,8 +14,8 @@ public abstract class ApiMethod<Self extends ApiMethod, Response extends ApiType
   private static final String METHOD_FIELD = "method";
 
   ApiMethod() {
-    methodClass = getEntityClass(getClass(), 0);
-    responseClass = getEntityClass(getClass(), 1);
+    methodClass = TypeUtil.getGenericType(getClass(), 0);
+    responseClass = TypeUtil.getGenericType(getClass(), 1);
   }
 
   public String marshal() throws TelegramApiException {

@@ -4,6 +4,7 @@ import com.eyelinecom.whoisd.sads2.multipart.RequestPart;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.util.JsonSerializer;
+import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 
 public abstract class ApiSendMethod<Self extends ApiSendMethod, Response extends ApiType>
     extends BaseApiMethod<Self, Response> {
@@ -34,8 +35,8 @@ public abstract class ApiSendMethod<Self extends ApiSendMethod, Response extends
 
 
   ApiSendMethod() {
-    methodClass = getEntityClass(getClass(), 0);
-    responseClass = getEntityClass(getClass(), 1);
+    methodClass = TypeUtil.getGenericType(getClass(), 0);
+    responseClass = TypeUtil.getGenericType(getClass(), 1);
   }
 
   public String getChatId() {
