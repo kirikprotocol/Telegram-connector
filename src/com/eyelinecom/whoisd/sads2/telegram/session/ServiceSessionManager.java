@@ -15,6 +15,7 @@ public interface ServiceSessionManager {
    * the listener will be called some time in the future after the corresponding event occurs.
    */
   void addSessionEventListener(SessionEventListener listener);
+  void removeSessionEventListener(SessionEventListener listener);
 
 
   interface SessionEventListener {
