@@ -140,10 +140,10 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
 
     assertEquals(
-        "{\"keyboard\":[[\"Page 1\",\"Page 2\"],[\"Page 3\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        "{\"keyboard\":[[\"Page 1\",\"Page 2\"],[\"Page 3\"]]}",
         kbd);
   }
 
@@ -162,10 +162,10 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
 
     assertEquals(
-        "{\"keyboard\":[[\"Page 1\"],[\"Page 2\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        "{\"keyboard\":[[\"Page 1\"],[\"Page 2\"]]}",
         kbd);
   }
 
@@ -187,10 +187,10 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
 
     assertEquals(
-        "{\"keyboard\":[[\"Back\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        "{\"keyboard\":[[\"Back\"]]}",
         kbd);
   }
 
@@ -209,10 +209,10 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
 
     assertEquals(
-        "{\"keyboard\":[[\"123456\",\"Text\"]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        "{\"keyboard\":[[\"123456\",\"Text\"]]}",
         kbd);
   }
 
@@ -263,10 +263,10 @@ public class ContentExtractionTest {
 
     @SuppressWarnings("ConstantConditions")
     final String kbd =
-        TelegramPushInterceptor.getKeyboard(rawDocument, true, true).marshal();
+        TelegramPushInterceptor.getKeyboard(rawDocument).marshal();
 
     assertEquals(
-        "{\"keyboard\":[[\"Ok\",{\"text\":\"Send my contact data\",\"request_contact\":true},{\"text\":\"Send my position\",\"request_location\":true}]],\"resize_keyboard\":true,\"one_time_keyboard\":true}",
+        "{\"keyboard\":[[\"Ok\",{\"text\":\"Send my contact data\",\"request_contact\":true},{\"text\":\"Send my position\",\"request_location\":true}]]}",
         kbd);
   }
 
@@ -303,13 +303,11 @@ public class ContentExtractionTest {
         new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
     final Element root = rawDocument.getRootElement();
 
-    final AttributeReader attributeReader = AttributeReader.forDocument(rawDocument);
-
     final Element link1 = (Element) root.selectSingleNode("//button[@href='/one.jsp']");
-    assertTrue(attributeReader.getAttributes(link1).getBoolean("telegram.inline").or(false));
-    assertNull(attributeReader.getAttributes(link1).getBoolean("missing.property").orNull());
+    assertTrue(AttributeReader.getAttributes(link1).getBoolean("telegram.inline").or(false));
+    assertNull(AttributeReader.getAttributes(link1).getBoolean("missing.property").orNull());
 
     final Element link2 = (Element) root.selectSingleNode("//button[@href='/two.jsp']");
-    assertFalse(attributeReader.getAttributes(link2).getBoolean("telegram.inline").or(false));
+    assertFalse(AttributeReader.getAttributes(link2).getBoolean("telegram.inline").or(false));
   }
 }

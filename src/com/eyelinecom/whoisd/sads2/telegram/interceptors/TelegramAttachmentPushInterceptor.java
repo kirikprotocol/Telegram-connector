@@ -13,7 +13,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.telegram.api.Attachment;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
@@ -89,10 +89,11 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
 
     // Resend keyboard along with the attachments so it stays on the screen.
-    final Keyboard keyboard = getKeyboard(
-        doc,
-        isOneTimeKeyboard(request, contentResponse),
-        isResizeKeyboard(request, contentResponse));
+    final ReplyKeyboardMarkup keyboard = getKeyboard(doc);
+    if (keyboard != null) {
+      if (isOneTimeKeyboard(request, contentResponse))  keyboard.setOneTimeKeyboard(true);
+      if (isResizeKeyboard(request, contentResponse))   keyboard.setResizeKeyboard(true);
+    }
 
     for (Attachment attachment : attachments) {
       final ApiSendMethod method =

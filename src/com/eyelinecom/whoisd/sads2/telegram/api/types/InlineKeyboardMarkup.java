@@ -12,6 +12,10 @@ public class InlineKeyboardMarkup extends Keyboard<InlineKeyboardMarkup> {
 
   public InlineKeyboardMarkup() {}
 
+  public InlineKeyboardMarkup(InlineKeyboardButton[][] keyboard) {
+    this.keyboard = keyboard;
+  }
+
   public InlineKeyboardButton[][] getKeyboard() {
     return keyboard;
   }

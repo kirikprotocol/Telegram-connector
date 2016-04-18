@@ -19,8 +19,10 @@ import com.eyelinecom.whoisd.sads2.input.InputFile;
 import com.eyelinecom.whoisd.sads2.input.InputLocation;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
+import com.eyelinecom.whoisd.sads2.telegram.api.internal.InlineCallbackQuery;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Audio;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.CallbackQuery;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Contact;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Location;
@@ -61,6 +63,8 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getChatId;
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.parseUpdate;
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
+import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 public class TelegramMessageConnector extends HttpServlet {
@@ -220,16 +224,41 @@ public class TelegramMessageConnector extends HttpServlet {
       final String token = getServiceToken(req);
 
       final Update update = parseUpdate(req.getContent());
-      final String chatId = String.valueOf(update.getMessage().getChat().getId());
-      final String userId = String.valueOf(update.getMessage().getFrom().getId());
 
-      final Profile profile = getProfileStorage()
-          .query()
-          .where(QueryRestrictions.property("telegram", "id").eq(userId))
-          .getOrCreate();
+      final Profile profile;
 
-      profile.query().property("telegram-chats", token).set(chatId);
+      if (update.getMessage() != null) {
+        final Message message = update.getMessage();
 
+        final String chatId = String.valueOf(message.getChat().getId());
+        final String userId = String.valueOf(message.getFrom().getId());
+
+        profile = getProfileStorage()
+            .query()
+            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .getOrCreate();
+
+        profile.query().property("telegram-chats", token).set(chatId);
+
+      } else if (update.getCallbackQuery() != null) {
+        final CallbackQuery callbackQuery = update.getCallbackQuery();
+
+        final String userId = String.valueOf(callbackQuery.getFrom().getId());
+        profile = getProfileStorage()
+            .query()
+            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .getOrCreate();
+
+        if (callbackQuery.getMessage() != null) {
+          final String chatId = String.valueOf(callbackQuery.getMessage().getChat().getId());
+          profile.query().property("telegram-chats", token).set(chatId);
+        }
+
+      } else {
+        profile = null;
+      }
+
+      //noinspection ConstantConditions
       return profile.getWnumber();
     }
 
@@ -265,107 +294,112 @@ public class TelegramMessageConnector extends HttpServlet {
           }
       }*/
 
-      @Override
-      protected void fillSADSRequest(SADSRequest sadsRequest, StoredHttpRequest req) {
-          super.fillSADSRequest(sadsRequest, req);
-          try {
-              TelegramApi api = (TelegramApi)getResource("telegram-api");
-              final String serviceToken = getServiceToken(req);
-              Update update = parseUpdate(req.getContent());
-              Message message = update.getMessage();
+    @Override
+    protected void fillSADSRequest(SADSRequest sadsRequest, StoredHttpRequest req) {
+      super.fillSADSRequest(sadsRequest, req);
+      try {
+        final Update update = parseUpdate(req.getContent());
 
-              final List<AbstractInputType> mediaList = new ArrayList<AbstractInputType>();
-              final PhotoSize[] photoArray = message.getPhoto();
-              if (photoArray!=null && photoArray.length>0) {
-                  for (PhotoSize photo: photoArray) {
-                      File tFile = api.getFile(serviceToken, photo.getFileId());
-                      InputFile file = new InputFile();
-                      file.setMediaType("photo");
-                      file.setUrl(tFile.getUrl());
-                      file.setSize(photo.getFileSize());
-                      mediaList.add(file);
-                  }
-              }
-              final Audio audio = message.getAudio();
-              if (audio!=null) {
-                  final File tFile = api.getFile(serviceToken, audio.getFileId());
-                  final InputFile file = new InputFile();
-                  file.setMediaType("audio");
-                  file.setUrl(tFile.getUrl());
-                  file.setContentType(audio.getMimeType());
-                  file.setSize(audio.getFileSize());
-                  mediaList.add(file);
-              }
-              final Sticker sticker = message.getSticker();
-              if (sticker!=null) {
-                  final File tFile = api.getFile(serviceToken, sticker.getFileId());
-                  final InputFile file = new InputFile();
-                  file.setMediaType("sticker");
-                  file.setUrl(tFile.getUrl());
-                  file.setSize(tFile.getFileSize());
-                  mediaList.add(file);
-              }
-              final Video video = message.getVideo();
-              if (video!=null) {
-                  final File tFile = api.getFile(serviceToken, video.getFileId());
-                  final InputFile file = new InputFile();
-                  file.setMediaType("video");
-                  file.setUrl(tFile.getUrl());
-                  file.setSize(tFile.getFileSize());
-                  mediaList.add(file);
-              }
-              final Voice voice = message.getVoice();
-              if (voice!=null) {
-                  final File tFile = api.getFile(serviceToken, voice.getFileId());
-                  final InputFile file = new InputFile();
-                  file.setMediaType("voice");
-                  file.setUrl(tFile.getUrl());
-                  file.setSize(tFile.getFileSize());
-                  mediaList.add(file);
-              }
-              final com.eyelinecom.whoisd.sads2.telegram.api.types.Document document = message.getDocument();
-              if (document!=null) {
-                  final File tFile = api.getFile(serviceToken, document.getFileId());
-                  final InputFile file = new InputFile();
-                  file.setMediaType("document");
-                  file.setUrl(tFile.getUrl());
-                  file.setSize(tFile.getFileSize());
-                  mediaList.add(file);
-              }
-              final Contact tContact = message.getContact();
-              if (tContact!=null) {
-                  final InputContact contact = new InputContact();
-                  contact.setMsisdn(tContact.getPhoneNumber());
-                  contact.setName(tContact.getFirstName()+" "+tContact.getLastName());
-                  mediaList.add(contact);
-              }
-              final Location tLocation = message.getLocation();
-              if (tLocation!=null) {
-                  final InputLocation location = new InputLocation();
-                  location.setLatitude(tLocation.getLatitude());
-                  location.setLongitude(tLocation.getLongitude());
-                  mediaList.add(location);
-              }
-              if (mediaList.size() > 0) {
-                  String mediaParameter = MarshalUtils.marshal(mediaList);
-                  //todo remove this copy-paste. separarate get inputName to dedicated method
-                  Session session = getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
-                  final Document prevPage =
-                          (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
-                  String inputName = null;
-                  final Element input = prevPage.getRootElement().element("input");
-                  if (input != null) {
-                      inputName = input.attributeValue("name");
-                  } else {
-                      inputName = "bad_command";
-                  }
-                  sadsRequest.getParameters().put(inputName, mediaParameter);
-                  sadsRequest.getParameters().put("input_type", "json");
-              }
-          } catch (Exception e) {
-              //
+        final Message message = update.getMessage();
+        if (message != null) {
+          final TelegramApi api = (TelegramApi) getResource("telegram-api");
+          final String serviceToken = getServiceToken(req);
+
+          final List<AbstractInputType> mediaList = new ArrayList<AbstractInputType>();
+          final PhotoSize[] photoArray = message.getPhoto();
+          if (photoArray != null && photoArray.length > 0) {
+            for (PhotoSize photo : photoArray) {
+              File tFile = api.getFile(serviceToken, photo.getFileId());
+              InputFile file = new InputFile();
+              file.setMediaType("photo");
+              file.setUrl(tFile.getUrl());
+              file.setSize(photo.getFileSize());
+              mediaList.add(file);
+            }
           }
+          final Audio audio = message.getAudio();
+          if (audio != null) {
+            final File tFile = api.getFile(serviceToken, audio.getFileId());
+            final InputFile file = new InputFile();
+            file.setMediaType("audio");
+            file.setUrl(tFile.getUrl());
+            file.setContentType(audio.getMimeType());
+            file.setSize(audio.getFileSize());
+            mediaList.add(file);
+          }
+          final Sticker sticker = message.getSticker();
+          if (sticker != null) {
+            final File tFile = api.getFile(serviceToken, sticker.getFileId());
+            final InputFile file = new InputFile();
+            file.setMediaType("sticker");
+            file.setUrl(tFile.getUrl());
+            file.setSize(tFile.getFileSize());
+            mediaList.add(file);
+          }
+          final Video video = message.getVideo();
+          if (video != null) {
+            final File tFile = api.getFile(serviceToken, video.getFileId());
+            final InputFile file = new InputFile();
+            file.setMediaType("video");
+            file.setUrl(tFile.getUrl());
+            file.setSize(tFile.getFileSize());
+            mediaList.add(file);
+          }
+          final Voice voice = message.getVoice();
+          if (voice != null) {
+            final File tFile = api.getFile(serviceToken, voice.getFileId());
+            final InputFile file = new InputFile();
+            file.setMediaType("voice");
+            file.setUrl(tFile.getUrl());
+            file.setSize(tFile.getFileSize());
+            mediaList.add(file);
+          }
+          final com.eyelinecom.whoisd.sads2.telegram.api.types.Document document = message.getDocument();
+          if (document != null) {
+            final File tFile = api.getFile(serviceToken, document.getFileId());
+            final InputFile file = new InputFile();
+            file.setMediaType("document");
+            file.setUrl(tFile.getUrl());
+            file.setSize(tFile.getFileSize());
+            mediaList.add(file);
+          }
+          final Contact tContact = message.getContact();
+          if (tContact != null) {
+            final InputContact contact = new InputContact();
+            contact.setMsisdn(tContact.getPhoneNumber());
+            contact.setName(tContact.getFirstName() + " " + tContact.getLastName());
+            mediaList.add(contact);
+          }
+          final Location tLocation = message.getLocation();
+          if (tLocation != null) {
+            final InputLocation location = new InputLocation();
+            location.setLatitude(tLocation.getLatitude());
+            location.setLongitude(tLocation.getLongitude());
+            mediaList.add(location);
+          }
+
+          if (mediaList.size() > 0) {
+            String mediaParameter = MarshalUtils.marshal(mediaList);
+            //todo remove this copy-paste. separarate get inputName to dedicated method
+            Session session = getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
+            final Document prevPage =
+                (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
+            String inputName = null;
+            final Element input = prevPage.getRootElement().element("input");
+            if (input != null) {
+              inputName = input.attributeValue("name");
+            } else {
+              inputName = "bad_command";
+            }
+            sadsRequest.getParameters().put(inputName, mediaParameter);
+            sadsRequest.getParameters().put("input_type", "json");
+          }
+        }
+
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
       }
+    }
 
       @Override
     protected Protocol getRequestProtocol(ServiceConfig config,
@@ -380,7 +414,66 @@ public class TelegramMessageConnector extends HttpServlet {
                                    StoredHttpRequest message) throws Exception {
 
       final String serviceId = config.getId();
-      final String incoming = TelegramRequestUtils.getMessageText(message.getContent());
+      final Update update = parseUpdate(message.getContent());
+
+      if (update.getMessage() != null) {
+        return handleMessage(config, wnumber, message, serviceId, update.getMessage());
+
+      } else if (update.getCallbackQuery() != null) {
+        return handleCallbackQuery(config, wnumber, message, serviceId, update);
+
+      } else {
+        // Unsupported.
+        log.warn("Unsupported update message: [" + update + "]");
+
+        final Session session = getSessionManager(serviceId).getSession(wnumber);
+        final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
+        if (prevUri == null) {
+          // No previous page means this is an initial request, thus serve the start page.
+          return super.getRequestUri(config, wnumber, message);
+
+        } else {
+          final String badCommandPage =
+              InitUtils.getString("bad-command-page", "", config.getAttributes());
+          final String href = UrlUtils.merge(prevUri, badCommandPage);
+
+          return UrlUtils.merge(prevUri, href);
+        }
+      }
+    }
+
+    private String handleCallbackQuery(ServiceConfig config,
+                                       String wnumber,
+                                       StoredHttpRequest message,
+                                       String serviceId,
+                                       Update update) throws Exception {
+
+      // Incoming callback query from a callback button in an inline keyboard.
+      final Session session = getSessionManager(serviceId).getSession(wnumber);
+
+      final CallbackQuery callback = update.getCallbackQuery();
+
+      // final Message repliedTo = callback.getMessage();
+
+      final InlineCallbackQuery btnPayload =
+          unmarshal(parse(callback.getData()), InlineCallbackQuery.class);
+
+      String rootUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
+      if (rootUri == null) {
+        rootUri = super.getRequestUri(config, wnumber, message);
+      }
+
+      final String href = btnPayload.getCallbackUrl();
+      return UrlUtils.merge(rootUri, href);
+    }
+
+    private String handleMessage(ServiceConfig config,
+                                 String wnumber,
+                                 StoredHttpRequest message,
+                                 String serviceId,
+                                 Message tgMessage) throws Exception {
+
+      final String incoming = tgMessage.getText();
 
       Session session = getSessionManager(serviceId).getSession(wnumber);
 

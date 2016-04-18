@@ -14,21 +14,31 @@ import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
+// TODO:  Implement attribute lookup in enclosing elements, i.e. attribute propagation.
+//        This would align nicely with CSS semantics & make hacks like manually looking up
+//        attributes in enclosing page unnecessary.
+// TODO:  Consider implementing more efficient attribute parsing (no `split` calls).
 public class AttributeReader {
 
   private static final String ATTRIBUTE_NAME = "attributes";
 
   private static final Cache<Document, AttributeReader> docCache =
-      CacheBuilder.newBuilder().weakValues().build();
+      CacheBuilder.newBuilder().expireAfterAccess(5, SECONDS).build();
 
   private static final Cache<Element, AttributeSet> elemCache =
-      CacheBuilder.newBuilder().weakValues().build();
+      CacheBuilder.newBuilder().expireAfterAccess(5, SECONDS).build();
 
   private final Document doc;
 
-  public static AttributeReader forDocument(final Document doc) {
+  public static AttributeSet getAttributes(Element element) {
+    return forDocument(element.getDocument()).getElementAttributes(element);
+  }
+
+  private static AttributeReader forDocument(final Document doc) {
     try {
 
       return docCache.get(doc, new Callable<AttributeReader>() {
@@ -44,32 +54,31 @@ public class AttributeReader {
     this.doc = checkNotNull(doc);
   }
 
-  public AttributeSet getAttributes(final Element elem) {
+  private AttributeSet getElementAttributes(final Element elem) {
     checkArgument(elem.getDocument().equals(doc));
 
     try {
 
       return elemCache.get(elem, new Callable<AttributeSet>() {
-        @Override public AttributeSet call() { return getAttributes0(elem); }
+        @Override
+        public AttributeSet call() {
+          final String value = elem.attributeValue(ATTRIBUTE_NAME);
+          try {
+            return new AttributeSetImpl().parse(value);
+
+          } catch (Exception e) {
+            throw new DocumentProcessingException("Failed processing element attributes:" +
+                " path = [" + elem.getUniquePath() + "]," +
+                " xml = [" + elem.asXML() + "]," +
+                " attributes = [" + value + "]", e);
+          }
+        }
       });
 
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), DocumentProcessingException.class);
 
       throw new DocumentProcessingException(e);
-    }
-  }
-
-  private AttributeSet getAttributes0(Element elem) {
-    final String value = elem.attributeValue(ATTRIBUTE_NAME);
-    try {
-      return new AttributeSetImpl().parse(value);
-
-    } catch (Exception e) {
-      throw new DocumentProcessingException("Failed processing element attributes:" +
-          " path = [" + elem.getUniquePath() + "]," +
-          " xml = [" + elem.asXML() + "]," +
-          " attributes = [" + value + "]", e);
     }
   }
 
@@ -80,7 +89,9 @@ public class AttributeReader {
 
   @SuppressWarnings("WeakerAccess")
   public interface AttributeSet {
-    Optional<Boolean> getBoolean(String name) throws DocumentProcessingException;
+    Optional<Boolean>   getBoolean(String name)   throws DocumentProcessingException;
+    Optional<String>    getString(String name)    throws DocumentProcessingException;
+    Optional<Integer>   getInteger(String name)   throws DocumentProcessingException;
   }
 
 
@@ -106,7 +117,19 @@ public class AttributeReader {
     @Override
     public Optional<Boolean> getBoolean(String name) {
       final String value = attributes.get(name);
-      return Optional.fromNullable(value == null ? null : Boolean.parseBoolean(value));
+      return Optional.fromNullable(isBlank(value) ? null : Boolean.parseBoolean(value));
+    }
+
+    @Override
+    public Optional<String> getString(String name) throws DocumentProcessingException {
+      final String value = attributes.get(name);
+      return Optional.fromNullable(isBlank(value) ? null : value);
+    }
+
+    @Override
+    public Optional<Integer> getInteger(String name) throws DocumentProcessingException {
+      final String value = attributes.get(name);
+      return Optional.fromNullable(isBlank(value) ? null : Integer.parseInt(value));
     }
   }
 }

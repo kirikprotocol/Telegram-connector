@@ -25,6 +25,10 @@ public class ReplyKeyboardMarkup extends Keyboard<ReplyKeyboardMarkup> {
 
   public ReplyKeyboardMarkup() {}
 
+  public ReplyKeyboardMarkup(KeyboardButton[][] keyboard) {
+    this.keyboard = keyboard;
+  }
+
   public KeyboardButton[][] getKeyboard() {
     return keyboard;
   }

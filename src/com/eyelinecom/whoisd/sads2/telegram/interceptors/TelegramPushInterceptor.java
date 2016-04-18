@@ -13,13 +13,16 @@ import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
+import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
@@ -43,6 +46,7 @@ import java.util.Properties;
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 @SuppressWarnings("unused")
 public class TelegramPushInterceptor extends TelegramPushBase implements Initable {
@@ -70,7 +74,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
-      if (StringUtils.isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
+      if (isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
             tgRequest,
@@ -87,6 +91,9 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
   }
 
+  /**
+   * Processes content-originated messages.
+   */
   private void sendTelegramMessage(ExtendedSadsRequest request,
                                    ContentResponse contentResponse,
                                    SADSResponse response) throws Exception {
@@ -94,15 +101,23 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     final String serviceId = request.getServiceId();
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
-    final Keyboard keyboard = getKeyboard(
-        doc,
-        isOneTimeKeyboard(request, contentResponse),
-        isResizeKeyboard(request, contentResponse));
+    final Keyboard keyboard;
+    {
+      final ReplyKeyboardMarkup replyKbd = getKeyboard(doc);
+      if (replyKbd != null) {
+        if (isOneTimeKeyboard(request, contentResponse))  replyKbd.setOneTimeKeyboard(true);
+        if (isResizeKeyboard(request, contentResponse))   replyKbd.setResizeKeyboard(true);
+        keyboard = replyKbd;
+
+      } else {
+        keyboard = getInlineKeyboard(doc);
+      }
+    }
 
     String text = getText(doc);
 
-    final boolean shouldPass = StringUtils.isBlank(text) && keyboard == null;
-    if (!shouldPass) {
+    final boolean isNothingToSend = StringUtils.isBlank(text) && keyboard == null;
+    if (!isNothingToSend) {
       // Empty message text is not allowed by Telegram Bot API.
       text = text.isEmpty() ? "." : text;
     }
@@ -119,14 +134,35 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
           response.getAttributes().get(ContentRequestUtils.ATTR_REQUEST_URI));
     }
 
-    if (!shouldPass) {
+    if (!isNothingToSend) {
       final String token =
           request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
       final String chatId = request.getProfile()
           .query()
           .property("telegram-chats", token)
           .getValue();
-      client.sendMessage(sessionManager, token, chatId, text, keyboard);
+
+      if (!isEditRequest(doc)) {
+        final Message message = client.sendMessage(sessionManager, token, chatId, text, keyboard);
+
+        // Save `content page ID` -> `Telegram message ID mapping`.
+        final String messageId = getMessageId(doc);
+        if (isNotBlank(messageId) && message.getMessageId() != null) {
+          session.setAttribute("message-" + messageId, message.getMessageId());
+        }
+
+      } else {
+        final String contentMessageId = getMessageId(doc);
+        final String tgMessageId = (String) session.getAttribute("message-" + contentMessageId);
+        client.editMessage(
+            sessionManager,
+            token,
+            chatId,
+            tgMessageId,
+            text,
+            keyboard instanceof InlineKeyboardMarkup ? (InlineKeyboardMarkup) keyboard : null
+        );
+      }
     }
 
     if (shouldCloseSession) {
@@ -135,6 +171,9 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
   }
 
+  /**
+   * Processes PUSH messages.
+   */
   private void sendTelegramMessage(final ExtendedSadsRequest request,
                                    final ContentResponse content,
                                    String message,
@@ -154,7 +193,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
 
     Keyboard kbd = new ReplyKeyboardHide();
     try {
-      if (StringUtils.isNotBlank(keyboard)) {
+      if (isNotBlank(keyboard)) {
         final String[][] buttons = unmarshal(parse(keyboard), String[][].class);
         if (buttons != null) {
           kbd = new ReplyKeyboardMarkup() {{
@@ -178,7 +217,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         kbd);
   }
 
-  private String getText(final Document doc) throws DocumentException {
+  public static String getText(final Document doc) throws DocumentException {
     final Collection<String> messages = new ArrayList<String>() {{
       //noinspection unchecked
       for (Element e : (List<Element>) doc.getRootElement().elements("message")) {
@@ -187,6 +226,18 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }};
 
     return StringUtils.join(messages, "\n").trim();
+  }
+
+  private String getMessageId(final Document doc) throws DocumentException {
+    return AttributeReader.getAttributes(doc.getRootElement())
+        .getString("telegram.message.id")
+        .orNull();
+  }
+
+  private boolean isEditRequest(final Document doc) throws DocumentException {
+    return AttributeReader.getAttributes(doc.getRootElement())
+        .getBoolean("telegram.message.edit")
+        .or(false);
   }
 
   public static String getContent(Element element) throws DocumentException {

@@ -8,12 +8,15 @@ import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.EditMessageText;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.util.RateLimiter;
@@ -86,11 +89,11 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public void sendMessage(SessionManager sessionManager,
-                          String token,
-                          String chatId,
-                          String text,
-                          Keyboard keyboard) throws TelegramApiException {
+  public Message sendMessage(SessionManager sessionManager,
+                             String token,
+                             String chatId,
+                             String text,
+                             Keyboard keyboard) throws TelegramApiException {
 
     acquireChatLimit(sessionManager, chatId);
 
@@ -103,15 +106,37 @@ public class TelegramApiImpl implements TelegramApi {
       method.setReplyMarkup(keyboard);
     }
 
-    call(token, method);
+    return call(token, method);
   }
 
   @Override
-  public void sendMessage(SessionManager sessionManager,
+  public Message sendMessage(SessionManager sessionManager,
+                             String token,
+                             String chatId,
+                             String text) throws TelegramApiException {
+    return sendMessage(sessionManager, token, chatId, text, null);
+  }
+
+  @Override
+  public void editMessage(SessionManager sessionManager,
                           String token,
                           String chatId,
-                          String text) throws TelegramApiException {
-    sendMessage(sessionManager, token, chatId, text, null);
+                          String messageId,
+                          String text,
+                          InlineKeyboardMarkup keyboard) throws TelegramApiException {
+
+    acquireChatLimit(sessionManager, chatId);
+
+    final EditMessageText method = new EditMessageText();
+    method.setChatId(chatId);
+    method.setText(text);
+    // Always using HTML seems quite safe.
+    method.setParseMode("HTML");
+    if (keyboard != null) {
+      method.setReplyMarkup(keyboard);
+    }
+
+    call(token, method);
   }
 
   @Override

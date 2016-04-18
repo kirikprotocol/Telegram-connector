@@ -24,7 +24,7 @@ public class Message extends ApiType<Message> {
   private User leftChatParticipant;
 
   @JsonProperty(value = "group_chat_created")
-  private Boolean groupchatCreated;
+  private Boolean groupChatCreated;
 
   @JsonProperty(value = "reply_to_message")
   private Message replyToMessage;
@@ -45,17 +45,41 @@ public class Message extends ApiType<Message> {
   @JsonProperty(value = "migrate_from_chat_id")
   private Long migrateFromChatId;
 
-    private PhotoSize[] photo;
-    private Audio audio;
-    private Document document;
-    private Sticker sticker;
-    private Video video;
-    private Voice voice;
-    private Contact contact;
-    private Location location;
+  /**
+   * Optional. Message is a photo, available sizes of the photo
+   */
+  @JsonProperty
+  private PhotoSize[] photo;
 
+  /** Optional. Message is an audio file, information about the file */
+  @JsonProperty
+  private Audio audio;
 
-    public Message() {}
+  /** Optional. Message is a general file, information about the file */
+  @JsonProperty
+  private Document document;
+
+  /** Optional. Message is a sticker, information about the sticker */
+  @JsonProperty
+  private Sticker sticker;
+
+  /** Optional. Message is a video, information about the video */
+  @JsonProperty
+  private Video video;
+
+  /** Optional. Message is a voice message, information about the file */
+  @JsonProperty
+  private Voice voice;
+
+  /** Optional. Message is a shared contact, information about the contact */
+  @JsonProperty
+  private Contact contact;
+
+  /** Optional. Message is a shared location, information about the location */
+  @JsonProperty
+  private Location location;
+
+  public Message() {}
 
   public Integer getMessageId() {
     return messageId;
@@ -113,12 +137,12 @@ public class Message extends ApiType<Message> {
     this.leftChatParticipant = leftChatParticipant;
   }
 
-  public Boolean getGroupchatCreated() {
-    return groupchatCreated;
+  public Boolean getGroupChatCreated() {
+    return groupChatCreated;
   }
 
-  public void setGroupchatCreated(Boolean groupchatCreated) {
-    this.groupchatCreated = groupchatCreated;
+  public void setGroupChatCreated(Boolean groupChatCreated) {
+    this.groupChatCreated = groupChatCreated;
   }
 
   public Message getReplyToMessage() {
@@ -161,67 +185,67 @@ public class Message extends ApiType<Message> {
     this.migrateFromChatId = migrateFromChatId;
   }
 
-    public PhotoSize[] getPhoto() {
-        return photo;
-    }
+  public PhotoSize[] getPhoto() {
+    return photo;
+  }
 
-    public void setPhoto(PhotoSize[] photo) {
-        this.photo = photo;
-    }
+  public void setPhoto(PhotoSize[] photo) {
+    this.photo = photo;
+  }
 
-    public Audio getAudio() {
-        return audio;
-    }
+  public Audio getAudio() {
+    return audio;
+  }
 
-    public void setAudio(Audio audio) {
-        this.audio = audio;
-    }
+  public void setAudio(Audio audio) {
+    this.audio = audio;
+  }
 
-    public Sticker getSticker() {
-        return sticker;
-    }
+  public Sticker getSticker() {
+    return sticker;
+  }
 
-    public void setSticker(Sticker sticker) {
-        this.sticker = sticker;
-    }
+  public void setSticker(Sticker sticker) {
+    this.sticker = sticker;
+  }
 
-    public Document getDocument() {
-        return document;
-    }
+  public Document getDocument() {
+    return document;
+  }
 
-    public void setDocument(Document document) {
-        this.document = document;
-    }
+  public void setDocument(Document document) {
+    this.document = document;
+  }
 
-    public Video getVideo() {
-        return video;
-    }
+  public Video getVideo() {
+    return video;
+  }
 
-    public void setVideo(Video video) {
-        this.video = video;
-    }
+  public void setVideo(Video video) {
+    this.video = video;
+  }
 
-    public Voice getVoice() {
-        return voice;
-    }
+  public Voice getVoice() {
+    return voice;
+  }
 
-    public void setVoice(Voice voice) {
-        this.voice = voice;
-    }
+  public void setVoice(Voice voice) {
+    this.voice = voice;
+  }
 
-    public Contact getContact() {
-        return contact;
-    }
+  public Contact getContact() {
+    return contact;
+  }
 
-    public void setContact(Contact contact) {
-        this.contact = contact;
-    }
+  public void setContact(Contact contact) {
+    this.contact = contact;
+  }
 
-    public Location getLocation() {
-        return location;
-    }
+  public Location getLocation() {
+    return location;
+  }
 
-    public void setLocation(Location location) {
-        this.location = location;
-    }
+  public void setLocation(Location location) {
+    this.location = location;
+  }
 }
