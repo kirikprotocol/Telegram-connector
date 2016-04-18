@@ -224,6 +224,9 @@
 
   <xsl:template match="/">
     <page>
+      <xsl:call-template name="copy-attributes">
+        <xsl:with-param name="elem" select="/page"/>
+      </xsl:call-template>
       <message>
         <xsl:apply-templates select="/page/title"/>
         <xsl:apply-templates select="/page/div[(count(@type)=0 or @type!='sms')]"/>
@@ -255,6 +258,17 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
+  <xsl:template name="copy-attributes">
+    <xsl:param name="elem"/>
+
+    <xsl:if test="$elem/@attributes">
+      <xsl:attribute name="attributes">
+        <xsl:value-of select="$elem/@attributes"/>
+      </xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
 
 </xsl:stylesheet>
 

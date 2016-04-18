@@ -1,0 +1,3 @@
+<page version="2.0" attributes="abc: true; def: false">
+  <div>Hello!</div>
+</page>

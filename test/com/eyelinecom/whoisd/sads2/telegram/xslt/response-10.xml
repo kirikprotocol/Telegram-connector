@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page attributes="abc: true; def: false">
+  <message>Hello!</message>
+</page>
