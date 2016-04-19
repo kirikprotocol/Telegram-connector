@@ -54,7 +54,6 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     try {
       final String wnumber = request.getAbonent();
       final String msisdn = tgRequest.getProfile()
-          .query()
           .property("mobile", "msisdn")
           .getValue();
 
@@ -68,7 +67,6 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
 
       } else if (
           tgRequest.getProfile()
-              .query()
               .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null)
       {
         if(log.isDebugEnabled()){log.debug("redirect from confirm msisdn");}

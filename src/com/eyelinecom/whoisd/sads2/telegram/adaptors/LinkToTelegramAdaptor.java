@@ -51,7 +51,6 @@ public class LinkToTelegramAdaptor extends URLAdaptor {
 
             final String hash = RandomStringUtils.randomAlphanumeric(hashLength);
             profile
-                .query()
                 .property("telegram-hashes", token)
                 .set(hash);
 

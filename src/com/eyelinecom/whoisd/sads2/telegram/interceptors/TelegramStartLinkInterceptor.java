@@ -5,7 +5,6 @@ import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.adaptors.LinkToTelegramAdaptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.StoredHttpRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
@@ -58,15 +57,13 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
           .get();  //TODO filter by date (link life-time: 10 min)
 
       if (profile != null) {
-        profile.query().property("telegram-hashes", token).delete();
+        profile.property("telegram-hashes", token).delete();
         final String msisdn = profile
-            .query()
             .property("mobile", "msisdn")
             .getValue();
 
         if (msisdn != null) {
           request.getProfile()
-              .query()
               .property("mobile", "msisdn")
               .set(msisdn);
         }

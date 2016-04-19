@@ -48,7 +48,6 @@ public class Msisdn2ChatInterceptor extends BlankInterceptor implements Initable
 
         if (token != null) {
           final Property chatId = profile
-              .query()
               .property("telegram-chats", token)
               .get();
 

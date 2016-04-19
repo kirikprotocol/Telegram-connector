@@ -10,7 +10,7 @@ import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.PropertyQuery;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
@@ -44,7 +44,6 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
       final String wnumber = request.getAbonent();
 
       final String msisdn = tgRequest.getProfile()
-          .query()
           .property("mobile", "msisdn")
           .getValue();
 
@@ -57,7 +56,6 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
 
       } else if ((msisdn != null) &&
           tgRequest.getProfile()
-              .query()
               .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
         redirectBack(msisdn, tgRequest, dispatcher, log);
       }
@@ -92,7 +90,6 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
         request.getServiceScenario().getAttributes().getProperty("msisdn-confirmation-uri");
 
     request.getProfile()
-        .query()
         .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED)
         .set(onSuccess);
 
@@ -131,7 +128,6 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
     final String serviceId = request.getServiceId();
 
     final PropertyQuery property = request.getProfile()
-        .query()
         .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED);
 
     final String originalUrl = property.getValue();

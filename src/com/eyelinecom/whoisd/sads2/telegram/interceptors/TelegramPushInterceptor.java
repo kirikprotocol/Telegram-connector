@@ -140,7 +140,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       final String token =
           request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
       final String chatId = request.getProfile()
-          .query()
           .property("telegram-chats", token)
           .getValue();
 
@@ -195,7 +194,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
 
     final String chatId = request
         .getProfile()
-        .query().property("telegram-chats", token)
+        .property("telegram-chats", token)
         .getValue();
 
     Keyboard kbd = new ReplyKeyboardHide();

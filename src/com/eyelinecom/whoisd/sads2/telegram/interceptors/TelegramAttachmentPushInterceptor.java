@@ -83,7 +83,6 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
     final String chatId = request.getProfile()
-        .query()
         .property("telegram-chats", token)
         .getValue();
     final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);

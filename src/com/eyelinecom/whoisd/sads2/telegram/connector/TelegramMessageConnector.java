@@ -246,7 +246,7 @@ public class TelegramMessageConnector extends HttpServlet {
             .where(QueryRestrictions.property("telegram", "id").eq(userId))
             .getOrCreate();
 
-        profile.query().property("telegram-chats", token).set(chatId);
+        profile.property("telegram-chats", token).set(chatId);
 
       } else if (update.getCallbackQuery() != null) {
         final CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -259,7 +259,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
         if (callbackQuery.getMessage() != null) {
           final String chatId = String.valueOf(callbackQuery.getMessage().getChat().getId());
-          profile.query().property("telegram-chats", token).set(chatId);
+          profile.property("telegram-chats", token).set(chatId);
         }
 
       } else {
@@ -498,7 +498,6 @@ public class TelegramMessageConnector extends HttpServlet {
             serviceToken,
             getProfileStorage()
                 .find(wnumber)
-                .query()
                 .property("telegram-chats", serviceToken)
                 .getValue(),
             "Hello from " + me.getUserName() + "!"

@@ -9,16 +9,13 @@ import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.commons.lang.StringUtils.remove;
 
 public class MsisdnRedirectInterceptor extends BlankInterceptor implements Initable {
 
@@ -61,7 +58,6 @@ public class MsisdnRedirectInterceptor extends BlankInterceptor implements Inita
       return null;
     }
     final Profile.Property msisdn = profile
-        .query()
         .property("mobile", "msisdn")
         .get();
     return msisdn == null ? null : msisdn.getValue();

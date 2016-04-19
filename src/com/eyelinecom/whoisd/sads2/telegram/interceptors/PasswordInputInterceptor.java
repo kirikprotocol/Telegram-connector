@@ -11,7 +11,7 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.PropertyQuery;
 import org.apache.commons.logging.Log;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -100,7 +100,6 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
     } else {
       final PropertyQuery passwordProp = tgRequest
           .getProfile()
-          .query()
           .property("services", "password-" + serviceId.replace(".", "_"));
 
       final String passwordValue = passwordProp.getValue();

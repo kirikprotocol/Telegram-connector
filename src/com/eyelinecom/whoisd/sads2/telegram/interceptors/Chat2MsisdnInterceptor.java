@@ -29,7 +29,6 @@ public class Chat2MsisdnInterceptor extends BlankInterceptor {
     try {
       final String msisdn = tgRequest
           .getProfile()
-          .query()
           .property("mobile", "msisdn")
           .getValue();
 
