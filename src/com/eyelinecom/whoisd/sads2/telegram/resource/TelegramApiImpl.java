@@ -129,6 +129,7 @@ public class TelegramApiImpl implements TelegramApi {
 
     final EditMessageText method = new EditMessageText();
     method.setChatId(chatId);
+    method.setMessageId(messageId);
     method.setText(text);
     // Always using HTML seems quite safe.
     method.setParseMode("HTML");

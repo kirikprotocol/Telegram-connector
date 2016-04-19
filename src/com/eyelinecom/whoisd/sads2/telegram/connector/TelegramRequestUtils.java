@@ -20,11 +20,19 @@ public class TelegramRequestUtils {
   }
 
   public static String getChatId(String webHookRequest) throws TelegramApiException {
-    return String.valueOf(parseUpdate(webHookRequest).getMessage().getChat().getId());
+    final Update update = parseUpdate(webHookRequest);
+
+    if (update.getMessage() != null) {
+      return String.valueOf(update.getMessage().getChat().getId());
+
+    } else {
+      return String.valueOf(update.getCallbackQuery().getMessage().getChat().getId());
+    }
   }
 
   public static String getMessageText(String webHookRequest) throws TelegramApiException {
-    return parseUpdate(webHookRequest).getMessage().getText();
+    final Update update = parseUpdate(webHookRequest);
+    return update.getMessage() != null ? update.getMessage().getText() : null;
   }
 
 }

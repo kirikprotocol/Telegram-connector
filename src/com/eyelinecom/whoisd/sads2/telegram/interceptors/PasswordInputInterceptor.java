@@ -6,7 +6,7 @@ import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
-import com.eyelinecom.whoisd.sads2.content.ContentRequest;
+import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
@@ -26,8 +26,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 public class PasswordInputInterceptor extends BlankInterceptor implements Initable {
 
   @Override
-  public void afterContentResponse(SADSRequest request,
-                                   ContentRequest contentRequest,
+  public void beforeResponseRender(SADSRequest request,
                                    ContentResponse content,
                                    RequestDispatcher dispatcher) throws InterceptionException {
 
@@ -41,41 +40,23 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
         .getRootElement()
         .selectSingleNode("//input[@type='password']");
 
-    if (inputElement == null) {
-      return;
-    }
+    final String redirectUri =
+        request.getServiceScenario().getAttributes().getProperty("password-input-uri");
 
-    final PropertyQuery passwordProp =
-        tgRequest.getProfile().query().property("services", "password-" + serviceId, "value");
-    final String passwordValue =  passwordProp.getValue();
+    final Session session = tgRequest.getSession();
+    if (inputElement != null) {
 
-    if (passwordValue != null) {
-      // Password value is already known in profile storage.
-      // Submit the value using input `name` and `href`.
-
-      passwordProp.delete();
-
-      String href = inputElement.attributeValue("href");
-      final String inputName = inputElement.attributeValue("name");
-
-      href = UrlUtils.addParameter(href, inputName, passwordValue);
-
-      try {
-        final String submitUri = UrlUtils.merge(request.getResourceURI(), href);
-        request.setResourceURI(submitUri);
-
-        dispatcher.processRequest(request);
-      } catch (Exception e) {
-        throw new InterceptionException(e);
-      }
-
-    } else {
-
-      // Set:
-      //  - password-sid: current service ID (the one which need the password)
+      // Got an input[type=password].
+      //
+      // Set request attrs:
+      //  - password-sid: current service ID (the one which needs the password)
       //  - password-prompt: message text
       //
-      // Redirect to service property "password-input-uri".
+      // Set session attrs:
+      //  - password-uri: submit URL, merged w/ the current content root
+      //  - password-name: input name
+      //
+      // Redirect to content service using property "password-input-uri".
       //
       final String prevUri = request.getResourceURI();
 
@@ -90,8 +71,17 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
         throw new InterceptionException(e);
       }
 
-      final String redirectUri =
-          request.getServiceScenario().getAttributes().getProperty("password-input-uri");
+      String href = inputElement.attributeValue("href");
+      try {
+        href = UrlUtils.merge(request.getResourceURI(), href);
+
+      } catch (Exception e) {
+        throw new InterceptionException(e);
+      }
+
+      session.setAttribute("password-uri", href);
+      session.setAttribute("password-name", inputElement.attributeValue("name"));
+
       request.setResourceURI(redirectUri);
 
       if (log.isDebugEnabled()) {
@@ -105,6 +95,39 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
         dispatcher.processRequest(request);
       } catch (Exception e) {
         throw new InterceptionException(e);
+      }
+
+    } else {
+      final PropertyQuery passwordProp = tgRequest
+          .getProfile()
+          .query()
+          .property("services", "password-" + serviceId.replace(".", "_"));
+
+      final String passwordValue = passwordProp.getValue();
+
+      if (passwordValue != null && !request.getResourceURI().startsWith(redirectUri)) {
+        // Password value is already known in profile storage.
+        //
+        // Submit the value using session attrs:
+        //  - password-uri: submit URL
+        //  - password-name: input name
+        //
+
+        passwordProp.delete();
+
+        String href = (String) session.getAttribute("password-uri");
+        final String inputName = (String) session.getAttribute("password-name");
+
+        href = UrlUtils.addParameter(href, inputName, passwordValue);
+
+        try {
+          request.setResourceURI(href);
+
+          dispatcher.processRequest(request);
+        } catch (Exception e) {
+          throw new InterceptionException(e);
+        }
+
       }
     }
   }

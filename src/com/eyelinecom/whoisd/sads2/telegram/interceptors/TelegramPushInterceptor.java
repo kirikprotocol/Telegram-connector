@@ -22,7 +22,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
+import static com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader.getAttributes;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -123,7 +123,9 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
 
     final boolean shouldCloseSession =
-        keyboard == null && doc.getRootElement().elements("input").isEmpty();
+        keyboard == null && doc.getRootElement().elements("input").isEmpty() &&
+            !getAttributes(doc.getRootElement()).getBoolean("telegram.keep.session").or(false);
+
     final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
     final Session session = request.getSession();
 
@@ -153,15 +155,20 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
 
       } else {
         final String contentMessageId = getMessageId(doc);
-        final String tgMessageId = (String) session.getAttribute("message-" + contentMessageId);
-        client.editMessage(
-            sessionManager,
-            token,
-            chatId,
-            tgMessageId,
-            text,
-            keyboard instanceof InlineKeyboardMarkup ? (InlineKeyboardMarkup) keyboard : null
-        );
+        final Integer tgMessageId = (Integer) session.getAttribute("message-" + contentMessageId);
+        if (tgMessageId != null) {
+          client.editMessage(
+              sessionManager,
+              token,
+              chatId,
+              String.valueOf(tgMessageId),
+              text,
+              keyboard instanceof InlineKeyboardMarkup ? (InlineKeyboardMarkup) keyboard : null
+          );
+
+        } else {
+          log.warn("Cannot find Telegram MessageId for content page ID [" + contentMessageId + "]");
+        }
       }
     }
 
@@ -229,13 +236,13 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   }
 
   private String getMessageId(final Document doc) throws DocumentException {
-    return AttributeReader.getAttributes(doc.getRootElement())
+    return getAttributes(doc.getRootElement())
         .getString("telegram.message.id")
         .orNull();
   }
 
   private boolean isEditRequest(final Document doc) throws DocumentException {
-    return AttributeReader.getAttributes(doc.getRootElement())
+    return getAttributes(doc.getRootElement())
         .getBoolean("telegram.message.edit")
         .or(false);
   }

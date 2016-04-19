@@ -185,12 +185,20 @@ public class TelegramMessageConnector extends HttpServlet {
     protected SADSResponse buildQueuedResponse(StoredHttpRequest req,
                                                SADSRequest sadsRequest) {
       try {
-        return buildWebhookResponse(
-            200,
-            new SendChatAction(
-                getChatId(req.getContent()),
-                SendChatAction.ChatAction.TYPING).marshalAsWebHookResponse()
-        );
+        final Update update = parseUpdate(req.getContent());
+        if (update.getMessage() != null) {
+          return buildWebhookResponse(
+              200,
+              new SendChatAction(
+                  getChatId(req.getContent()),
+                  SendChatAction.ChatAction.TYPING).marshalAsWebHookResponse()
+          );
+
+        } else {
+          // Do not send "typing" event in case this update is initiated by an inline keyboard
+          // as it displays a spinner itself.
+          return buildWebhookResponse(200);
+        }
 
       } catch (TelegramApiException e) {
         getLog(req).error(e.getMessage(), e);

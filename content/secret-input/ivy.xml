@@ -1,0 +1,8 @@
+<ivy-module version="2.0">
+  <info organisation="mobi.eyeline.mobilizer" module="content-secret-input"/>
+  <dependencies>
+
+    <dependency org="mobi.eyeline.utils" name="rest-client" rev="[0.1,+)" changing="true"/>
+
+  </dependencies>
+</ivy-module>
