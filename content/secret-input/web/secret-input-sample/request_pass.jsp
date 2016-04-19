@@ -2,7 +2,7 @@
 
 <page version="2.0">
   <div>
-    <input navigationId="submit" type="password" name="pin" title="Введите пароль (4 цифры):"/>
+    <input navigationId="submit" type="password" name="pin" title="Для какой-то операции нам потребуется ваш персональный пароль (4 цифры)"/>
   </div>
   <navigation id="submit">
     <link pageId="finish.jsp">Готово</link>

@@ -30,7 +30,7 @@
   private String payloadText(int total, int current) {
     final StringBuilder buf = new StringBuilder();
 
-    buf.append("Используйте клавиатуру ниже для ввода пароля: ");
+    buf.append("Вы можете использовать клавиатуру ниже, или ввести пароль вручную: ");
     buf.append("<b>");
 
     for (int i = 0; i < total; i++)
@@ -48,8 +48,9 @@
 
   final String wnumber = request.getParameter("subscriber");
   final String key = request.getParameter("key");
+  final String badCommand = request.getParameter("bad_command");
 
-  if (key == null) {
+  if (key == null && badCommand == null) {
     // Initial page load.
 
     final String fromServiceId = request.getParameter("password-sid");
@@ -78,12 +79,14 @@
 
     request.setAttribute("isEdit", true);
 
-    final String currentValue = session.getAttribute("entered-value") + key;
+    final String currentValue = badCommand != null ?
+        badCommand : (session.getAttribute("entered-value") + key);
+
     session.setAttribute("entered-value", currentValue);
 
     final int currentLength = currentValue.length();
 
-    if (currentLength == 4) {
+    if (currentLength == 4 || badCommand != null) {
       final String prevSid = (String) session.getAttribute("password-sid");
       new RestClient()
           .json(API_ROOT + "/profile/" + wnumber + "/services.password-" + prevSid.replace(".", "_"), post(RestClient.content(currentValue)));
