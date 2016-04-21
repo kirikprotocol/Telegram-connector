@@ -52,7 +52,7 @@ public class TelegramApiImpl implements TelegramApi {
                          Properties properties) throws Exception {
     this.loader = loader;
 
-    this.publicKeyPath = SADSInitUtils.getFilename("certificate.pem", properties);
+    publicKeyPath = getPublicKeyPath(properties);
     this.baseUrl = properties.getProperty("base.url");
     this.connectorBaseUrl = properties.getProperty("connector.url");
 
@@ -65,6 +65,17 @@ public class TelegramApiImpl implements TelegramApi {
 
     this.maxRateLimitRetries =
         Integer.parseInt(properties.getProperty("telegram.max.rate.limit.retries", "5"));
+  }
+
+  private String getPublicKeyPath(Properties properties) {
+    try {
+      return SADSInitUtils.getFilename("certificate.pem", properties);
+
+    } catch (Exception e) {
+      log.info(
+          "Property 'certificate.pem' is missing, public certificate PEM file cannot be used", e);
+      return null;
+    }
   }
 
   @Override
