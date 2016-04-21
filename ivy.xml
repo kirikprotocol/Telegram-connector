@@ -15,7 +15,7 @@
     <dependency org="commons-httpclient" name="commons-httpclient" rev="3.1"/>
     <dependency org="commons-codec" name="commons-codec" rev="1.2"/>
     <dependency org="log4j" name="log4j" rev="1.2.16"/>
-    <dependency org="mobi.eyeline.util" name="utils" rev="1.0.44"/>
+    <dependency org="mobi.eyeline.util" name="utils" rev="1.0.62"/>
     <dependency org="mobi.eyeline.mobilizer" name="personalization-helpers" rev="0.09"/>
     <!-- dependency org="org.glassfish" name="javax.json" rev="1.0.4"/ -->
     <dependency org="com.google.guava"   name="guava"         rev="[16.0.1,)" />
