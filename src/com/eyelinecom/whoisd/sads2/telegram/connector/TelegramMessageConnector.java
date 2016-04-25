@@ -62,6 +62,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getChatId;
+import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getMessageText;
 import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.parseUpdate;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
@@ -232,6 +233,20 @@ public class TelegramMessageConnector extends HttpServlet {
       final String token = getServiceToken(req);
 
       final Update update = parseUpdate(req.getContent());
+
+      final String incoming = getMessageText(req.getContent());
+
+      if ("/clear_profile".equals(incoming)) {
+        // Reset profile of the current user.
+        final String userId = String.valueOf(update.getMessage().getFrom().getId());
+        final Profile profile = getProfileStorage()
+            .query()
+            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .get();
+        if (profile != null) {
+          profile.delete();
+        }
+      }
 
       final Profile profile;
 
@@ -485,7 +500,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       Session session = getSessionManager(serviceId).getSession(wnumber);
 
-      if ("/reset".equals(incoming)) {
+      if ("/invalidate_session".equals(incoming) || "/reset".equals(incoming)) {
         // Invalidate the current session.
         session.close();
         session = getSessionManager(serviceId).getSession(wnumber);
@@ -493,6 +508,7 @@ public class TelegramMessageConnector extends HttpServlet {
       } else if ("/who".equals(incoming)) {
         final String serviceToken = getServiceToken(message);
         final User me = getClient().getMe(serviceToken);
+
         getClient().sendMessage(
             getSessionManager(serviceId),
             serviceToken,
@@ -500,7 +516,18 @@ public class TelegramMessageConnector extends HttpServlet {
                 .find(wnumber)
                 .property("telegram-chats", serviceToken)
                 .getValue(),
-            "Hello from " + me.getUserName() + "!"
+            "Bot name: @" + me.getUserName() + ".\nToken: " + serviceToken + ".\nService: " + serviceId + "."
+        );
+
+      } else if ("/show_profile".equals(incoming)) {
+        final Profile profile = getProfileStorage().find(wnumber);
+        final String serviceToken = getServiceToken(message);
+
+        getClient().sendMessage(
+            getSessionManager(serviceId),
+            serviceToken,
+            profile.property("telegram-chats", serviceToken).getValue(),
+            profile.dump()
         );
       }
 
