@@ -6,8 +6,7 @@ import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.telegram.connector.StoredHttpRequest;
-import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
+import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramWebhookRequest;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
@@ -31,18 +30,18 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
 
   @Override
   public void onOuterRequest(SADSRequest request, Object outerRequest) throws Exception {
-    if (request.getProtocol() == Protocol.TELEGRAM && outerRequest instanceof StoredHttpRequest) {
-      onTelegramRequest((ExtendedSadsRequest) request, (StoredHttpRequest) outerRequest);
+    if (request.getProtocol() == Protocol.TELEGRAM && outerRequest instanceof TelegramWebhookRequest) {
+      onTelegramRequest((ExtendedSadsRequest) request, (TelegramWebhookRequest) outerRequest);
     }
   }
 
   private void onTelegramRequest(ExtendedSadsRequest request,
-                                 StoredHttpRequest outerRequest) throws Exception {
+                                 TelegramWebhookRequest outerRequest) throws Exception {
 
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
-    final String rawSubscriberData = TelegramRequestUtils.getMessageText(outerRequest.getContent());
+    final String rawSubscriberData = outerRequest.getMessageText();
 
     if (rawSubscriberData!=null &&
         rawSubscriberData.startsWith(START_MESSAGE) &&

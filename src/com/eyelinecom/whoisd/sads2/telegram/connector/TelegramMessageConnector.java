@@ -61,9 +61,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getChatId;
-import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.getMessageText;
-import static com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.parseUpdate;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
@@ -74,7 +71,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
   public static final String ATTR_SESSION_PREVIOUS_PAGE_URI = "SADS-previous-page-uri";
 
-  private MessageConnector<StoredHttpRequest, SADSResponse> connector;
+  private MessageConnector<TelegramWebhookRequest, SADSResponse> connector;
 
   @Override
   public void destroy() {
@@ -99,7 +96,7 @@ public class TelegramMessageConnector extends HttpServlet {
   protected void service(HttpServletRequest req,
                          HttpServletResponse resp) throws ServletException, IOException {
 
-    final StoredHttpRequest request = new StoredHttpRequest(req);
+    final TelegramWebhookRequest request = new TelegramWebhookRequest(req);
 
     SADSResponse response = connector.process(request);
     fillHttpResponse(resp, response);
@@ -124,7 +121,7 @@ public class TelegramMessageConnector extends HttpServlet {
   }
 
   private class TelegramMessageConnectorImpl
-      extends LazyMessageConnector<StoredHttpRequest, SADSResponse> {
+      extends LazyMessageConnector<TelegramWebhookRequest, SADSResponse> {
 
     private static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
 
@@ -183,15 +180,15 @@ public class TelegramMessageConnector extends HttpServlet {
      * Response to a WebHook update.
      */
     @Override
-    protected SADSResponse buildQueuedResponse(StoredHttpRequest req,
+    protected SADSResponse buildQueuedResponse(TelegramWebhookRequest req,
                                                SADSRequest sadsRequest) {
       try {
-        final Update update = parseUpdate(req.getContent());
+        final Update update = req.asUpdate();
         if (update.getMessage() != null) {
           return buildWebhookResponse(
               200,
               new SendChatAction(
-                  getChatId(req.getContent()),
+                  req.getChatId(),
                   SendChatAction.ChatAction.TYPING).marshalAsWebHookResponse()
           );
 
@@ -212,7 +209,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected SADSResponse buildQueueErrorResponse(Exception e,
-                                                   StoredHttpRequest httpServletRequest,
+                                                   TelegramWebhookRequest httpServletRequest,
                                                    SADSRequest sadsRequest) {
       return buildWebhookResponse(500);
     }
@@ -229,13 +226,12 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected String getSubscriberId(StoredHttpRequest req) throws Exception {
+    protected String getSubscriberId(TelegramWebhookRequest req) throws Exception {
       final String token = getServiceToken(req);
 
-      final Update update = parseUpdate(req.getContent());
+      final Update update = req.asUpdate();
 
-      final String incoming = getMessageText(req.getContent());
-
+      final String incoming = req.getMessageText();
       if ("/clear_profile".equals(incoming)) {
         // Reset profile of the current user.
         final String userId = String.valueOf(update.getMessage().getFrom().getId());
@@ -286,13 +282,13 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected String getServiceId(StoredHttpRequest req) throws Exception {
+    protected String getServiceId(TelegramWebhookRequest req) throws Exception {
       // Extract service ID as a part of registered WebHook URL.
       final String[] parts = req.getRequestURI().split("/");
       return parts[parts.length - 2];
     }
 
-    protected String getServiceToken(StoredHttpRequest req) throws Exception {
+    protected String getServiceToken(TelegramWebhookRequest req) throws Exception {
       // Extract service token as a part of registered WebHook URL.
       final String[] parts = req.getRequestURI().split("/");
       return parts[parts.length - 1];
@@ -305,7 +301,7 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected String getGatewayRequestDescription(StoredHttpRequest httpServletRequest) {
+    protected String getGatewayRequestDescription(TelegramWebhookRequest httpServletRequest) {
       // Arbitrary description, passed to content Provider via headers (detailed)
       return "Telegram";
     }
@@ -318,126 +314,150 @@ public class TelegramMessageConnector extends HttpServlet {
       }*/
 
     @Override
-    protected void fillSADSRequest(SADSRequest sadsRequest, StoredHttpRequest req) {
+    protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
       super.fillSADSRequest(sadsRequest, req);
+
       try {
-        final Update update = parseUpdate(req.getContent());
-
-        final Message message = update.getMessage();
-        if (message != null) {
-          final TelegramApi api = (TelegramApi) getResource("telegram-api");
-          final String serviceToken = getServiceToken(req);
-
-          final List<AbstractInputType> mediaList = new ArrayList<AbstractInputType>();
-          final PhotoSize[] photoArray = message.getPhoto();
-          if (photoArray != null && photoArray.length > 0) {
-            for (PhotoSize photo : photoArray) {
-              File tFile = api.getFile(serviceToken, photo.getFileId());
-              InputFile file = new InputFile();
-              file.setMediaType("photo");
-              file.setUrl(tFile.getUrl());
-              file.setSize(photo.getFileSize());
-              mediaList.add(file);
-            }
-          }
-          final Audio audio = message.getAudio();
-          if (audio != null) {
-            final File tFile = api.getFile(serviceToken, audio.getFileId());
-            final InputFile file = new InputFile();
-            file.setMediaType("audio");
-            file.setUrl(tFile.getUrl());
-            file.setContentType(audio.getMimeType());
-            file.setSize(audio.getFileSize());
-            mediaList.add(file);
-          }
-          final Sticker sticker = message.getSticker();
-          if (sticker != null) {
-            final File tFile = api.getFile(serviceToken, sticker.getFileId());
-            final InputFile file = new InputFile();
-            file.setMediaType("sticker");
-            file.setUrl(tFile.getUrl());
-            file.setSize(tFile.getFileSize());
-            mediaList.add(file);
-          }
-          final Video video = message.getVideo();
-          if (video != null) {
-            final File tFile = api.getFile(serviceToken, video.getFileId());
-            final InputFile file = new InputFile();
-            file.setMediaType("video");
-            file.setUrl(tFile.getUrl());
-            file.setSize(tFile.getFileSize());
-            mediaList.add(file);
-          }
-          final Voice voice = message.getVoice();
-          if (voice != null) {
-            final File tFile = api.getFile(serviceToken, voice.getFileId());
-            final InputFile file = new InputFile();
-            file.setMediaType("voice");
-            file.setUrl(tFile.getUrl());
-            file.setSize(tFile.getFileSize());
-            mediaList.add(file);
-          }
-          final com.eyelinecom.whoisd.sads2.telegram.api.types.Document document = message.getDocument();
-          if (document != null) {
-            final File tFile = api.getFile(serviceToken, document.getFileId());
-            final InputFile file = new InputFile();
-            file.setMediaType("document");
-            file.setUrl(tFile.getUrl());
-            file.setSize(tFile.getFileSize());
-            mediaList.add(file);
-          }
-          final Contact tContact = message.getContact();
-          if (tContact != null) {
-            final InputContact contact = new InputContact();
-            contact.setMsisdn(tContact.getPhoneNumber());
-            contact.setName(tContact.getFirstName() + " " + tContact.getLastName());
-            mediaList.add(contact);
-          }
-          final Location tLocation = message.getLocation();
-          if (tLocation != null) {
-            final InputLocation location = new InputLocation();
-            location.setLatitude(tLocation.getLatitude());
-            location.setLongitude(tLocation.getLongitude());
-            mediaList.add(location);
-          }
-
-          if (mediaList.size() > 0) {
-            String mediaParameter = MarshalUtils.marshal(mediaList);
-            //todo remove this copy-paste. separarate get inputName to dedicated method
-            Session session = getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
-            final Document prevPage =
-                (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
-            String inputName = null;
-            final Element input = prevPage.getRootElement().element("input");
-            if (input != null) {
-              inputName = input.attributeValue("name");
-            } else {
-              inputName = "bad_command";
-            }
-            sadsRequest.getParameters().put(inputName, mediaParameter);
-            sadsRequest.getParameters().put("input_type", "json");
-          }
-        }
+        handleFileUpload(sadsRequest, req);
 
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }
     }
 
-      @Override
+    private void handleFileUpload(SADSRequest sadsRequest,
+                                  TelegramWebhookRequest req) throws Exception {
+
+      final Update update = req.asUpdate();
+
+      final Message message = update.getMessage();
+      if (message != null) {
+        final TelegramApi api = (TelegramApi) getResource("telegram-api");
+        final String serviceToken = getServiceToken(req);
+
+        final List<AbstractInputType> mediaList = extractMedia(message, api, serviceToken);
+
+        if (mediaList.size() > 0) {
+          final String mediaParameter = MarshalUtils.marshal(mediaList);
+          //todo remove this copy-paste. separarate get inputName to dedicated method
+
+          final String inputName;
+          {
+            final Session session =
+                getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
+            final Document prevPage =
+                (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
+
+            final Element input =
+                prevPage == null ? null : prevPage.getRootElement().element("input");
+            if (input != null) {
+              inputName = input.attributeValue("name");
+
+            } else {
+              inputName = "bad_command";
+            }
+          }
+
+          sadsRequest.getParameters().put(inputName, mediaParameter);
+          sadsRequest.getParameters().put("input_type", "json");
+        }
+      }
+    }
+
+    private List<AbstractInputType> extractMedia(Message message,
+                                                 TelegramApi api,
+                                                 String serviceToken) throws TelegramApiException {
+
+      final List<AbstractInputType> mediaList = new ArrayList<>();
+
+      final PhotoSize[] photoArray = message.getPhoto();
+      if (photoArray != null && photoArray.length > 0) {
+        for (PhotoSize photo : photoArray) {
+          File tFile = api.getFile(serviceToken, photo.getFileId());
+          InputFile file = new InputFile();
+          file.setMediaType("photo");
+          file.setUrl(tFile.getUrl());
+          file.setSize(photo.getFileSize());
+          mediaList.add(file);
+        }
+      }
+      final Audio audio = message.getAudio();
+      if (audio != null) {
+        final File tFile = api.getFile(serviceToken, audio.getFileId());
+        final InputFile file = new InputFile();
+        file.setMediaType("audio");
+        file.setUrl(tFile.getUrl());
+        file.setContentType(audio.getMimeType());
+        file.setSize(audio.getFileSize());
+        mediaList.add(file);
+      }
+      final Sticker sticker = message.getSticker();
+      if (sticker != null) {
+        final File tFile = api.getFile(serviceToken, sticker.getFileId());
+        final InputFile file = new InputFile();
+        file.setMediaType("sticker");
+        file.setUrl(tFile.getUrl());
+        file.setSize(tFile.getFileSize());
+        mediaList.add(file);
+      }
+      final Video video = message.getVideo();
+      if (video != null) {
+        final File tFile = api.getFile(serviceToken, video.getFileId());
+        final InputFile file = new InputFile();
+        file.setMediaType("video");
+        file.setUrl(tFile.getUrl());
+        file.setSize(tFile.getFileSize());
+        mediaList.add(file);
+      }
+      final Voice voice = message.getVoice();
+      if (voice != null) {
+        final File tFile = api.getFile(serviceToken, voice.getFileId());
+        final InputFile file = new InputFile();
+        file.setMediaType("voice");
+        file.setUrl(tFile.getUrl());
+        file.setSize(tFile.getFileSize());
+        mediaList.add(file);
+      }
+      final com.eyelinecom.whoisd.sads2.telegram.api.types.Document document = message.getDocument();
+      if (document != null) {
+        final File tFile = api.getFile(serviceToken, document.getFileId());
+        final InputFile file = new InputFile();
+        file.setMediaType("document");
+        file.setUrl(tFile.getUrl());
+        file.setSize(tFile.getFileSize());
+        mediaList.add(file);
+      }
+      final Contact tContact = message.getContact();
+      if (tContact != null) {
+        final InputContact contact = new InputContact();
+        contact.setMsisdn(tContact.getPhoneNumber());
+        contact.setName(tContact.getFirstName() + " " + tContact.getLastName());
+        mediaList.add(contact);
+      }
+      final Location tLocation = message.getLocation();
+      if (tLocation != null) {
+        final InputLocation location = new InputLocation();
+        location.setLatitude(tLocation.getLatitude());
+        location.setLongitude(tLocation.getLongitude());
+        mediaList.add(location);
+      }
+      return mediaList;
+    }
+
+    @Override
     protected Protocol getRequestProtocol(ServiceConfig config,
                                           String subscriberId,
-                                          StoredHttpRequest httpServletRequest) {
+                                          TelegramWebhookRequest httpServletRequest) {
       return Protocol.TELEGRAM;
     }
 
     @Override
     protected String getRequestUri(ServiceConfig config,
                                    String wnumber,
-                                   StoredHttpRequest message) throws Exception {
+                                   TelegramWebhookRequest message) throws Exception {
 
       final String serviceId = config.getId();
-      final Update update = parseUpdate(message.getContent());
+      final Update update = message.asUpdate();
 
       if (update.getMessage() != null) {
         return handleMessage(config, wnumber, message, serviceId, update.getMessage());
@@ -467,7 +487,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     private String handleCallbackQuery(ServiceConfig config,
                                        String wnumber,
-                                       StoredHttpRequest message,
+                                       TelegramWebhookRequest message,
                                        String serviceId,
                                        Update update) throws Exception {
 
@@ -492,7 +512,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     private String handleMessage(ServiceConfig config,
                                  String wnumber,
-                                 StoredHttpRequest message,
+                                 TelegramWebhookRequest message,
                                  String serviceId,
                                  Message tgMessage) throws Exception {
 
@@ -579,7 +599,7 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected SADSResponse getSavedSADSResponse(StoredHttpRequest httpServletRequest) {
+    protected SADSResponse getSavedSADSResponse(TelegramWebhookRequest httpServletRequest) {
       // Always NULL.
       return null;
     }
@@ -589,7 +609,7 @@ public class TelegramMessageConnector extends HttpServlet {
      * @param response  Response from content provider
      */
     @Override
-    protected SADSResponse getOuterResponse(StoredHttpRequest req,
+    protected SADSResponse getOuterResponse(TelegramWebhookRequest req,
                                             SADSRequest request,
                                             SADSResponse response) {
       return buildWebhookResponse(200);
@@ -610,14 +630,14 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected SADSResponse sadsRequestBuildError(Exception e,
-                                                 StoredHttpRequest req) {
+                                                 TelegramWebhookRequest req) {
       getLog(req).error("SADSRequest build error", e);
       return null;
     }
 
     @Override
     protected SADSResponse sadsResponseBuildError(Exception e,
-                                                  StoredHttpRequest req,
+                                                  TelegramWebhookRequest req,
                                                   SADSRequest sadsRequest) {
       getLog(req).error("SADSResponse build error", e);
       return null;
@@ -625,7 +645,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected SADSResponse messageProcessingError(Exception e,
-                                                  StoredHttpRequest req,
+                                                  TelegramWebhookRequest req,
                                                   SADSRequest sadsRequest,
                                                   SADSResponse response) {
       getLog(req).error("Message processing error", e);
@@ -646,7 +666,7 @@ public class TelegramMessageConnector extends HttpServlet {
       return (ProfileStorage) getResource("profile-storage");
     }
 
-    private Log getLog(StoredHttpRequest req) {
+    private Log getLog(TelegramWebhookRequest req) {
       try{
         return SADSLogger.getLogger(getServiceId(req), getSubscriberId(req), getClass());
 
