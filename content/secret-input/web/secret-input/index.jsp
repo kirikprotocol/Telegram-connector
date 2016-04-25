@@ -1,15 +1,23 @@
 <%@ page import="mobi.eyeline.utils.restclient.web.RestClient" %>
-<%@ page import="java.net.HttpURLConnection" %>
-<%@ page import="java.net.URL" %>
-<%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.json.JSONArray" %>
+<%@ page import="org.json.JSONObject" %>
+<%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
 <%@ page import="static java.nio.charset.StandardCharsets.UTF_8" %>
 <%@ page import="static javax.xml.bind.DatatypeConverter.parseBase64Binary" %>
+<%@ page import="java.io.UnsupportedEncodingException" %>
+<%@ page import="java.net.HttpURLConnection" %>
+<%@ page import="java.net.URL" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 
 
 <%!
-  static final String API_ROOT = "http://localhost:7890/wstorage";
+  static final String API_ROOT = "http:///wstorage";
+  static final String MOBILIZER_ROOT = "http://devel.globalussd.mobi/";
 
   private void sendGet(String url) throws Exception {
     final HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
@@ -20,11 +28,11 @@
   private void pushBack(String serviceId,
                         String wnumber) throws Exception {
 
-    sendGet("http://devel.globalussd.mobi/push?" +
+    sendGet(MOBILIZER_ROOT + "/push?" +
         "service=" + serviceId +
         "&subscriber=" + wnumber +
         "&protocol=telegram" +
-        "&scenario=default");
+        "&scenario=default-noinform");
   }
 
   private String payloadText(int total, int current) {
@@ -40,6 +48,61 @@
 
     return buf.toString();
   }
+
+  private String linksToLabels(String links) throws UnsupportedEncodingException {
+    if (links == null || links.isEmpty()) {
+      return "";
+    }
+
+    final JSONArray target = new JSONArray();
+
+    final String json = new String(DatatypeConverter.parseBase64Binary(links), "UTF-8");
+    final JSONArray rows = new JSONArray(json);
+    for (Object row0 : rows) {
+      if (!(row0 instanceof JSONArray)) continue;
+
+      final JSONArray row = (JSONArray) row0;
+
+      final JSONArray labelRow = new JSONArray();
+      for (Object btn0 : row) {
+        if (!(btn0 instanceof JSONObject)) continue;
+
+        final JSONObject btn = (JSONObject) btn0;
+        labelRow.put(btn.getString("label"));
+      }
+
+      if (labelRow.length() != 0) {
+        target.put(labelRow);
+      }
+    }
+
+    return target.length() == 0 ? "" : target.toString();
+  }
+
+  private Map<String, String> parseLinks(String links) throws UnsupportedEncodingException {
+    if (links == null || links.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    final Map<String, String> target = new HashMap<String, String>();
+
+    final String json = new String(DatatypeConverter.parseBase64Binary(links), "UTF-8");
+    final JSONArray rows = new JSONArray(json);
+    for (Object row0 : rows) {
+      if (!(row0 instanceof JSONArray)) continue;
+
+      final JSONArray row = (JSONArray) row0;
+
+      for (Object btn0 : row) {
+        if (!(btn0 instanceof JSONObject)) continue;
+
+        final JSONObject btn = (JSONObject) btn0;
+        target.put(btn.getString("label"), btn.getString("href"));
+      }
+    }
+
+    return target;
+  }
 %>
 
 <%
@@ -50,67 +113,93 @@
   final String key = request.getParameter("key");
   final String badCommand = request.getParameter("bad_command");
 
-  if (key == null && badCommand == null) {
-    // Initial page load.
+  final Map<String, String> contentLinks =
+      (Map<String, String>) session.getAttribute("password-links");
 
-    final String fromServiceId = request.getParameter("password-sid");
-    session.setAttribute("password-sid", fromServiceId);
+  if (badCommand != null && contentLinks != null && contentLinks.containsKey(badCommand)) {
+    final String linkId = contentLinks.get(badCommand);
 
-    final String prevTextParam = request.getParameter("password-prompt");
-    final String prevText =
-        prevTextParam == null || prevTextParam.length() == 0 ?
-            "" :
-            new String(parseBase64Binary(prevTextParam), UTF_8);
-    session.setAttribute("password-prompt", prevText);
+    final String fromServiceId = (String) session.getAttribute("password-sid");
 
-    session.setAttribute("entered-value", "");
-
-    text = payloadText(4, 0);
-    request.setAttribute("isEdit", false);
-
-    sendGet("http://devel.globalussd.mobi/push?" +
+    sendGet(MOBILIZER_ROOT + "/push?" +
         "service=" + fromServiceId +
         "&subscriber=" + wnumber +
         "&protocol=telegram" +
-        "&scenario=push" +
-        "&message=" + URLEncoder.encode(prevText, "UTF-8"));
+        "&pageId=" + URLEncoder.encode(linkId, "UTF-8") +
+        "&scenario=default");
+
+    request.setAttribute("isEdit", true);
+    request.setAttribute("hideKeyboard", true);
+    request.setAttribute("keepSession", true);
+    text = "Ввод пароля отменен.";
 
   } else {
 
-    request.setAttribute("isEdit", true);
+    if (key == null && badCommand == null) {
+      // Initial page load.
 
-    final String currentValue = badCommand != null ?
-        badCommand : (session.getAttribute("entered-value") + key);
+      final String fromServiceId = request.getParameter("password-sid");
+      session.setAttribute("password-sid", fromServiceId);
 
-    session.setAttribute("entered-value", currentValue);
+      final String prevTextParam = request.getParameter("password-prompt");
+      final String prevText =
+          prevTextParam == null || prevTextParam.length() == 0 ?
+              "" :
+              new String(parseBase64Binary(prevTextParam), "UTF-8");
+      session.setAttribute("password-prompt", prevText);
 
-    final int currentLength = currentValue.length();
+      session.setAttribute("entered-value", "");
 
-    if (currentLength == 4 || badCommand != null) {
-      final String prevSid = (String) session.getAttribute("password-sid");
-      new RestClient()
-          .json(API_ROOT + "/profile/" + wnumber + "/services.password-" + prevSid.replace(".", "_"), post(RestClient.content(currentValue)));
+      text = payloadText(4, 0);
+      request.setAttribute("isEdit", false);
 
-      try {
-        pushBack(prevSid, request.getParameter("subscriber"));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      final String links = request.getParameter("password-links");
+      session.setAttribute("password-links", parseLinks(links));
 
-      request.setAttribute("hideKeyboard", true);
-      request.setAttribute("keepSession", true);
-      text = "Пароль введён.";
+      sendGet(MOBILIZER_ROOT + "/push?" +
+          "service=" + fromServiceId +
+          "&subscriber=" + wnumber +
+          "&protocol=telegram" +
+          "&scenario=push" +
+          "&message=" + URLEncoder.encode(prevText, "UTF-8") +
+          "&keyboard=" + linksToLabels(links));
 
     } else {
-      pageId = session.getId();
-      text = payloadText(4, currentLength);
+
+      request.setAttribute("isEdit", true);
+
+      final String currentValue = badCommand != null ?
+          badCommand : (session.getAttribute("entered-value") + key);
+
+      session.setAttribute("entered-value", currentValue);
+
+      final int currentLength = currentValue.length();
+
+      if (currentLength == 4 || badCommand != null) {
+        final String prevSid = (String) session.getAttribute("password-sid");
+        new RestClient()
+            .json(API_ROOT + "/profile/" + wnumber + "/services.password-" + prevSid.replace(".", "_"), post(RestClient.content(currentValue)));
+
+        try {
+          pushBack(prevSid, request.getParameter("subscriber"));
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        request.setAttribute("hideKeyboard", true);
+        request.setAttribute("keepSession", true);
+        text = "Пароль введён.";
+
+      } else {
+        pageId = session.getId();
+        text = payloadText(4, currentLength);
+      }
     }
   }
 
   request.setAttribute("pageId", pageId);
   request.setAttribute("text", text);
 %>
-
 
 <page version="2.0" attributes="telegram.message.id: ${pageId}; telegram.message.edit: ${isEdit}; telegram.keep.session: ${keepSession}">
   <div>

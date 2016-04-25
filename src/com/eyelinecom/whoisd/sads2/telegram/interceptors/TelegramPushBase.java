@@ -1,5 +1,6 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
+import com.eyelinecom.whoisd.sads2.common.ArrayUtil;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
@@ -17,7 +18,6 @@ import com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -25,16 +25,12 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil.isBooleanSet;
 import static com.google.common.base.Predicates.not;
 
@@ -97,9 +93,9 @@ public abstract class TelegramPushBase extends BlankInterceptor {
     return new ReplyKeyboardMarkup(keyboard);
   }
 
-  private static <T> T[][] collectButtons(final Class<T> btnType,
-                                          final List<Element> buttons,
-                                          final Function<Element, T> asButton) {
+  public static <T> T[][] collectButtons(final Class<T> btnType,
+                                         final List<Element> buttons,
+                                         final Function<Element, T> asButton) {
     // { <row number> -> [<button>] }
     final Map<Integer, List<T>> keyTable = new HashMap<Integer, List<T>>() {{
       for (Element button : buttons) {
@@ -111,11 +107,14 @@ public abstract class TelegramPushBase extends BlankInterceptor {
           put(nRow, rowButtons = new ArrayList<>());
         }
 
-        rowButtons.add(asButton.apply(button));
+        final T btn = asButton.apply(button);
+        if (btn != null) {
+          rowButtons.add(btn);
+        }
       }
     }};
 
-    return mapToTable(btnType, keyTable);
+    return ArrayUtil.mapToTable(btnType, keyTable);
   }
 
   public static InlineKeyboardMarkup getInlineKeyboard(Document doc) {
@@ -157,29 +156,6 @@ public abstract class TelegramPushBase extends BlankInterceptor {
         });
 
     return new InlineKeyboardMarkup(keyboard);
-  }
-
-  private static <T> T[][] mapToTable(Class<T> clazz, Map<Integer, List<T>> keyTable) {
-    @SuppressWarnings("unchecked")
-    final T[][] keys = (T[][]) Array.newInstance(clazz, keyTable.size(), 1);
-
-    final List<Map.Entry<Integer, List<T>>> rows = new ArrayList<>(keyTable.entrySet());
-    Collections.sort(
-        rows,
-        new Comparator<Map.Entry<Integer, ?>>() {
-          @Override
-          public int compare(Map.Entry<Integer, ?> _1, Map.Entry<Integer, ?> _2) {
-            return Integer.compare(_1.getKey(), _2.getKey());
-          }
-        });
-
-    int i = 0;
-    for (Map.Entry<Integer, List<T>> row : rows) {
-      //noinspection unchecked
-      keys[i++] = transformArray(clazz, (T[]) row.getValue().toArray(), Functions.<T>identity());
-    }
-
-    return keys;
   }
 
 }

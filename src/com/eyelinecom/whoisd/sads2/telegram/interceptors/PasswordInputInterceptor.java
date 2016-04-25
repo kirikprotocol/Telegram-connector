@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
+import com.eyelinecom.whoisd.sads2.common.ArrayUtil;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
@@ -11,7 +12,13 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
+import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
+import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.ExtLink;
+import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
+import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.PropertyQuery;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import org.apache.commons.logging.Log;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -21,6 +28,7 @@ import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor.getText;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.xml.bind.DatatypeConverter.parseBase64Binary;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 
 public class PasswordInputInterceptor extends BlankInterceptor implements Initable {
@@ -33,11 +41,21 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
     final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
 
     final String serviceId = request.getServiceId();
-    final Log log = SADSLogger.getLogger(serviceId, getClass());
 
     final Document doc = (Document) content.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
-    final Element inputElement = (Element) doc
-        .getRootElement()
+    final Element rootElement = doc.getRootElement();
+
+    final Optional<String> redirect =
+        AttributeReader.getAttributes(rootElement).getString("telegram.redirect");
+    if (redirect.isPresent()) {
+      final String redirectBase64 = redirect.get();
+      request.setResourceURI(new String(parseBase64Binary(redirectBase64), UTF_8));
+      processRequest(request, dispatcher);
+
+      return;
+    }
+
+    final Element inputElement = (Element) rootElement
         .selectSingleNode("//input[@type='password']");
 
     final String redirectUri =
@@ -45,59 +63,15 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
 
     final Session session = tgRequest.getSession();
     if (inputElement != null) {
-
-      // Got an input[type=password].
-      //
-      // Set request attrs:
-      //  - password-sid: current service ID (the one which needs the password)
-      //  - password-prompt: message text
-      //
-      // Set session attrs:
-      //  - password-uri: submit URL, merged w/ the current content root
-      //  - password-name: input name
-      //
-      // Redirect to content service using property "password-input-uri".
-      //
-      final String prevUri = request.getResourceURI();
-
-      request.getParameters().put("password-sid", serviceId);
-
-      try {
-        request.getParameters().put(
-            "password-prompt",
-            printBase64Binary(getText(doc).getBytes(UTF_8))
-        );
-      } catch (DocumentException e) {
-        throw new InterceptionException(e);
-      }
-
-      String href = inputElement.attributeValue("href");
-      try {
-        href = UrlUtils.merge(request.getResourceURI(), href);
-
-      } catch (Exception e) {
-        throw new InterceptionException(e);
-      }
-
-      session.setAttribute("password-uri", href);
-      session.setAttribute("password-name", inputElement.attributeValue("name"));
-
-      request.setResourceURI(redirectUri);
-
-      if (log.isDebugEnabled()) {
-        log.debug("Redirecting to password input:" +
-            " wnumber = [" + tgRequest.getProfile().getWnumber() + "]," +
-            " redirect to = [" + redirectUri + "]," +
-            " from = [" + prevUri + "]");
-      }
-
-      try {
-        dispatcher.processRequest(request);
-      } catch (Exception e) {
-        throw new InterceptionException(e);
-      }
+      redirectToPasswordInput(
+          tgRequest,
+          dispatcher,
+          doc,
+          inputElement,
+          redirectUri);
 
     } else {
+
       final PropertyQuery passwordProp = tgRequest
           .getProfile()
           .property("services", "password-" + serviceId.replace(".", "_"));
@@ -118,16 +92,108 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
         final String inputName = (String) session.getAttribute("password-name");
 
         href = UrlUtils.addParameter(href, inputName, passwordValue);
+        request.setResourceURI(href);
 
-        try {
-          request.setResourceURI(href);
-
-          dispatcher.processRequest(request);
-        } catch (Exception e) {
-          throw new InterceptionException(e);
-        }
+        processRequest(request, dispatcher);
 
       }
+    }
+  }
+
+  private void redirectToPasswordInput(final ExtendedSadsRequest request,
+                                       RequestDispatcher dispatcher,
+                                       Document doc,
+                                       Element inputElement,
+                                       String redirectUri) throws InterceptionException {
+
+    final Log log = SADSLogger.getLogger(request.getServiceId(), getClass());
+
+    // Got an input[type=password].
+    //
+    // Set request attrs:
+    //  - password-sid: current service ID (the one which needs the password)
+    //  - password-prompt: message text
+    //  - password-links: original message buttons, if any
+    //
+    // Set session attrs:
+    //  - password-uri: submit URL, merged w/ the current content root
+    //  - password-name: input name
+    //
+    // Redirect to content service using property "password-input-uri".
+    //
+    final String prevUri = request.getResourceURI();
+
+    request.getParameters().put("password-sid", request.getServiceId());
+
+    try {
+      request.getParameters().put(
+          "password-prompt",
+          printBase64Binary(getText(doc).getBytes(UTF_8))
+      );
+    } catch (DocumentException e) {
+      throw new InterceptionException(e);
+    }
+
+    final ExtLink[][] links = TelegramRequestUtils.collectExtLinks(doc);
+    try {
+      if (links != null) {
+
+        ArrayUtil.forEach(links,
+            new Function<ExtLink, ExtLink>() {
+              @Override
+              public ExtLink apply(ExtLink link) {
+                try {
+                  return new ExtLink(
+                      UrlUtils.merge(request.getResourceURI(), link.href),
+                      link.label
+                  );
+
+                } catch (Exception e) {
+                  log.error(e.getMessage(), e);
+                  return link;
+                }
+              }
+            });
+
+        request.getParameters().put(
+            "password-links",
+            printBase64Binary(MarshalUtils.marshal(links).getBytes(UTF_8))
+        );
+      }
+    } catch (Exception e) {
+      throw new InterceptionException(e);
+    }
+
+    String href = inputElement.attributeValue("href");
+    try {
+      href = UrlUtils.merge(request.getResourceURI(), href);
+
+    } catch (Exception e) {
+      throw new InterceptionException(e);
+    }
+
+    request.getSession().setAttribute("password-uri", href);
+    request.getSession().setAttribute("password-name", inputElement.attributeValue("name"));
+
+    request.setResourceURI(redirectUri);
+
+    if (log.isDebugEnabled()) {
+      log.debug("Redirecting to password input:" +
+          " wnumber = [" + request.getProfile().getWnumber() + "]," +
+          " redirect to = [" + redirectUri + "]," +
+          " from = [" + prevUri + "]");
+    }
+
+    processRequest(request, dispatcher);
+  }
+
+  private void processRequest(SADSRequest request,
+                              RequestDispatcher dispatcher) throws InterceptionException {
+    try {
+      dispatcher.processRequest(request);
+
+    } catch (Exception e) {
+      throw new InterceptionException(e);
     }
   }
 

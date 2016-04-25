@@ -52,7 +52,7 @@ public class TelegramApiImpl implements TelegramApi {
                          Properties properties) throws Exception {
     this.loader = loader;
 
-    publicKeyPath = getPublicKeyPath(properties);
+    this.publicKeyPath = getPublicKeyPath(properties);
     this.baseUrl = properties.getProperty("base.url");
     this.connectorBaseUrl = properties.getProperty("connector.url");
 

@@ -1,8 +1,10 @@
 package com.eyelinecom.whoisd.sads2.telegram.xslt;
 
 
+import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
 import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor;
+import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -10,11 +12,11 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ContentExtractionTest {
 
@@ -145,6 +147,21 @@ public class ContentExtractionTest {
     assertEquals(
         "{\"keyboard\":[[\"Page 1\",\"Page 2\"],[\"Page 3\"]]}",
         kbd);
+
+    final TelegramRequestUtils.ExtLink[][] links =
+        TelegramRequestUtils.collectExtLinks(rawDocument);
+
+    assertEquals(
+        "[" +
+            "[" +
+              "{\"href\":\"page.xml\",\"label\":\"Page 1\"}," +
+              "{\"href\":\"page.xml\",\"label\":\"Page 2\"}" +
+            "]," +
+            "[" +
+              "{\"href\":\"page.xml\",\"label\":\"Page 3\"}" +
+            "]" +
+        "]",
+        MarshalUtils.marshal(links));
   }
 
   @Test
