@@ -4,9 +4,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.zip.GZIPInputStream;
 
@@ -45,6 +45,7 @@ abstract class Resource extends RestClient {
   //
 
   public static class JSONResource extends Resource {
+    private String content;
     private Object json;
 
     JSONResource(Option... options) {
@@ -53,21 +54,30 @@ abstract class Resource extends RestClient {
 
     @SuppressWarnings("unused")
     public JSONArray array() throws IOException {
-      unmarshal();
+      ensureParsed();
       return (JSONArray) json;
     }
 
     @SuppressWarnings("unused")
     public JSONObject object() throws IOException {
-      unmarshal();
+      ensureParsed();
       return (JSONObject) json;
     }
 
-    private void unmarshal() throws IOException {
-      if (json == null) {
-        json = new JSONTokener(new InputStreamReader(inputStream, "UTF-8")).nextValue();
-        inputStream.close();
-      }
+    @SuppressWarnings("unused")
+    public String text() throws IOException {
+      ensureRead();
+      return content;
+    }
+
+    private void ensureRead() throws IOException {
+      content = toString(inputStream, "UTF-8");
+      inputStream.close();
+    }
+
+    private void ensureParsed() throws IOException {
+      if (content == null)  ensureRead();
+      if (json == null)     json = new JSONTokener(content).nextValue();
     }
 
     @Override
@@ -75,5 +85,17 @@ abstract class Resource extends RestClient {
       return "application/json";
     }
 
+  }
+
+  static String toString(InputStream is, String charset) throws IOException {
+    final ByteArrayOutputStream rc = new ByteArrayOutputStream();
+    final byte[] buf = new byte[1024];
+
+    int length;
+    while ((length = is.read(buf)) != -1) {
+      rc.write(buf, 0, length);
+    }
+
+    return rc.toString(charset);
   }
 }

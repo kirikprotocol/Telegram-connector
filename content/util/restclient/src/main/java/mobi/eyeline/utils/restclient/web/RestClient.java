@@ -22,6 +22,54 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Simple and lightweight REST API client.
+ *
+ * <p>
+ *   Supports:
+ *   <ul>
+ *     <li>GET, POST, PUT and DELETE queries,
+ *     <li>Request and response handling using either built-in JSON object model or plain text,
+ *     <li>GZIP and uncompressed response types,
+ *     <li>Custom headers, timeout adjustment, basic SSL settings.
+ *   </ul>
+ *
+ * </p>
+ *
+ * <p>
+ *   <h1>Examples</h1>
+ *
+ *   <h2>Example 1: GET</h2>
+ *   <pre>
+ *     // Execute GET and receive response as JSON object right away, ...
+ *     JSONObject rc = new RestClient().json("example.com").object();
+ *
+ *     // ... then query its' fields.
+ *     String rcAttr = rc.getString("value");
+ *
+ *     // Or get just the raw response.
+ *     String plainTextResponse = new RestClient().json("example.com").text();
+ *   </pre>
+ *
+ *   <h2>Example 2: POST</h2>
+ *
+ *   <pre>
+ *     // Construct JSON payload, ...
+ *     JSONArray postData = new JSONArray();
+ *     postData.put("foo");
+ *     postData.put("bar");
+ *
+ *     // ... and POST it to a target URL.
+ *     JSONResource rc = new RestClient().json("example.com", RestClient.post(RestClient.content(postData)));
+ *
+ *     // Check the response if needed.
+ *     JSONObject obj = rc.object();
+ *     JSONArray arrat = rc.array();
+ *     String plainText = rc.text();
+ *   </pre>
+ *
+ * </p>
+ */
 public class RestClient {
 
   private Map<String, String> headers;
