@@ -7,12 +7,24 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * Telegram WebHook request.
+ * <br/>
+ * Expected to land at {@literal <MOBILIZER_ROOT>/<TELEGRAM_CONNECTOR>/<telegram.token>/<service.id>}.
+ */
 public class TelegramWebhookRequest extends StoredHttpRequest {
 
   private Update update;
 
+  private final String serviceToken;
+  private final String serviceId;
+
   TelegramWebhookRequest(HttpServletRequest request) {
     super(request);
+
+    final String[] parts = getRequestURI().split("/");
+    serviceToken = parts[parts.length - 1];
+    serviceId = parts[parts.length - 2];
   }
 
   public Update asUpdate() throws IOException, TelegramApiException {
@@ -38,4 +50,19 @@ public class TelegramWebhookRequest extends StoredHttpRequest {
     final Update update = asUpdate();
     return update.getMessage() != null ? update.getMessage().getText() : null;
   }
+
+  /**
+   * Extract service token as a part of registered WebHook URL.
+   */
+  public String getServiceToken() {
+    return serviceToken;
+  }
+
+  /**
+   * Extract service ID as a part of registered WebHook URL.
+   */
+  public String getServiceId() {
+    return serviceId;
+  }
+
 }

@@ -39,7 +39,6 @@ import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -63,6 +62,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
+import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 public class TelegramMessageConnector extends HttpServlet {
@@ -227,7 +227,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected String getSubscriberId(TelegramWebhookRequest req) throws Exception {
-      final String token = getServiceToken(req);
+      final String token = req.getServiceToken();
 
       final Update update = req.asUpdate();
 
@@ -237,7 +237,7 @@ public class TelegramMessageConnector extends HttpServlet {
         final String userId = String.valueOf(update.getMessage().getFrom().getId());
         final Profile profile = getProfileStorage()
             .query()
-            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .where(property("telegram", "id").eq(userId))
             .get();
         if (profile != null) {
           profile.delete();
@@ -254,7 +254,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
         profile = getProfileStorage()
             .query()
-            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .where(property("telegram", "id").eq(userId))
             .getOrCreate();
 
         profile.property("telegram-chats", token).set(chatId);
@@ -265,7 +265,7 @@ public class TelegramMessageConnector extends HttpServlet {
         final String userId = String.valueOf(callbackQuery.getFrom().getId());
         profile = getProfileStorage()
             .query()
-            .where(QueryRestrictions.property("telegram", "id").eq(userId))
+            .where(property("telegram", "id").eq(userId))
             .getOrCreate();
 
         if (callbackQuery.getMessage() != null) {
@@ -283,15 +283,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected String getServiceId(TelegramWebhookRequest req) throws Exception {
-      // Extract service ID as a part of registered WebHook URL.
-      final String[] parts = req.getRequestURI().split("/");
-      return parts[parts.length - 2];
-    }
-
-    protected String getServiceToken(TelegramWebhookRequest req) throws Exception {
-      // Extract service token as a part of registered WebHook URL.
-      final String[] parts = req.getRequestURI().split("/");
-      return parts[parts.length - 1];
+      return req.getServiceId();
     }
 
     @Override
@@ -305,13 +297,6 @@ public class TelegramMessageConnector extends HttpServlet {
       // Arbitrary description, passed to content Provider via headers (detailed)
       return "Telegram";
     }
-
-/*      private void fillLink(AbstractFile f, TelegramApi api, String token, SADSRequest request) throws TelegramApiException {
-          if (f!=null) {
-              File file = api.getFile(token, f.getFileId());
-              request.getHeaders().put("X-Media", file.getUrl());
-          }
-      }*/
 
     @Override
     protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
@@ -331,42 +316,65 @@ public class TelegramMessageConnector extends HttpServlet {
       final Update update = req.asUpdate();
 
       final Message message = update.getMessage();
-      if (message != null) {
-        final TelegramApi api = (TelegramApi) getResource("telegram-api");
-        final String serviceToken = getServiceToken(req);
+      if (message == null) {
+        return;
+      }
 
-        final List<AbstractInputType> mediaList = extractMedia(message, api, serviceToken);
+      // Steal contact data.
 
-        if (mediaList.size() > 0) {
-          final String mediaParameter = MarshalUtils.marshal(mediaList);
-          //todo remove this copy-paste. separarate get inputName to dedicated method
+      final Contact contact = message.getContact();
+      if (contact != null) {
+        final Integer tgUserId = contact.getUserId();
+        final String msisdn = contact.getPhoneNumber();
 
-          final String inputName;
-          {
-            final Session session =
-                getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
-            final Document prevPage =
-                (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
-
-            final Element input =
-                prevPage == null ? null : prevPage.getRootElement().element("input");
-            if (input != null) {
-              inputName = input.attributeValue("name");
-
-            } else {
-              inputName = "bad_command";
-            }
-          }
-
-          sadsRequest.getParameters().put(inputName, mediaParameter);
-          sadsRequest.getParameters().put("input_type", "json");
+        if (tgUserId != null && msisdn != null) {
+          // TODO: this makes more sense if profile merging is implemented.
+          getProfileStorage().query()
+              .where(property("telegram", "id").eq(String.valueOf(tgUserId)))
+              .where(property("mobile", "msisdn").eq(msisdn))
+              .getOrCreate();
         }
       }
+
+      // Submit uploaded files to the content service via request parameter.
+
+      final List<AbstractInputType> mediaList = extractMedia(req);
+      if (mediaList.size() <= 0) {
+        return;
+      }
+
+      final String inputName;
+      {
+        final Session session =
+            getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
+        final Document prevPage =
+            (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
+
+        final Element input =
+            prevPage == null ? null : prevPage.getRootElement().element("input");
+        if (input != null) {
+          inputName = input.attributeValue("name");
+
+        } else {
+          inputName = "bad_command";
+        }
+      }
+
+      final String mediaParameter = MarshalUtils.marshal(mediaList);
+      sadsRequest.getParameters().put(inputName, mediaParameter);
+      sadsRequest.getParameters().put("input_type", "json");
     }
 
-    private List<AbstractInputType> extractMedia(Message message,
-                                                 TelegramApi api,
-                                                 String serviceToken) throws TelegramApiException {
+    private List<AbstractInputType> extractMedia(TelegramWebhookRequest req)
+        throws Exception {
+
+      final Message message = req.asUpdate().getMessage();
+      if (message == null) {
+        return Collections.emptyList();
+      }
+
+      final TelegramApi api = (TelegramApi) getResource("telegram-api");
+      final String serviceToken = req.getServiceToken();
 
       final List<AbstractInputType> mediaList = new ArrayList<>();
 
@@ -526,7 +534,7 @@ public class TelegramMessageConnector extends HttpServlet {
         session = getSessionManager(serviceId).getSession(wnumber);
 
       } else if ("/who".equals(incoming)) {
-        final String serviceToken = getServiceToken(message);
+        final String serviceToken = message.getServiceToken();
         final User me = getClient().getMe(serviceToken);
 
         getClient().sendMessage(
@@ -541,7 +549,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       } else if ("/show_profile".equals(incoming)) {
         final Profile profile = getProfileStorage().find(wnumber);
-        final String serviceToken = getServiceToken(message);
+        final String serviceToken = message.getServiceToken();
 
         getClient().sendMessage(
             getSessionManager(serviceId),
