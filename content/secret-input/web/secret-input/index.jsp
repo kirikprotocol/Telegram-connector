@@ -109,7 +109,10 @@
   String text = null;
   String pageId = session.getId();
 
-  final String wnumber = request.getParameter("subscriber");
+  String wnumber = request.getParameter("wnumber");
+  if (wnumber==null) {
+    wnumber = request.getParameter("subscriber");
+  }	
   final String key = request.getParameter("key");
   final String badCommand = request.getParameter("bad_command");
 
@@ -181,7 +184,7 @@
             .json(API_ROOT + "/profile/" + wnumber + "/services.password-" + prevSid.replace(".", "_"), post(RestClient.content(currentValue)));
 
         try {
-          pushBack(prevSid, request.getParameter("subscriber"));
+          pushBack(prevSid, wnumber);
         } catch (Exception e) {
           e.printStackTrace();
         }
