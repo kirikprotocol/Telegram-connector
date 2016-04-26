@@ -1,59 +1,73 @@
-<%@ page import="com.eyelinecom.whoisd.sads2.telegram.confirmation.Context" %>
-<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile" %>
-<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Query.PropertyQuery" %>
-<%@ page import="static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.*" %>
-<%@ page import="com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage" %>
-<%@ page import="org.codehaus.jettison.json.JSONArray" %>
+<%@ page import="org.json.JSONArray" %>
+<%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
+<%@ page import="org.json.JSONObject" %>
+<%@ page import="java.io.IOException" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
 <%!
-  private final ProfileStorage storage = Context.getInstance().getProfileStorage();
+  private String getPhase(String wnumber, String serviceId) {
+    try {
+      return new RestClient()
+          .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".phase")
+          .object()
+          .getString("value");
+
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private void setPhase(String wnumber, String serviceId, String phase) throws IOException {
+    new RestClient()
+        .json(
+            API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".phase",
+            post(RestClient.content(phase))
+        );
+  }
 
   private String handle(HttpServletRequest request) throws Exception {
     final String wnumber = getWnumber(request);
-    final Profile profile = storage.find(wnumber);
+    final String serviceId = request.getParameter("serviceId");
+    final String phase = getPhase(wnumber, serviceId);
 
-    String serviceId = request.getParameter("serviceId");
-    if (StringUtils.isNotBlank(serviceId)) {
-      profile
-          .query()
-          .property("services", "auth-" + serviceId, "service-id")
-          .set(serviceId);
+    if (phase == null) {
+      setPhase(wnumber, serviceId, PHASE_ASKED_FOR_MSISDN);
 
-    } else {
-      serviceId = profile
-          .query()
-          .property("services", "auth-*", "service-id")
-          .getValue();
-    }
-
-    PropertyQuery pq = profile
-        .query()
-        .property("services", "auth-" + serviceId, "phase");
-
-    if (pq.get() == null) {
-      pq.set(PHASE_ASKED_FOR_MSISDN);
       return "PAGE_REQUEST_MSISDN";
 
     } else {
-      final String stage = pq.getValue();
 
-      if (PHASE_HAS_MSISDN.equals(stage)) {
+      if (PHASE_HAS_MSISDN.equals(phase)) {
         return "PAGE_REQUEST_CALLBACK";
 
-      } else if (PHASE_ASKED_FOR_MSISDN.equals(stage)) {
+      } else if (PHASE_ASKED_FOR_MSISDN.equals(phase)) {
         // Must be MSISDN.
 
         final String payload = request.getParameter("confirm_msisdn");
 
         String enteredMsisdn = null;
         try {
-          enteredMsisdn = normalize(
-              "json".equals(request.getParameter("input_type")) ?
-                  new JSONArray(payload).getJSONObject(0).getString("msisdn") :
-                  payload
-          );
+          if ("json".equals(request.getParameter("input_type"))) {
+            // Attachment. Treat it as a concact input (or fail and ignore).
+            final JSONObject contact = new JSONArray(payload).getJSONObject(0);
+            enteredMsisdn = normalize(contact.getString("msisdn"));
+
+            final String contactWnumber = contact.optString("id");
+            if (wnumber.equals(contactWnumber) && enteredMsisdn != null) {
+              // Got a contact info with:
+              //   - Valid MSISDN, which is
+              //   - Already persisted to the profile storage and associated to the current profile.
+              //
+              // No need to request any confirmation: mark verified & redirect back to content.
+              verify(enteredMsisdn);
+              return "PAGE_EMPTY";
+            }
+
+          } else {
+            // Plain text input.
+            enteredMsisdn = normalize(payload);
+          }
 
         } catch (Exception e) {
           getLog().warn("Failed parsing user input [" + payload + "]");
@@ -63,12 +77,18 @@
           return "PAGE_REQUEST_MSISDN_INVALID";
 
         } else {
-          pq.set(PHASE_HAS_MSISDN);
+          setPhase(wnumber, serviceId, PHASE_HAS_MSISDN);
 
-          profile
-              .query()
-              .property("services", "auth-" + serviceId, "entered-msisdn")
-              .set(enteredMsisdn);
+          final String safeSid = serviceId.replace(".", "_");
+          new RestClient()
+              .json(
+                  API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".entered-msisdn",
+                  post(RestClient.content(enteredMsisdn)));
+
+          new RestClient()
+              .json(
+                  API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
+                  post(RestClient.content(serviceId)));
 
           return "PAGE_REQUEST_CALLBACK";
         }
@@ -109,6 +129,9 @@
 
 <% } else if (target.equals("PAGE_REQUEST_CALLBACK")) { %>
   <jsp:include page="request_callback.jsp" flush="true"/>
+
+<% } else if (target.equals("PAGE_EMPTY")) { %>
+  <jsp:include page="empty.jsp" flush="true"/>
 
 <% } %>
 
