@@ -53,6 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -282,7 +283,7 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected String getServiceId(TelegramWebhookRequest req) throws Exception {
+    protected String getServiceId(TelegramWebhookRequest req) {
       return req.getServiceId();
     }
 
@@ -328,11 +329,13 @@ public class TelegramMessageConnector extends HttpServlet {
         final String msisdn = contact.getPhoneNumber();
 
         if (tgUserId != null && msisdn != null) {
-          // TODO: this makes more sense if profile merging is implemented.
-          getProfileStorage().query()
+          // TODO: implement profile merging instead of manual property propagation.
+          final Collection<Profile> profiles = getProfileStorage().query()
               .where(property("telegram", "id").eq(String.valueOf(tgUserId)))
-              .where(property("mobile", "msisdn").eq(msisdn))
-              .getOrCreate();
+              .list();
+          for (Profile profile : profiles) {
+            profile.property("mobile", "msisdn").set(normalize(msisdn));
+          }
         }
       }
 
@@ -440,6 +443,17 @@ public class TelegramMessageConnector extends HttpServlet {
         final InputContact contact = new InputContact();
         contact.setMsisdn(tContact.getPhoneNumber());
         contact.setName(tContact.getFirstName() + " " + tContact.getLastName());
+        if (tContact.getUserId() != null && tContact.getPhoneNumber() != null) {
+          // Rely on contact data already persisted to profile storage.
+          final Profile profile = getProfileStorage()
+              .query()
+              .where(property("telegram", "id").eq(String.valueOf(tContact.getUserId())))
+              .where(property("mobile", "msisdn").eq(normalize(tContact.getPhoneNumber())))
+              .get();
+          if (profile != null) {
+            contact.setId(profile.getWnumber());
+          }
+        }
         mediaList.add(contact);
       }
       final Location tLocation = message.getLocation();
@@ -658,6 +672,23 @@ public class TelegramMessageConnector extends HttpServlet {
                                                   SADSResponse response) {
       getLog(req).error("Message processing error", e);
       return null;
+    }
+
+    private String normalize(String msisdn) {
+      if (msisdn == null) {
+        return null;
+      }
+
+      msisdn = msisdn.replaceAll("[^0-9]+", "");
+      if (msisdn.length() < 11) {
+        return null;
+      }
+
+      if (msisdn.length() == 11 && msisdn.startsWith("8")) {
+        msisdn = msisdn.replaceFirst("8", "7");
+      }
+
+      return msisdn;
     }
 
     private TelegramApi getClient() throws NotFoundResourceException {

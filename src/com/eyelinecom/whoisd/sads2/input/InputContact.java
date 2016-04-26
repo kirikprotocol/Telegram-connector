@@ -1,34 +1,49 @@
 package com.eyelinecom.whoisd.sads2.input;
 
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
+
 /**
  * Created by jeck on 31/03/16
  */
 public class InputContact extends AbstractInputType<InputLocation>  {
-    private String msisdn;
+  private String msisdn;
 
-    private String name;
+  private String name;
 
-    public InputContact() {
-    }
+  /**
+   * Optional, contact {@linkplain Profile#getWnumber()}.
+   */
+  private String id;
 
-    public String getMsisdn() {
-        return msisdn;
-    }
+  public InputContact() {
+  }
 
-    public void setMsisdn(String msisdn) {
-        this.msisdn = msisdn;
-    }
+  public String getMsisdn() {
+    return msisdn;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setMsisdn(String msisdn) {
+    this.msisdn = msisdn;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    @Override
-    protected String getTypeValue() {
-        return "contact";
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  @Override
+  protected String getTypeValue() {
+    return "contact";
+  }
 }
