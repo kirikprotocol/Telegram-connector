@@ -93,7 +93,7 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
 
         } else if (
             tgRequest.getProfile()
-                .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
+                .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
           if (log.isDebugEnabled()) {
             log.debug("redirect from confirm msisdn");
           }

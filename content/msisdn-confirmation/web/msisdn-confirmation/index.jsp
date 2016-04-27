@@ -1,7 +1,5 @@
-<%@ page import="org.json.JSONArray" %>
-<%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
-<%@ page import="org.json.JSONObject" %>
 <%@ page import="java.io.IOException" %>
+<%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
@@ -19,11 +17,16 @@
   }
 
   private void setPhase(String wnumber, String serviceId, String phase) throws IOException {
-    new RestClient()
-        .json(
-            API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".phase",
-            post(RestClient.content(phase))
-        );
+    final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".phase";
+
+    try {
+      int maxPhases = 3;
+      while (maxPhases-- > 0) {
+        new RestClient().json(path, RestClient.delete());
+      }
+    } catch (Exception ignored) {}
+
+    new RestClient().json(path, post(RestClient.content(phase)));
   }
 
   private String handle(HttpServletRequest request) throws Exception {
@@ -52,6 +55,8 @@
             // Attachment. Treat it as a concact input (or fail and ignore).
             final JSONObject contact = new JSONArray(payload).getJSONObject(0);
             enteredMsisdn = normalize(contact.getString("msisdn"));
+            System.out.println("contact = " + contact);
+            System.out.println("wnumber = " + wnumber);
 
             final String contactWnumber = contact.optString("id");
             if (wnumber.equals(contactWnumber) && enteredMsisdn != null) {
@@ -60,6 +65,19 @@
               //   - Already persisted to the profile storage and associated to the current profile.
               //
               // No need to request any confirmation: mark verified & redirect back to content.
+
+              setPhase(wnumber, serviceId, PHASE_HAS_MSISDN);
+              final String safeSid = serviceId.replace(".", "_");
+              new RestClient()
+                  .json(
+                      API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".entered-msisdn",
+                      post(RestClient.content(enteredMsisdn)));
+
+              new RestClient()
+                  .json(
+                      API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
+                      post(RestClient.content(serviceId)));
+
               verify(enteredMsisdn);
               return "PAGE_EMPTY";
             }
@@ -70,7 +88,7 @@
           }
 
         } catch (Exception e) {
-          getLog().warn("Failed parsing user input [" + payload + "]");
+          getLog().warn("Failed processing user input [" + payload + "]", e);
         }
 
         if (enteredMsisdn == null) {

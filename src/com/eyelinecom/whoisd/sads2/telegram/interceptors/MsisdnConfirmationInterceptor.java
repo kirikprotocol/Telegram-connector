@@ -56,7 +56,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
 
       } else if ((msisdn != null) &&
           tgRequest.getProfile()
-              .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
+              .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
         redirectBack(msisdn, tgRequest, dispatcher, log);
       }
 
@@ -90,7 +90,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
         request.getServiceScenario().getAttributes().getProperty("msisdn-confirmation-uri");
 
     request.getProfile()
-        .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED)
+        .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED)
         .set(onSuccess);
 
     request.setResourceURI(redirectUri);
@@ -128,7 +128,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
     final String serviceId = request.getServiceId();
 
     final PropertyQuery property = request.getProfile()
-        .property("services", "auth-" + serviceId, VAR_MSISDN_CONFIRMATION_REDIRECTED);
+        .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED);
 
     final String originalUrl = property.getValue();
     property.delete();
