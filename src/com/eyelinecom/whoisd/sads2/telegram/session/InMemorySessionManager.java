@@ -8,11 +8,19 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.apache.commons.lang.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Created by jeck on 10/02/16
@@ -111,7 +120,7 @@ public class InMemorySessionManager {
         }
 
         return new MemorySession(subscriberId) {
-          @Override public void close() { storage.invalidate(subscriberId); }
+          @Override public void close() { super.close(); storage.invalidate(subscriberId); }
         };
       }
 
@@ -147,8 +156,9 @@ public class InMemorySessionManager {
 
   private static abstract class MemorySession implements Session {
     private final String id;
-    private final Map<String,Object> attributes = new HashMap<>();
+    private final Map<String, Object> attributes = new HashMap<>();
     private final Date startDate = new Date();
+    private boolean closed;
 
     MemorySession(String id) {
       this.id = id;
@@ -156,32 +166,68 @@ public class InMemorySessionManager {
 
     @Override
     public String getId() {
+      ensureOpen();
       return id;
     }
 
     @Override
     public Object getAttribute(String id) {
+      ensureOpen();
       return attributes.get(id);
     }
 
     @Override
     public void setAttribute(String id, Object value) {
+      ensureOpen();
       attributes.put(id, value);
     }
 
     @Override
     public Collection<String> getAttributesNames() {
+      ensureOpen();
       return unmodifiableSet(new HashSet<>(attributes.keySet()));
     }
 
     @Override
     public Object removeAttribute(String id) {
+      ensureOpen();
       return attributes.remove(id);
     }
 
     @Override
     public Date getStartDate() {
+      ensureOpen();
       return startDate;
+    }
+
+    @Override
+    public void close() {
+      ensureOpen();
+      closed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+      return closed;
+    }
+
+    public String dump() {
+      return new ToStringBuilder(this, SHORT_PREFIX_STYLE)
+          .append("id", id)
+          .append("attributes", attributes)
+          .append("startDate", startDate)
+          .append("closed", closed)
+          .toString();
+    }
+
+    @Override
+    public String toString() {
+      return "MemorySession{id='" + id + '\'' + ", startDate=" + startDate + '}';
+    }
+
+    private void ensureOpen() {
+      // checkState(!isClosed(), "Session is already closed.");
+      log.warn("The session is already closed! Session is [" + dump() + "]");
     }
   }
 
