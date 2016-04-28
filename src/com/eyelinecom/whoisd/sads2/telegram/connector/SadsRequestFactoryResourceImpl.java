@@ -10,11 +10,14 @@ import com.eyelinecom.whoisd.sads2.executors.connector.SimpleSADSRequestFactory;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
 import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
+
+import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
 
 public class SadsRequestFactoryResourceImpl implements SadsRequestFactoryResource {
 
@@ -44,8 +47,22 @@ public class SadsRequestFactoryResourceImpl implements SadsRequestFactoryResourc
 
         if (request instanceof ExtendedSadsRequest) {
           final ExtendedSadsRequest ext = (ExtendedSadsRequest) request;
-          ext.setSession(sessionManager.getSessionManager(ext.getServiceId()).getSession(ext.getAbonent()));
-          ext.setProfile(profileStorage.find(ext.getAbonent()));
+
+          Profile profile = profileStorage.find(ext.getAbonent());
+          if (profile == null) {
+            // Okay, seems to be not wnumber.
+            profile = profileStorage
+                .query()
+                .where(property("mobile", "msisdn").eq(ext.getAbonent()))
+                .get();
+          }
+          ext.setProfile(profile);
+
+          ext.setSession(
+              sessionManager
+                  .getSessionManager(ext.getServiceId())
+                  .getSession(profile != null ? profile.getWnumber() : ext.getAbonent())
+          );
         }
 
         return request;
