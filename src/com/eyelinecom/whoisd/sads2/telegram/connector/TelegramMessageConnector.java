@@ -348,8 +348,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       final String inputName;
       {
-        final Session session =
-            getSessionManager(sadsRequest.getServiceId()).getSession(sadsRequest.getAbonent());
+        final Session session = ((ExtendedSadsRequest) sadsRequest).getSession();
         final Document prevPage =
             (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
 
