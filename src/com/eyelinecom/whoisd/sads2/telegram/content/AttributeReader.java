@@ -1,5 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.content;
 
+import com.eyelinecom.whoisd.sads2.exception.ExceptionMapper;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
@@ -15,12 +17,9 @@ import java.util.concurrent.ExecutionException;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
-// TODO:  Implement attribute lookup in enclosing elements, i.e. attribute propagation.
-//        This would align nicely with CSS semantics & make hacks like manually looking up
-//        attributes in enclosing page unnecessary.
 // TODO:  Consider implementing more efficient attribute parsing (no `split` calls).
 public class AttributeReader {
 
@@ -29,13 +28,16 @@ public class AttributeReader {
   private static final Cache<Document, AttributeReader> docCache =
       CacheBuilder.newBuilder().expireAfterAccess(5, SECONDS).build();
 
-  private static final Cache<Element, AttributeSet> elemCache =
+  private static final Cache<Element, AttributeSetImpl> elemCache =
       CacheBuilder.newBuilder().expireAfterAccess(5, SECONDS).build();
 
   private final Document doc;
 
   public static AttributeSet getAttributes(Element element) {
-    return forDocument(element.getDocument()).getElementAttributes(element);
+    return ExceptionMapper.proxy(
+        forDocument(element.getDocument()).getElementAttributes(element),
+        DocumentProcessingException.class,
+        AttributeSet.class);
   }
 
   private static AttributeReader forDocument(final Document doc) {
@@ -46,7 +48,7 @@ public class AttributeReader {
       });
 
     } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      throw new DocumentProcessingException(e);
     }
   }
 
@@ -54,23 +56,27 @@ public class AttributeReader {
     this.doc = checkNotNull(doc);
   }
 
-  private AttributeSet getElementAttributes(final Element elem) {
+  private AttributeSetImpl getElementAttributes(final Element elem) {
     checkArgument(elem.getDocument().equals(doc));
 
     try {
-
-      return elemCache.get(elem, new Callable<AttributeSet>() {
+      return elemCache.get(elem, new Callable<AttributeSetImpl>() {
         @Override
-        public AttributeSet call() {
-          final String value = elem.attributeValue(ATTRIBUTE_NAME);
+        public AttributeSetImpl call() {
           try {
-            return new AttributeSetImpl().parse(value);
+            final AttributeSetImpl impl = new AttributeSetImpl();
+
+            if (elem.getParent() != null) {
+              impl.copy(getElementAttributes(elem.getParent()));
+            }
+
+            final String value = elem.attributeValue(ATTRIBUTE_NAME);
+            return impl.parse(value);
 
           } catch (Exception e) {
             throw new DocumentProcessingException("Failed processing element attributes:" +
                 " path = [" + elem.getUniquePath() + "]," +
-                " xml = [" + elem.asXML() + "]," +
-                " attributes = [" + value + "]", e);
+                " xml = [" + elem.asXML() + "]", e);
           }
         }
       });
@@ -103,11 +109,21 @@ public class AttributeReader {
 
     private final Map<String, String> attributes = new HashMap<>();
 
+    AttributeSetImpl copy(AttributeSetImpl other) {
+      attributes.putAll(other.attributes);
+      return this;
+    }
+
     public AttributeSetImpl parse(String attributes) {
       if (isNotBlank(attributes)) {
         for (String part : attributes.split(";")) {
           final String[] keyValue = part.split(":");
-          this.attributes.put(keyValue[0].trim(), keyValue[1].trim());
+
+          final String key = trimToNull(keyValue[0]);
+          final String value = trimToNull(keyValue[1]);
+          if (key != null && value != null) {
+            this.attributes.put(key, value);
+          }
         }
       }
 
@@ -116,20 +132,25 @@ public class AttributeReader {
 
     @Override
     public Optional<Boolean> getBoolean(String name) {
-      final String value = attributes.get(name);
-      return Optional.fromNullable(isBlank(value) ? null : Boolean.parseBoolean(value));
+      final Function<String, Boolean> toBoolean = new Function<String, Boolean>() {
+        @Override public Boolean apply(String input) { return Boolean.parseBoolean(input); }
+      };
+
+      return getString(name).transform(toBoolean);
     }
 
     @Override
-    public Optional<String> getString(String name) throws DocumentProcessingException {
-      final String value = attributes.get(name);
-      return Optional.fromNullable(isBlank(value) ? null : value);
+    public Optional<String> getString(String name) {
+      return Optional.fromNullable(attributes.get(name));
     }
 
     @Override
-    public Optional<Integer> getInteger(String name) throws DocumentProcessingException {
-      final String value = attributes.get(name);
-      return Optional.fromNullable(isBlank(value) ? null : Integer.parseInt(value));
+    public Optional<Integer> getInteger(String name) {
+      final Function<String, Integer> toInteger = new Function<String, Integer>() {
+        @Override public Integer apply(String input) { return Integer.parseInt(input); }
+      };
+
+      return getString(name).transform(toInteger);
     }
   }
 }
