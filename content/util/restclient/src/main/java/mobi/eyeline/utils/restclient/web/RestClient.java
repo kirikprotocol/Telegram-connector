@@ -75,6 +75,7 @@ public class RestClient {
   private Map<String, String> headers;
   private final Option[] options;
 
+  @SuppressWarnings("WeakerAccess")
   public RestClient(Option... options) {
     this.options = (options == null) ? new Option[0] : options;
     for (Option o : this.options) o.init(this);
@@ -92,15 +93,15 @@ public class RestClient {
 
   @SuppressWarnings({"unused", "WeakerAccess"})
   public JSONResource json(URI uri) throws IOException {
-    JSONResource resource = new JSONResource(options);
+    final JSONResource resource = new JSONResource(options);
     return readResponse(openConnection(uri, resource), resource);
   }
 
   @SuppressWarnings({"unused", "WeakerAccess"})
-  public JSONResource json(URI uri, Content requestContent) throws IOException {
-    JSONResource resource = new JSONResource(options);
+  public JSONResource json(URI uri, Content content) throws IOException {
+    final JSONResource resource = new JSONResource(options);
     final HttpURLConnection conn = openConnection(uri, resource);
-    requestContent.addContent(conn);
+    content.addContent(conn);
     return readResponse(conn, resource);
   }
 
@@ -228,8 +229,9 @@ public class RestClient {
   @SuppressWarnings("WeakerAccess")
   abstract public static class Option {
     public void apply(HttpURLConnection conn) {}
-    public void init(RestClient client) {}
+    public void init(@SuppressWarnings("UnusedParameters") RestClient client) {}
 
+    @SuppressWarnings("unused")
     public static Timeout timeout(int millis) { return new Timeout(millis); }
   }
 
