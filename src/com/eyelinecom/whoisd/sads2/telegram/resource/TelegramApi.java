@@ -1,5 +1,6 @@
 package com.eyelinecom.whoisd.sads2.telegram.resource;
 
+import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
@@ -7,7 +8,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
-import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 
 public interface TelegramApi {
 

@@ -11,14 +11,13 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
+import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.Attachment;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
-import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -54,11 +53,10 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     }
 
     try {
-      final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
       if (StringUtils.isBlank(request.getParameters().get("sadsSmsMessage"))) {
-        sendTelegramMessage(tgRequest, content, response);
+        sendTelegramMessage(request, content, response);
       }
 
       dispatcher.stop(response);
@@ -68,7 +66,7 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     }
   }
 
-  private void sendTelegramMessage(ExtendedSadsRequest request,
+  private void sendTelegramMessage(SADSRequest request,
                                    ContentResponse contentResponse,
                                    SADSResponse response) throws Exception {
 

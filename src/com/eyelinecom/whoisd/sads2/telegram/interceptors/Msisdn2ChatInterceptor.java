@@ -9,10 +9,10 @@ import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.Profile.Property;
+import com.eyelinecom.whoisd.sads2.profile.ProfileStorage;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.Property;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;

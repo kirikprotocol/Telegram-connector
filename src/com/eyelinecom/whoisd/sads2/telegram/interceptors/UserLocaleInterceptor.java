@@ -6,8 +6,7 @@ import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
 
 /**
  * Passes current client language to content provider via request param.
@@ -30,39 +29,36 @@ public class UserLocaleInterceptor extends BlankInterceptor {
   }
 
   private String getLangParam(SADSRequest request) {
-    if (request instanceof ExtendedSadsRequest) {
-      final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
 
-      // 1. Check current session.
-      final Session session = tgRequest.getSession();
-      if (session != null && !session.isClosed()) {
-        final String sessionParam = (String) session.getAttribute("lang");
-        if (sessionParam != null) {
-          return sessionParam;
-        }
+    // 1. Check current session.
+    final Session session = request.getSession();
+    if (session != null && !session.isClosed()) {
+      final String sessionParam = (String) session.getAttribute("lang");
+      if (sessionParam != null) {
+        return sessionParam;
+      }
+    }
+
+    final Profile profile = request.getProfile();
+    if (profile != null) {
+      // 2. Check service-specific profile.
+      final String safeSid = request.getServiceId().replace(".", "_");
+
+      final String profileParam = profile
+          .property("services", "lang-" + safeSid)
+          .getValue();
+
+      if (profileParam != null) {
+        return profileParam;
       }
 
-      final Profile profile = tgRequest.getProfile();
-      if (profile != null) {
-        // 2. Check service-specific profile.
-        final String safeSid = request.getServiceId().replace(".", "_");
+      // 3. Check global profile.
+      final String globalProfileParam = profile
+          .property("lang")
+          .getValue();
 
-        final String profileParam = profile
-            .property("services", "lang-" + safeSid)
-            .getValue();
-
-        if (profileParam != null) {
-          return profileParam;
-        }
-
-        // 3. Check global profile.
-        final String globalProfileParam = profile
-            .property("lang")
-            .getValue();
-
-        if (globalProfileParam != null) {
-          return globalProfileParam;
-        }
+      if (globalProfileParam != null) {
+        return globalProfileParam;
       }
     }
 

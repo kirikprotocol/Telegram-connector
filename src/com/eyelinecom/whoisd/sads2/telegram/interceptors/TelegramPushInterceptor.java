@@ -13,6 +13,8 @@ import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
+import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
@@ -20,12 +22,9 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
-import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -71,19 +70,18 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
 
     try {
-      final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
       final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
 
       if (isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
-            tgRequest,
+            request,
             content,
             request.getParameters().get("sadsSmsMessage"),
             request.getParameters().get("keyboard"));
 
       } else {
-        sendTelegramMessage(tgRequest, content, response);
+        sendTelegramMessage(request, content, response);
       }
 
     } catch (Exception e) {
@@ -94,7 +92,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   /**
    * Processes content-originated messages.
    */
-  private void sendTelegramMessage(ExtendedSadsRequest request,
+  private void sendTelegramMessage(SADSRequest request,
                                    ContentResponse contentResponse,
                                    SADSResponse response) throws Exception {
 
@@ -180,7 +178,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   /**
    * Processes PUSH messages.
    */
-  private void sendTelegramMessage(final ExtendedSadsRequest request,
+  private void sendTelegramMessage(final SADSRequest request,
                                    final ContentResponse content,
                                    String message,
                                    String keyboard) throws Exception {

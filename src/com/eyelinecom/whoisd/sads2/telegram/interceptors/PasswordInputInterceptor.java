@@ -11,12 +11,11 @@ import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
+import com.eyelinecom.whoisd.sads2.profile.Profile.PropertyQuery;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.ExtLink;
 import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.PropertyQuery;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import org.apache.commons.logging.Log;
@@ -37,8 +36,6 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
   public void beforeResponseRender(SADSRequest request,
                                    ContentResponse content,
                                    RequestDispatcher dispatcher) throws InterceptionException {
-
-    final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
 
     final String serviceId = request.getServiceId();
 
@@ -61,10 +58,10 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
     final String redirectUri =
         request.getServiceScenario().getAttributes().getProperty("password-input-uri");
 
-    final Session session = tgRequest.getSession();
+    final Session session = request.getSession();
     if (inputElement != null) {
       redirectToPasswordInput(
-          tgRequest,
+          request,
           dispatcher,
           doc,
           inputElement,
@@ -72,7 +69,7 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
 
     } else {
 
-      final PropertyQuery passwordProp = tgRequest
+      final PropertyQuery passwordProp = request
           .getProfile()
           .property("services", "password-" + serviceId.replace(".", "_"));
 
@@ -100,7 +97,7 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
     }
   }
 
-  private void redirectToPasswordInput(final ExtendedSadsRequest request,
+  private void redirectToPasswordInput(final SADSRequest request,
                                        RequestDispatcher dispatcher,
                                        Document doc,
                                        Element inputElement,

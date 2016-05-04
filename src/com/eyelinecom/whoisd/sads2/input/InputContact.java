@@ -1,6 +1,6 @@
 package com.eyelinecom.whoisd.sads2.input;
 
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
 
 /**
  * Created by jeck on 31/03/16

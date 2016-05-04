@@ -2,6 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.common.ArrayUtil;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.api.internal.InlineCallbackQuery;
@@ -12,7 +13,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.RequestContactButton;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.RequestLocationButton;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
@@ -38,7 +38,7 @@ public abstract class TelegramPushBase extends BlankInterceptor {
 
   private static final Logger log = Logger.getLogger(TelegramPushBase.class);
 
-  protected boolean isResizeKeyboard(ExtendedSadsRequest request,
+  protected boolean isResizeKeyboard(SADSRequest request,
                                      ContentResponse contentResponse) {
 
     final Properties serviceAttrs = request.getServiceScenario().getAttributes();
@@ -49,7 +49,7 @@ public abstract class TelegramPushBase extends BlankInterceptor {
         InitUtils.getBoolean("telegram.keyboard-resize", true, serviceAttrs);
   }
 
-  protected boolean isOneTimeKeyboard(ExtendedSadsRequest request,
+  protected boolean isOneTimeKeyboard(SADSRequest request,
                                       ContentResponse contentResponse) {
 
     final Properties serviceAttrs = request.getServiceScenario().getAttributes();

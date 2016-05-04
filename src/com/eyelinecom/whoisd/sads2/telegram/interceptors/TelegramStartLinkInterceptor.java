@@ -7,11 +7,10 @@ import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.ProfileStorage;
+import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramWebhookRequest;
-import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 
 import java.util.Properties;
 
@@ -37,11 +36,11 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
   @Override
   public void onOuterRequest(SADSRequest request, Object outerRequest) throws Exception {
     if (request.getProtocol() == Protocol.TELEGRAM && outerRequest instanceof TelegramWebhookRequest) {
-      onTelegramRequest((ExtendedSadsRequest) request, (TelegramWebhookRequest) outerRequest);
+      onTelegramRequest(request, (TelegramWebhookRequest) outerRequest);
     }
   }
 
-  private void onTelegramRequest(ExtendedSadsRequest request,
+  private void onTelegramRequest(SADSRequest request,
                                  TelegramWebhookRequest outerRequest) throws Exception {
 
     final String token = outerRequest.getServiceToken();
@@ -81,7 +80,7 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
 
   }
 
-  private void closeSession(ExtendedSadsRequest request, String wnumber) throws Exception {
+  private void closeSession(SADSRequest request, String wnumber) throws Exception {
     request.getSession().close();
 
     final Session session = serviceSessionManager

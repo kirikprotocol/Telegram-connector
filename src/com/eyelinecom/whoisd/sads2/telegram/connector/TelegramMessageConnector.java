@@ -17,7 +17,11 @@ import com.eyelinecom.whoisd.sads2.input.AbstractInputType;
 import com.eyelinecom.whoisd.sads2.input.InputContact;
 import com.eyelinecom.whoisd.sads2.input.InputFile;
 import com.eyelinecom.whoisd.sads2.input.InputLocation;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.ProfileStorage;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
+import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
+import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.internal.InlineCallbackQuery;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
@@ -34,11 +38,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Video;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
-import com.eyelinecom.whoisd.sads2.telegram.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -348,7 +348,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       final String inputName;
       {
-        final Session session = ((ExtendedSadsRequest) sadsRequest).getSession();
+        final Session session = sadsRequest.getSession();
         final Document prevPage =
             (Document) session.getAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE);
 

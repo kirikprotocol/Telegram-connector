@@ -10,7 +10,6 @@ import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
@@ -33,8 +32,7 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
       return;
     }
     if (request.getProtocol() == Protocol.TELEGRAM) {
-      ExtendedSadsRequest extendedRequest = (ExtendedSadsRequest) request;
-      extendedRequest.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
+      request.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
     }
   }
 
@@ -73,11 +71,10 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     } else {
 
       final String serviceId = request.getServiceId();
-      final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
 
       try {
         final String wnumber = request.getAbonent();
-        final String msisdn = tgRequest.getProfile()
+        final String msisdn = request.getProfile()
             .property("mobile", "msisdn")
             .getValue();
 
@@ -89,23 +86,23 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
           if (log.isDebugEnabled()) {
             log.debug("redirect to confirm msisdn");
           }
-          redirectConfirmMsisdn(tgRequest, dispatcher, log);
+          redirectConfirmMsisdn(request, dispatcher, log);
 
         } else if (
-            tgRequest.getProfile()
+            request.getProfile()
                 .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
           if (log.isDebugEnabled()) {
             log.debug("redirect from confirm msisdn");
           }
-          redirectBack(msisdn, tgRequest, contentRequest, dispatcher, log);
+          redirectBack(msisdn, request, contentRequest, dispatcher, log);
         } else {
           if (log.isDebugEnabled()) {
             log.debug("already verified msisdn");
           }
 
           String originalUrl = UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
-          originalUrl = getForwardUrl(tgRequest, originalUrl);
-          super.redirectBack(tgRequest, dispatcher, originalUrl);
+          originalUrl = getForwardUrl(request, originalUrl);
+          super.redirectBack(request, dispatcher, originalUrl);
         }
 
       } catch (Exception e) {
@@ -121,7 +118,7 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     );
   }
 
-  private void redirectConfirmMsisdn(ExtendedSadsRequest request,
+  private void redirectConfirmMsisdn(SADSRequest request,
                                      RequestDispatcher dispatcher,
                                      Log log) throws Exception {
 
@@ -131,7 +128,7 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
   }
 
   private void redirectBack(String msisdn,
-                            ExtendedSadsRequest request,
+                            SADSRequest request,
                             ContentRequest contentRequest,
                             RequestDispatcher dispatcher,
                             Log log) throws Exception {
@@ -141,7 +138,7 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     super.redirectBack(request, dispatcher, originalUrl);
   }
 
-  private String getForwardUrl(ExtendedSadsRequest request,String forwardUrl){
+  private String getForwardUrl(SADSRequest request,String forwardUrl) {
     if(UrlUtils.isAbsoluteUrl(forwardUrl)){
       return forwardUrl;
     }
