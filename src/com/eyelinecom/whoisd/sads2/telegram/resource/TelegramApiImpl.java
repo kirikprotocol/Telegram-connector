@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.resource;
 
 import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
+import com.eyelinecom.whoisd.sads2.common.RateLimiter;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
@@ -19,7 +20,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
-import com.eyelinecom.whoisd.sads2.telegram.util.RateLimiter;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
