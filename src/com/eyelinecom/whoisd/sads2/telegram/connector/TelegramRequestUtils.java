@@ -1,9 +1,9 @@
 package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.common.ArrayUtil;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushBase;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Function;
@@ -15,8 +15,8 @@ import org.dom4j.Element;
 import java.io.IOException;
 import java.util.List;
 
+import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeUtil.isBooleanSet;
 import static com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType.unmarshal;
-import static com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil.isBooleanSet;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.google.common.base.Predicates.not;
 

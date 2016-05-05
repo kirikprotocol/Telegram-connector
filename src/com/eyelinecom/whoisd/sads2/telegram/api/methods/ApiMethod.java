@@ -1,9 +1,9 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 
+import com.eyelinecom.whoisd.sads2.common.TypeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;

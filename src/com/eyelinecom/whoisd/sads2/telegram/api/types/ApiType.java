@@ -1,8 +1,8 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.types;
 
+import com.eyelinecom.whoisd.sads2.common.TypeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
-import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public abstract class ApiType<T extends ApiType> {

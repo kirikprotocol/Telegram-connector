@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
-import static com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader.getAttributes;
+import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static org.apache.commons.lang.StringUtils.isNotBlank;

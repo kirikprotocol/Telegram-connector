@@ -1,8 +1,8 @@
 package com.eyelinecom.whoisd.sads2.telegram.xslt;
 
 
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import org.dom4j.Document;

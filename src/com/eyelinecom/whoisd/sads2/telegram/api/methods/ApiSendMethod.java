@@ -1,10 +1,10 @@
 package com.eyelinecom.whoisd.sads2.telegram.api.methods;
 
+import com.eyelinecom.whoisd.sads2.common.TypeUtil;
 import com.eyelinecom.whoisd.sads2.multipart.RequestPart;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.util.JsonSerializer;
-import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
 
 public abstract class ApiSendMethod<Self extends ApiSendMethod, Response extends ApiType>
     extends BaseApiMethod<Self, Response> {

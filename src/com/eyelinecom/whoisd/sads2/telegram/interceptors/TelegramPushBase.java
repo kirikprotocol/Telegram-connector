@@ -4,6 +4,8 @@ import com.eyelinecom.whoisd.sads2.common.ArrayUtil;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.api.internal.InlineCallbackQuery;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardButton;
@@ -13,8 +15,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.RequestContactButton;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.RequestLocationButton;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Function;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.telegram.content.AttributeUtil.isBooleanSet;
+import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeUtil.isBooleanSet;
 import static com.google.common.base.Predicates.not;
 
 public abstract class TelegramPushBase extends BlankInterceptor {
