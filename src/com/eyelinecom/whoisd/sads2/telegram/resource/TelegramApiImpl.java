@@ -61,7 +61,7 @@ public class TelegramApiImpl implements TelegramApi {
 
     final float limitMessagesPerSecond =
         Float.parseFloat(properties.getProperty("telegram.limit.messages.per.second", "30"));
-    this.messagesPerSecondLimit = RateLimiter.create(limitChatMessagesPerSecond);
+    this.messagesPerSecondLimit = RateLimiter.create(limitMessagesPerSecond);
 
     this.maxRateLimitRetries =
         Integer.parseInt(properties.getProperty("telegram.max.rate.limit.retries", "5"));
