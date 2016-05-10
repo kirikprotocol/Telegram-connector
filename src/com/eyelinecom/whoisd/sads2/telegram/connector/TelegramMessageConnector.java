@@ -5,6 +5,7 @@ import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.SADSUrlUtils;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
+import com.eyelinecom.whoisd.sads2.connector.ChatCommand;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
@@ -39,6 +40,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Video;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
+import com.eyelinecom.whoisd.sads2.utils.ConnectorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -56,11 +58,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.CLEAR_PROFILE;
+import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.INVALIDATE_SESSION;
+import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.SHOW_PROFILE;
+import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.WHO_IS;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
@@ -100,26 +106,13 @@ public class TelegramMessageConnector extends HttpServlet {
     final TelegramWebhookRequest request = new TelegramWebhookRequest(req);
 
     SADSResponse response = connector.process(request);
-    fillHttpResponse(resp, response);
+    ConnectorUtils.fillHttpResponse(resp, response);
   }
 
-  private void fillHttpResponse(HttpServletResponse httpResponse,
-                                SADSResponse sadsResponse) throws IOException {
 
-    httpResponse.setStatus(sadsResponse.getStatus());
-    String contentType = sadsResponse.getMimeType();
-    if (sadsResponse.getEncoding() != null && !contentType.contains("charset=")) {
-      contentType += "; charset=" + sadsResponse.getEncoding();
-    }
-    httpResponse.setContentType(contentType);
-    Map<String, String> headers = sadsResponse.getHeaders();
-    for (String key : headers.keySet()) {
-      httpResponse.setHeader(key, headers.get(key));
-    }
-    httpResponse.setContentLength(sadsResponse.getData().length);
-    httpResponse.getOutputStream().write(sadsResponse.getData());
-    httpResponse.flushBuffer();
-  }
+  //
+  //
+  //
 
   private class TelegramMessageConnectorImpl
       extends LazyMessageConnector<TelegramWebhookRequest, SADSResponse> {
@@ -233,7 +226,8 @@ public class TelegramMessageConnector extends HttpServlet {
       final Update update = req.asUpdate();
 
       final String incoming = req.getMessageText();
-      if ("/clear_profile".equals(incoming)) {
+
+      if (ChatCommand.match(incoming, TELEGRAM) == CLEAR_PROFILE) {
         // Reset profile of the current user.
         final String userId = String.valueOf(update.getMessage().getFrom().getId());
         final Profile profile = getProfileStorage()
@@ -469,7 +463,7 @@ public class TelegramMessageConnector extends HttpServlet {
     protected Protocol getRequestProtocol(ServiceConfig config,
                                           String subscriberId,
                                           TelegramWebhookRequest httpServletRequest) {
-      return Protocol.TELEGRAM;
+      return TELEGRAM;
     }
 
     @Override
@@ -541,12 +535,13 @@ public class TelegramMessageConnector extends HttpServlet {
 
       Session session = getSessionManager(serviceId).getSession(wnumber);
 
-      if ("/invalidate_session".equals(incoming) || "/reset".equals(incoming)) {
+      final ChatCommand cmd = ChatCommand.match(incoming, TELEGRAM);
+      if (cmd == INVALIDATE_SESSION) {
         // Invalidate the current session.
         session.close();
         session = getSessionManager(serviceId).getSession(wnumber);
 
-      } else if ("/who".equals(incoming)) {
+      } else if (cmd == WHO_IS) {
         final String serviceToken = message.getServiceToken();
         final User me = getClient().getMe(serviceToken);
 
@@ -560,7 +555,7 @@ public class TelegramMessageConnector extends HttpServlet {
             "Bot name: @" + me.getUserName() + ".\nToken: " + serviceToken + ".\nService: " + serviceId + "."
         );
 
-      } else if ("/show_profile".equals(incoming)) {
+      } else if (cmd == SHOW_PROFILE) {
         final Profile profile = getProfileStorage().find(wnumber);
         final String serviceToken = message.getServiceToken();
 

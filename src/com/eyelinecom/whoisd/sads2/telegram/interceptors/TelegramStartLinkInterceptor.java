@@ -61,7 +61,6 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
             .get();  //TODO filter by date (link life-time: 10 min)
 
         if (profile != null) {
-          profile.property("telegram-hashes", token).delete();
           final String msisdn = profile
               .property("mobile", "msisdn")
               .getValue();
