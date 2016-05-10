@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+
 @SuppressWarnings("unused")
 public class TelegramAttachmentPushInterceptor extends TelegramPushBase implements Initable {
 
@@ -83,7 +85,7 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     final String chatId = request.getProfile()
         .property("telegram-chats", token)
         .getValue();
-    final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
+    final SessionManager sessionManager = this.sessionManager.getSessionManager(TELEGRAM, serviceId);
 
     // Resend keyboard along with the attachments so it stays on the screen.
     final ReplyKeyboardMarkup keyboard = getKeyboard(doc);

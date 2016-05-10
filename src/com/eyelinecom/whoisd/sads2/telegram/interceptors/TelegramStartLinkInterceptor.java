@@ -83,14 +83,14 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
     request.getSession().close();
 
     final Session session = serviceSessionManager
-        .getSessionManager(request.getServiceId())
+        .getSessionManager(request.getProtocol(), request.getServiceId())
         .getSession(wnumber, false);
     if (session != null) {
       session.close();
     }
 
     final Session currentSession = serviceSessionManager
-        .getSessionManager(request.getServiceId())
+        .getSessionManager(request.getProtocol(), request.getServiceId())
         .getSession(wnumber);
     request.setSession(currentSession);
 

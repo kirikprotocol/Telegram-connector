@@ -691,8 +691,8 @@ public class TelegramMessageConnector extends HttpServlet {
 
     private SessionManager getSessionManager(String serviceId) throws Exception {
       final ServiceSessionManager serviceSessionManager =
-          (ServiceSessionManager) getResource("telegram-session-manager");
-      return serviceSessionManager.getSessionManager(serviceId);
+          (ServiceSessionManager) getResource("session-manager");
+      return serviceSessionManager.getSessionManager(TELEGRAM, serviceId);
     }
 
     private ProfileStorage getProfileStorage() throws Exception {

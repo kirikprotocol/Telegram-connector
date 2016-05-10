@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
@@ -124,7 +125,8 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         keyboard == null && doc.getRootElement().elements("input").isEmpty() &&
             !getAttributes(doc.getRootElement()).getBoolean("telegram.keep.session").or(false);
 
-    final SessionManager sessionManager = this.sessionManager.getSessionManager(serviceId);
+    final SessionManager sessionManager =
+        this.sessionManager.getSessionManager(TELEGRAM, serviceId);
     final Session session = request.getSession();
 
     if (!shouldCloseSession) {
@@ -185,7 +187,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
 
     final String serviceId = request.getServiceId();
     final SessionManager sessionManager =
-        this.sessionManager.getSessionManager(serviceId);
+        this.sessionManager.getSessionManager(TELEGRAM, serviceId);
 
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
