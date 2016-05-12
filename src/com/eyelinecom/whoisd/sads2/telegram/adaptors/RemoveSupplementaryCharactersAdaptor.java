@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class RemoveSupplimentaryCharactersAdaptor extends DocumentAdaptor {
+public class RemoveSupplementaryCharactersAdaptor extends DocumentAdaptor {
 
   @Override
   public Document transform(Document document, ContentResponse content) throws Exception {
