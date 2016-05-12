@@ -65,7 +65,7 @@ public class MsisdnRedirectInterceptor extends BlankInterceptor implements Inita
 
   @Override
   public void init(Properties config) throws Exception {
-    profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+    profileStorage = SADSInitUtils.getResource("profile-storage", config);
   }
 
   @Override

@@ -91,7 +91,7 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
     @Override
     public WebHookConfigListener build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
-      TelegramApi api = (TelegramApi) SADSInitUtils.getResource("telegram-api", properties);
+      TelegramApi api = SADSInitUtils.getResource("telegram-api", properties);
       return new WebHookConfigListener(api);
     }
 

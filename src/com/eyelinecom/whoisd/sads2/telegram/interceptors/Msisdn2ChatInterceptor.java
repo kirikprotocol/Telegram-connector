@@ -64,7 +64,7 @@ public class Msisdn2ChatInterceptor extends BlankInterceptor implements Initable
 
   @Override
   public void init(Properties config) throws Exception {
-    profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+    profileStorage = SADSInitUtils.getResource("profile-storage", config);
   }
 
   @Override

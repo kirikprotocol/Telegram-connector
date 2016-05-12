@@ -69,9 +69,9 @@ public class LinkToTelegramAdaptor extends URLAdaptor {
     public void init(Properties config) throws Exception {
         super.init(config);
         this.telegramAddress = InitUtils.getString("telegram-url", "https://telegram.me/",config);
-        this.profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+        this.profileStorage = SADSInitUtils.getResource("profile-storage", config);
 
         this.hashLength = InitUtils.getInt("hash-length", 5, config);
-        this.api = (TelegramApi) SADSInitUtils.getResource("telegram-api", config);
+        this.api = SADSInitUtils.getResource("telegram-api", config);
     }
 }

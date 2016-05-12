@@ -28,9 +28,9 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
 
   @Override
   public void init(Properties config) throws Exception {
-    profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+    profileStorage = SADSInitUtils.getResource("profile-storage", config);
     serviceSessionManager =
-        (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
+        SADSInitUtils.getResource("session-manager", config);
   }
 
   @Override

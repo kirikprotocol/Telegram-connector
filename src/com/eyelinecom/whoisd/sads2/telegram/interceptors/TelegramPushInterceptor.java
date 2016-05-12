@@ -15,13 +15,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
@@ -274,8 +268,8 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
 
   @Override
   public void init(Properties config) throws Exception {
-    client = (TelegramApi) SADSInitUtils.getResource("client", config);
-    sessionManager = (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
+    client = SADSInitUtils.getResource("client", config);
+    sessionManager = SADSInitUtils.getResource("session-manager", config);
   }
 
   @Override

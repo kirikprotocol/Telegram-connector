@@ -8,18 +8,8 @@ import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.EditMessageText;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.*;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -216,8 +206,7 @@ public class TelegramApiImpl implements TelegramApi {
                              Properties properties,
                              HierarchicalConfiguration config) throws Exception {
 
-      final HttpDataLoader loader =
-          (HttpDataLoader) SADSInitUtils.getResource("loader", properties);
+      final HttpDataLoader loader = SADSInitUtils.getResource("loader", properties);
 
       return new TelegramApiImpl(loader, properties);
     }
