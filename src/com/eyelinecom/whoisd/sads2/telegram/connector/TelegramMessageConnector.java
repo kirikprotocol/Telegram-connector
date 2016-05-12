@@ -14,6 +14,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector
 import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
+import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.input.AbstractInputType;
 import com.eyelinecom.whoisd.sads2.input.InputContact;
 import com.eyelinecom.whoisd.sads2.input.InputFile;
@@ -29,7 +30,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendChatAction;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Audio;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.CallbackQuery;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Contact;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Location;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.PhotoSize;
@@ -117,6 +117,7 @@ public class TelegramMessageConnector extends HttpServlet {
   private class TelegramMessageConnectorImpl
       extends LazyMessageConnector<TelegramWebhookRequest, SADSResponse> {
 
+    //<editor-fold desc="Thread pool boilerplate">
     private static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
 
     private String executorResourceName;
@@ -169,6 +170,7 @@ public class TelegramMessageConnector extends HttpServlet {
         return delayedExecutor;
       }
     }
+    //</editor-fold>
 
     /**
      * Response to a WebHook update.
@@ -335,7 +337,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       // Submit uploaded files to the content service via request parameter.
 
-      final List<AbstractInputType> mediaList = extractMedia(req);
+      final List<AbstractInputType> mediaList = extractMedia(sadsRequest.getServiceId(), req);
       if (mediaList.size() <= 0) {
         return;
       }
@@ -361,7 +363,8 @@ public class TelegramMessageConnector extends HttpServlet {
       sadsRequest.getParameters().put("input_type", "json");
     }
 
-    private List<AbstractInputType> extractMedia(TelegramWebhookRequest req)
+    private List<AbstractInputType> extractMedia(String serviceId,
+                                                 TelegramWebhookRequest req)
         throws Exception {
 
       final Message message = req.asUpdate().getMessage();
@@ -369,68 +372,61 @@ public class TelegramMessageConnector extends HttpServlet {
         return Collections.emptyList();
       }
 
-      final TelegramApi api = (TelegramApi) getResource("telegram-api");
-      final String serviceToken = req.getServiceToken();
-
       final List<AbstractInputType> mediaList = new ArrayList<>();
 
       final PhotoSize[] photoArray = message.getPhoto();
       if (photoArray != null && photoArray.length > 0) {
         for (PhotoSize photo : photoArray) {
-          File tFile = api.getFile(serviceToken, photo.getFileId());
-          InputFile file = new InputFile();
+          final InputFile file = new InputFile();
           file.setMediaType("photo");
-          file.setUrl(tFile.getUrl());
+          file.setUrl(getFilePath(serviceId, photo.getFileId()));
           file.setSize(photo.getFileSize());
           mediaList.add(file);
         }
       }
+
       final Audio audio = message.getAudio();
       if (audio != null) {
-        final File tFile = api.getFile(serviceToken, audio.getFileId());
         final InputFile file = new InputFile();
         file.setMediaType("audio");
-        file.setUrl(tFile.getUrl());
+        file.setUrl(getFilePath(serviceId, audio.getFileId()));
         file.setContentType(audio.getMimeType());
         file.setSize(audio.getFileSize());
         mediaList.add(file);
       }
+
       final Sticker sticker = message.getSticker();
       if (sticker != null) {
-        final File tFile = api.getFile(serviceToken, sticker.getFileId());
         final InputFile file = new InputFile();
         file.setMediaType("sticker");
-        file.setUrl(tFile.getUrl());
-        file.setSize(tFile.getFileSize());
+        file.setUrl(getFilePath(serviceId, sticker.getFileId()));
         mediaList.add(file);
       }
+
       final Video video = message.getVideo();
       if (video != null) {
-        final File tFile = api.getFile(serviceToken, video.getFileId());
         final InputFile file = new InputFile();
         file.setMediaType("video");
-        file.setUrl(tFile.getUrl());
-        file.setSize(tFile.getFileSize());
+        file.setUrl(getFilePath(serviceId, video.getFileId()));
         mediaList.add(file);
       }
+
       final Voice voice = message.getVoice();
       if (voice != null) {
-        final File tFile = api.getFile(serviceToken, voice.getFileId());
         final InputFile file = new InputFile();
         file.setMediaType("voice");
-        file.setUrl(tFile.getUrl());
-        file.setSize(tFile.getFileSize());
+        file.setUrl(getFilePath(serviceId, voice.getFileId()));
         mediaList.add(file);
       }
+
       final com.eyelinecom.whoisd.sads2.telegram.api.types.Document document = message.getDocument();
       if (document != null) {
-        final File tFile = api.getFile(serviceToken, document.getFileId());
         final InputFile file = new InputFile();
         file.setMediaType("document");
-        file.setUrl(tFile.getUrl());
-        file.setSize(tFile.getFileSize());
+        file.setUrl(getFilePath(serviceId, document.getFileId()));
         mediaList.add(file);
       }
+
       final Contact tContact = message.getContact();
       if (tContact != null) {
         final InputContact contact = new InputContact();
@@ -449,6 +445,7 @@ public class TelegramMessageConnector extends HttpServlet {
         }
         mediaList.add(contact);
       }
+
       final Location tLocation = message.getLocation();
       if (tLocation != null) {
         final InputLocation location = new InputLocation();
@@ -456,6 +453,7 @@ public class TelegramMessageConnector extends HttpServlet {
         location.setLongitude(tLocation.getLongitude());
         mediaList.add(location);
       }
+
       return mediaList;
     }
 
@@ -683,6 +681,21 @@ public class TelegramMessageConnector extends HttpServlet {
       }
 
       return msisdn;
+    }
+
+    private String getFilePath(String serviceId, String fileId) {
+      final Properties mainProperties;
+      try {
+        mainProperties = SADSInitializer.getMainProperties();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      // Note: using absolute URL here seems redundant (and might cause a lot of issues),
+      // but we don't have any way to inform content provider of our actual URL.
+      //
+      // Consider using headers for this, like always passing "X-MyHostName = ...".
+      return mainProperties.getProperty("root.uri") + "/files/" +  serviceId + "/telegram/" + fileId;
     }
 
     private TelegramApi getClient() throws NotFoundResourceException {

@@ -8,12 +8,13 @@ import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
+import com.eyelinecom.whoisd.sads2.content.attachments.Attachment;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.api.Attachment;
+import com.eyelinecom.whoisd.sads2.telegram.api.TgAttachmentMethodConverter;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
@@ -75,7 +76,7 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     final String serviceId = request.getServiceId();
     final Document doc = (Document) response.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
 
-    final Collection<Attachment> attachments = getAttachments(doc);
+    final Collection<Attachment> attachments = Attachment.extract(log, doc);
     if (attachments.isEmpty()) {
       return;
     }
@@ -94,9 +95,15 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
       if (isResizeKeyboard(request, contentResponse))   keyboard.setResizeKeyboard(true);
     }
 
+    final TgAttachmentMethodConverter converter =
+        new TgAttachmentMethodConverter(log, loader, request.getResourceURI());
+
     for (Attachment attachment : attachments) {
-      final ApiSendMethod method =
-          attachment.asTelegramMethod(log, loader, request.getResourceURI());
+      final ApiSendMethod method = converter.apply(attachment);
+      if (method == null) {
+        continue;
+      }
+
       method.setChatId(chatId);
       method.setReplyMarkup(keyboard);
 
@@ -124,9 +131,9 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
 
   @Override
   public void init(Properties config) throws Exception {
-    client = (TelegramApi) SADSInitUtils.getResource("client", config);
-    sessionManager = (ServiceSessionManager) SADSInitUtils.getResource("session-manager", config);
-    loader = (HttpDataLoader) SADSInitUtils.getResource("loader", config);
+    client = SADSInitUtils.getResource("client", config);
+    sessionManager = SADSInitUtils.getResource("session-manager", config);
+    loader = SADSInitUtils.getResource("loader", config);
   }
 
   @Override

@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @SuppressWarnings("unused")
 public class WebHookConfigListener extends ServiceConfigListener {
 
@@ -77,6 +79,10 @@ public class WebHookConfigListener extends ServiceConfigListener {
     } catch (TelegramApiException e) {
       throw new ConfigurationException(serviceId, e.getMessage());
     }
+  }
+
+  public String getToken(String serviceId) {
+    return serviceId2Token.get(checkNotNull(serviceId));
   }
 
 
