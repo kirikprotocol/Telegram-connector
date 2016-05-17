@@ -52,11 +52,9 @@
         String enteredMsisdn = null;
         try {
           if ("json".equals(request.getParameter("input_type"))) {
-            // Attachment. Treat it as a concact input (or fail and ignore).
+            // Attachment. Treat it as a contact input (or fail and ignore).
             final JSONObject contact = new JSONArray(payload).getJSONObject(0);
             enteredMsisdn = normalize(contact.getString("msisdn"));
-            System.out.println("contact = " + contact);
-            System.out.println("wnumber = " + wnumber);
 
             final String contactWnumber = contact.optString("id");
             if (wnumber.equals(contactWnumber) && enteredMsisdn != null) {
@@ -77,6 +75,11 @@
                   .json(
                       API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
                       post(RestClient.content(serviceId)));
+
+              new RestClient()
+                  .json(
+                      API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol",
+                      post(RestClient.content(request.getParameter("protocol"))));
 
               verify(enteredMsisdn);
               return "PAGE_EMPTY";
@@ -107,6 +110,11 @@
               .json(
                   API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
                   post(RestClient.content(serviceId)));
+
+          new RestClient()
+              .json(
+                  API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol",
+                  post(RestClient.content(request.getParameter("protocol"))));
 
           return "PAGE_REQUEST_CALLBACK";
         }
@@ -139,8 +147,11 @@
   final String target = handle(request);
 %>
 
-<% if (target.equals("PAGE_REQUEST_MSISDN")) { %>
-  <jsp:include page="request_msisdn.jsp" flush="true"/>
+<% if (target.equals("PAGE_REQUEST_MSISDN") && "skype".equals(request.getParameter("protocol"))) { %>
+  <jsp:include page="request_msisdn_skype.jsp" flush="true"/>
+
+<% } else if (target.equals("PAGE_REQUEST_MSISDN")) { %>
+  <jsp:include page="request_msisdn_tg.jsp" flush="true"/>
 
 <% } else if (target.equals("PAGE_REQUEST_MSISDN_INVALID")) { %>
   <jsp:include page="request_msisdn_invalid.jsp" flush="true"/>

@@ -67,25 +67,30 @@
         }
       }
 
-      final Set<String> serviceIds = new HashSet<String>() {{
+      final Set<String[]> serviceIds = new HashSet<String[]>() {{
         for (String safeSid : safeServiceIds) {
-          add(
+          add(new String[]{
               new RestClient()
                   .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id")
                   .object()
-                  .getString("value")
+                  .getString("value"),
+              new RestClient()
+                  .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol")
+                  .object()
+                  .getString("value"),
+          }
           );
         }
       }};
 
-      for (String serviceId : serviceIds) {
-        verify(msisdn, wnumber, serviceId);
+      for (String[] service : serviceIds) {
+        verify(msisdn, wnumber, service[0], service[1]);
       }
 
     }
   }
 
-  private void verify(String msisdn, String wnumber, String serviceId) throws Exception {
+  private void verify(String msisdn, String wnumber, String serviceId, String protocol) throws Exception {
     final String safeSid = serviceId.replace(".", "_");
 
     new RestClient()
@@ -93,6 +98,8 @@
 
     new RestClient()
         .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id", delete());
+    new RestClient()
+        .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol", delete());
     new RestClient()
         .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".phase", delete());
 
@@ -114,7 +121,7 @@
     sendGet(MOBILIZER_ROOT + "/push?" +
         "service=" + serviceId +
         "&subscriber=" + wnumber +
-        "&protocol=telegram" +
+        "&protocol=" + protocol +
         "&pageId=" + URLEncoder.encode(prevUrl, "UTF-8") +
         "&scenario=default-noinform");
   }

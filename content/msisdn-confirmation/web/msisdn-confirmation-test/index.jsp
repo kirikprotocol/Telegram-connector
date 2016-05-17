@@ -11,6 +11,6 @@
   </div>
   <navigation>
     <link pageId="verify://msisdn?success_url=authorize.jsp">Авторизоваться</link>
-    <link pageId="reset.jsp">Сбросить профиль Telegram</link>
+    <link pageId="reset.jsp">Сбросить профиль</link>
   </navigation>
 </page>
