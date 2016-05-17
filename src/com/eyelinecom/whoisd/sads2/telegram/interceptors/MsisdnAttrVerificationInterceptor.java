@@ -1,5 +1,6 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
+import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
@@ -9,20 +10,25 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.profile.Profile.PropertyQuery;
-import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
 
-public class MsisdnConfirmationInterceptor extends BlankInterceptor implements Initable {
+import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static java.lang.Boolean.parseBoolean;
+
+public class MsisdnAttrVerificationInterceptor extends BlankInterceptor implements Initable {
 
   /**
    * Content page attribute marking it as requiring MSISDN verification.
    */
-  public static final String ATTR_MSISDN_REQUIRED = "msisdn-required";
-  public static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
+  private static final String ATTR_MSISDN_REQUIRED  = "msisdn-required";
 
-  public static final String CONF_MSISDN_CONFIRMATION_ENABLED = "telegram.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_TG       = "telegram.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_SKYPE    = "skype.msisdn.confirmation.enabled";
+
+  static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
 
   @Override
   public void afterContentResponse(SADSRequest request,
@@ -63,10 +69,12 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
   }
 
   private boolean isEnabled(SADSRequest request) {
-    final ServiceConfig config = request.getServiceScenario();
-    return Boolean.parseBoolean(
-        config.getAttributes().getProperty(CONF_MSISDN_CONFIRMATION_ENABLED, "false")
-    );
+    final Properties attrs = request.getServiceScenario().getAttributes();
+    final Protocol protocol = request.getProtocol();
+    return
+        (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
+            ||
+        (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")));
   }
 
   private void redirectConfirmMsisdn(SADSRequest request,

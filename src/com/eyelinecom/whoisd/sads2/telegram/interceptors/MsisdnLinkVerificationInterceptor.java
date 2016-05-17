@@ -9,29 +9,38 @@ import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
-import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
 
-public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor implements Initable {
+import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static java.lang.Boolean.parseBoolean;
+
+public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInterceptor implements Initable {
 
   /**
-   * request url must start with verify://msisdn?success_url=... to mark that verification is needed.
+   * Request url must start with {@code verify://msisdn?success_url=...} to mark that
+   * verification is needed.
    */
-  public static final String MSISDN_REQUIRED_SIGN = "verify://msisdn";
-  public static final String SUCCESS_REDIRECT_URL_PARAM = "success_url";
-  public static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
+  private static final String MSISDN_REQUIRED_SIGN            = "verify://msisdn";
+  private static final String SUCCESS_REDIRECT_URL_PARAM      = "success_url";
+  private static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
 
-  public static final String CONF_MSISDN_CONFIRMATION_ENABLED = "telegram.msisdn.confirmation.enabled";
-
+  private static final String CONF_ENABLED_TG    = "telegram.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_SKYPE = "skype.msisdn.confirmation.enabled";
 
   @Override
-  public void afterContentResponse(SADSRequest request, ContentRequest contentRequest, ContentResponse content, RequestDispatcher dispatcher) throws InterceptionException {
+  public void afterContentResponse(SADSRequest request,
+                                   ContentRequest contentRequest,
+                                   ContentResponse content,
+                                   RequestDispatcher dispatcher) throws InterceptionException {
+
     if (!isEnabled(request)) {
       return;
     }
-    if (request.getProtocol() == Protocol.TELEGRAM) {
+
+    if (request.getProtocol() == TELEGRAM || request.getProtocol() == SKYPE) {
       request.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
     }
   }
@@ -50,11 +59,13 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
        return;
     }
 
-    if (request.getProtocol() != Protocol.TELEGRAM) {
+    if (request.getProtocol() != TELEGRAM && request.getProtocol() != SKYPE) {
       // Proceed directly to success_url.
       try {
         String successUrl = UrlUtils.getParameter(requestUri, SUCCESS_REDIRECT_URL_PARAM);
-        successUrl = UrlUtils.merge(request.getServiceScenario().getAttributes().getProperty("start-page"), successUrl);
+        successUrl = UrlUtils.merge(
+            request.getServiceScenario().getAttributes().getProperty("start-page"),
+            successUrl);
 
         if (log.isDebugEnabled()) {
           log.debug("Protocol = [" + request.getProtocol() + "]," +
@@ -83,26 +94,25 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
         }
 
         if (msisdn == null) {
-          if (log.isDebugEnabled()) {
-            log.debug("redirect to confirm msisdn");
-          }
+          log.debug("Redirecting to MSISDN verification");
+
           redirectConfirmMsisdn(request, dispatcher, log);
 
         } else if (
             request.getProfile()
                 .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
-          if (log.isDebugEnabled()) {
-            log.debug("redirect from confirm msisdn");
-          }
-          redirectBack(msisdn, request, contentRequest, dispatcher, log);
-        } else {
-          if (log.isDebugEnabled()) {
-            log.debug("already verified msisdn");
-          }
+          log.debug("Redirecting FROM MSISDN verification");
 
-          String originalUrl = UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
-          originalUrl = getForwardUrl(request, originalUrl);
-          super.redirectBack(request, dispatcher, originalUrl);
+          redirectBack(msisdn, request, contentRequest, dispatcher, log);
+
+        } else {
+          log.debug("MSISDN is already verified");
+
+          String successUrl =
+              UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
+          successUrl = resolveForwardUrl(request, successUrl);
+
+          super.redirectBack(request, dispatcher, successUrl);
         }
 
       } catch (Exception e) {
@@ -112,19 +122,21 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
   }
 
   private boolean isEnabled(SADSRequest request) {
-    final ServiceConfig config = request.getServiceScenario();
-    return Boolean.parseBoolean(
-        config.getAttributes().getProperty(CONF_MSISDN_CONFIRMATION_ENABLED, "false")
-    );
+    final Properties attrs = request.getServiceScenario().getAttributes();
+    final Protocol protocol = request.getProtocol();
+    return
+        (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
+            ||
+        (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")));
   }
 
   private void redirectConfirmMsisdn(SADSRequest request,
                                      RequestDispatcher dispatcher,
                                      Log log) throws Exception {
 
-    String verificationForwardUri = UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
-    verificationForwardUri = getForwardUrl(request,verificationForwardUri);
-    redirectTo(request, dispatcher, log, verificationForwardUri);
+    String successUrl = UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
+    successUrl = resolveForwardUrl(request, successUrl);
+    redirectTo(request, dispatcher, log, successUrl);
   }
 
   private void redirectBack(String msisdn,
@@ -138,18 +150,21 @@ public class MsisdnVerificationInterceptor extends MsisdnConfirmationInterceptor
     super.redirectBack(request, dispatcher, originalUrl);
   }
 
-  private String getForwardUrl(SADSRequest request,String forwardUrl) {
-    if(UrlUtils.isAbsoluteUrl(forwardUrl)){
+  private String resolveForwardUrl(SADSRequest request, String forwardUrl) {
+    if (UrlUtils.isAbsoluteUrl(forwardUrl)) {
       return forwardUrl;
     }
-    String previousUrl = (String)request.getSession().getAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM);
-    if(previousUrl!=null){
+
+    String previousUrl = (String) request.getSession().getAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM);
+    if (previousUrl != null) {
       try {
-        return UrlUtils.merge(previousUrl,forwardUrl);
+        return UrlUtils.merge(previousUrl, forwardUrl);
+
       } catch (Exception e) {
         return forwardUrl;
       }
     }
+
     return forwardUrl;
   }
 
