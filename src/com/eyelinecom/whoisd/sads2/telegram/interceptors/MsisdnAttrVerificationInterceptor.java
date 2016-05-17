@@ -1,5 +1,6 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
+import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
@@ -8,22 +9,26 @@ import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile.PropertyQuery;
+import com.eyelinecom.whoisd.sads2.profile.Profile.PropertyQuery;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
 
-public class MsisdnConfirmationInterceptor extends BlankInterceptor implements Initable {
+import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
+import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static java.lang.Boolean.parseBoolean;
+
+public class MsisdnAttrVerificationInterceptor extends BlankInterceptor implements Initable {
 
   /**
    * Content page attribute marking it as requiring MSISDN verification.
    */
-  public static final String ATTR_MSISDN_REQUIRED = "msisdn-required";
-  public static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
+  private static final String ATTR_MSISDN_REQUIRED  = "msisdn-required";
 
-  public static final String CONF_MSISDN_CONFIRMATION_ENABLED = "telegram.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_TG       = "telegram.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_SKYPE    = "skype.msisdn.confirmation.enabled";
+
+  static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
 
   @Override
   public void afterContentResponse(SADSRequest request,
@@ -38,12 +43,10 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
       return;
     }
 
-    final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
-
     try {
       final String wnumber = request.getAbonent();
 
-      final String msisdn = tgRequest.getProfile()
+      final String msisdn = request.getProfile()
           .property("mobile", "msisdn")
           .getValue();
 
@@ -52,12 +55,12 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
       }
 
       if ((content.getAttributes().get(ATTR_MSISDN_REQUIRED) != null) && (msisdn == null)) {
-        redirectConfirmMsisdn(tgRequest, dispatcher, log);
+        redirectConfirmMsisdn(request, dispatcher, log);
 
       } else if ((msisdn != null) &&
-          tgRequest.getProfile()
+          request.getProfile()
               .property("services", "auth-" + serviceId.replace(".", "_"), VAR_MSISDN_CONFIRMATION_REDIRECTED).get() != null) {
-        redirectBack(msisdn, tgRequest, dispatcher, log);
+        redirectBack(msisdn, request, dispatcher, log);
       }
 
     } catch (Exception e) {
@@ -66,13 +69,15 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
   }
 
   private boolean isEnabled(SADSRequest request) {
-    final ServiceConfig config = request.getServiceScenario();
-    return Boolean.parseBoolean(
-        config.getAttributes().getProperty(CONF_MSISDN_CONFIRMATION_ENABLED, "false")
-    );
+    final Properties attrs = request.getServiceScenario().getAttributes();
+    final Protocol protocol = request.getProtocol();
+    return
+        (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
+            ||
+        (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")));
   }
 
-  private void redirectConfirmMsisdn(ExtendedSadsRequest request,
+  private void redirectConfirmMsisdn(SADSRequest request,
                                      RequestDispatcher dispatcher,
                                      Log log) throws Exception {
 
@@ -80,7 +85,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
     redirectTo(request, dispatcher, log, prevUri);
   }
 
-  protected void redirectTo(ExtendedSadsRequest request,
+  protected void redirectTo(SADSRequest request,
                             RequestDispatcher dispatcher,
                             Log log,
                             String onSuccess) throws Exception {
@@ -106,7 +111,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
   }
 
   private void redirectBack(String msisdn,
-                            ExtendedSadsRequest request,
+                            SADSRequest request,
                             RequestDispatcher dispatcher,
                             Log log) throws Exception {
 
@@ -115,7 +120,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
     redirectBack(request, dispatcher, originalUrl);
   }
 
-  String redirectBack(ExtendedSadsRequest request,
+  String redirectBack(SADSRequest request,
                       RequestDispatcher dispatcher,
                       String originalUrl) throws Exception {
     request.setResourceURI(originalUrl);
@@ -124,7 +129,7 @@ public class MsisdnConfirmationInterceptor extends BlankInterceptor implements I
     return originalUrl;
   }
 
-  String popOrigUrl(String msisdn, ExtendedSadsRequest request, Log log) {
+  String popOrigUrl(String msisdn, SADSRequest request, Log log) {
     final String serviceId = request.getServiceId();
 
     final PropertyQuery property = request.getProfile()

@@ -8,9 +8,8 @@ import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.Profile;
-import com.eyelinecom.whoisd.sads2.wstorage.profile.ProfileStorage;
+import com.eyelinecom.whoisd.sads2.profile.Profile;
+import com.eyelinecom.whoisd.sads2.profile.ProfileStorage;
 import org.apache.commons.logging.Log;
 
 import java.util.Properties;
@@ -27,11 +26,12 @@ public class MsisdnRedirectInterceptor extends BlankInterceptor implements Inita
   public void onRequest(SADSRequest request, RequestDispatcher dispatcher) throws InterceptionException {
     if (InitUtils.getBoolean(CONF_MSISDN_CONFIRMATION_FORCED, false, request.getServiceScenario().getAttributes())) {
       final Log log = SADSLogger.getLogger(request.getServiceId(), getClass());
-      if (!isEnabled(request) || !(request instanceof ExtendedSadsRequest)) {
+      if (!isEnabled(request) || request.getProfile() == null) {
         return;
       }
+
       try {
-        Profile profile = ((ExtendedSadsRequest) request).getProfile();
+        final Profile profile = request.getProfile();
         final String msisdn = getMsisdn(profile);
         if (log.isDebugEnabled()) {
           log.debug("Processing wnumber = [" + profile.getWnumber() + "], stored msisdn = [" + msisdn + "]");
@@ -65,7 +65,7 @@ public class MsisdnRedirectInterceptor extends BlankInterceptor implements Inita
 
   @Override
   public void init(Properties config) throws Exception {
-    profileStorage = (ProfileStorage) SADSInitUtils.getResource("profile-storage", config);
+    profileStorage = SADSInitUtils.getResource("profile-storage", config);
   }
 
   @Override

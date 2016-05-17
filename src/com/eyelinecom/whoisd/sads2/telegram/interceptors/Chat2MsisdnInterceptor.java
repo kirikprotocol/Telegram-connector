@@ -6,7 +6,6 @@ import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
-import com.eyelinecom.whoisd.sads2.telegram.connector.ExtendedSadsRequest;
 import org.apache.commons.logging.Log;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -21,13 +20,11 @@ public class Chat2MsisdnInterceptor extends BlankInterceptor {
                                    ContentRequest contentRequest,
                                    RequestDispatcher dispatcher) throws InterceptionException {
 
-    final ExtendedSadsRequest tgRequest = (ExtendedSadsRequest) request;
-
     final String serviceId = request.getServiceId();
     final Log log = SADSLogger.getLogger(serviceId, serviceId, getClass());
 
     try {
-      final String msisdn = tgRequest
+      final String msisdn = request
           .getProfile()
           .property("mobile", "msisdn")
           .getValue();

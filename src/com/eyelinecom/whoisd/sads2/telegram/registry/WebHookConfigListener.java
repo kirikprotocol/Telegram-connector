@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @SuppressWarnings("unused")
 public class WebHookConfigListener extends ServiceConfigListener {
 
@@ -79,13 +81,17 @@ public class WebHookConfigListener extends ServiceConfigListener {
     }
   }
 
+  public String getToken(String serviceId) {
+    return serviceId2Token.get(checkNotNull(serviceId));
+  }
+
 
   @SuppressWarnings("unused")
   public static class Factory implements ResourceFactory {
 
     @Override
     public WebHookConfigListener build(String id, Properties properties, HierarchicalConfiguration config) throws Exception {
-      TelegramApi api = (TelegramApi) SADSInitUtils.getResource("telegram-api", properties);
+      TelegramApi api = SADSInitUtils.getResource("telegram-api", properties);
       return new WebHookConfigListener(api);
     }
 

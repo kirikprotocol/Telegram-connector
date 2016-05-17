@@ -1,6 +1,6 @@
 package com.eyelinecom.whoisd.sads2.input;
 
-import com.eyelinecom.whoisd.sads2.telegram.util.TypeUtil;
+import com.eyelinecom.whoisd.sads2.common.TypeUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;

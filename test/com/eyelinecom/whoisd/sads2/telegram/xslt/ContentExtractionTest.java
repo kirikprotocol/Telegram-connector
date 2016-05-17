@@ -2,7 +2,6 @@ package com.eyelinecom.whoisd.sads2.telegram.xslt;
 
 
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
-import com.eyelinecom.whoisd.sads2.telegram.content.AttributeReader;
 import com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import org.dom4j.Document;
@@ -13,10 +12,8 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class ContentExtractionTest {
 
@@ -305,26 +302,4 @@ public class ContentExtractionTest {
     assertNull(root.selectSingleNode("//input[@type='hidden']"));
   }
 
-  @Test
-  public void testAttributes1() throws Exception {
-    final String text =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<page>\n" +
-            "  <message>Hello!</message>\n" +
-            "\n" +
-            "  <button href=\"/one.jsp\" attributes=\"telegram.inline: true;\">One</button>\n" +
-            "  <button href=\"/two.jsp\" attributes=\"telegram.inline: false;\">Two</button>\n" +
-            "</page>";
-
-    final Document rawDocument =
-        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
-    final Element root = rawDocument.getRootElement();
-
-    final Element link1 = (Element) root.selectSingleNode("//button[@href='/one.jsp']");
-    assertTrue(AttributeReader.getAttributes(link1).getBoolean("telegram.inline").or(false));
-    assertNull(AttributeReader.getAttributes(link1).getBoolean("missing.property").orNull());
-
-    final Element link2 = (Element) root.selectSingleNode("//button[@href='/two.jsp']");
-    assertFalse(AttributeReader.getAttributes(link2).getBoolean("telegram.inline").or(false));
-  }
 }
