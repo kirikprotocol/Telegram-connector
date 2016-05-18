@@ -1,10 +1,11 @@
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
+<%@include file="common.jspf" %>
 
 <page version="2.0">
   <div>
-    Пожалуйста, перезвоните с указанного телефона на номер +78002008123 для подтверждения.
+    <%= _("request.callback", request) %>
   </div>
   <navigation>
-    <link pageId="cancel.jsp">Отмена</link>
+    <link pageId="cancel.jsp"><%= _("cancel", request) %></link>
   </navigation>
 </page>

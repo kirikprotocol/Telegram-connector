@@ -9,9 +9,12 @@
 <%@ page import="java.net.HttpURLConnection" %>
 <%@ page import="java.net.URL" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Locale" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.util.ResourceBundle" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 
 
@@ -35,10 +38,10 @@
         "&scenario=default-noinform");
   }
 
-  private String payloadText(int total, int current) {
+  private String payloadText(HttpServletRequest req, int total, int current) {
     final StringBuilder buf = new StringBuilder();
 
-    buf.append("Вы можете использовать клавиатуру ниже, или ввести пароль вручную: ");
+    buf.append(_("prompt", req) + " ");
     buf.append("<b>");
 
     for (int i = 0; i < total; i++)
@@ -103,6 +106,37 @@
 
     return target;
   }
+
+
+
+  //
+  //  Locales.
+  //
+
+  private static final String BUNDLE_BASE = "secret_input";
+
+  public static String _(String key, String lang) {
+    if (lang == null) {
+      lang = "ru";
+    }
+
+    final Locale expectedLocale = new Locale(lang);
+    ResourceBundle rb =
+        ResourceBundle.getBundle("/" + BUNDLE_BASE, expectedLocale);
+
+    if (!rb.getLocale().equals(expectedLocale)) {
+      // Falls back to system locale -> replace with default one
+      rb = ResourceBundle.getBundle("/" + BUNDLE_BASE, new Locale("en"));
+    }
+
+    return new String(
+        rb.getString(key).getBytes(StandardCharsets.ISO_8859_1),
+        StandardCharsets.UTF_8);
+  }
+
+  public static String _(String key, HttpServletRequest req) {
+    return _(key, req.getParameter("lang"));
+  }
 %>
 
 <%
@@ -134,7 +168,7 @@
     request.setAttribute("isEdit", true);
     request.setAttribute("hideKeyboard", true);
     request.setAttribute("keepSession", true);
-    text = "Ввод пароля отменен.";
+    text = _("cancelled", request);
 
   } else {
 
@@ -153,7 +187,7 @@
 
       session.setAttribute("entered-value", "");
 
-      text = payloadText(4, 0);
+      text = payloadText(request, 4, 0);
       request.setAttribute("isEdit", false);
 
       final String links = request.getParameter("password-links");
@@ -191,11 +225,11 @@
 
         request.setAttribute("hideKeyboard", true);
         request.setAttribute("keepSession", true);
-        text = "Пароль введён.";
+        text = _("password.entered", request);
 
       } else {
         pageId = session.getId();
-        text = payloadText(4, currentLength);
+        text = payloadText(request, 4, currentLength);
       }
     }
   }
