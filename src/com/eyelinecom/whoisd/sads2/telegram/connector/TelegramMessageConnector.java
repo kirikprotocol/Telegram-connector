@@ -105,7 +105,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
     final TelegramWebhookRequest request = new TelegramWebhookRequest(req);
 
-    SADSResponse response = connector.process(request);
+    final SADSResponse response = connector.process(request);
     ConnectorUtils.fillHttpResponse(resp, response);
   }
 
