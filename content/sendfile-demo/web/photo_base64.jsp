@@ -2,6 +2,10 @@
 
 <page version="2.0">
 
+  <div>
+    Вот и картинка.
+  </div>
+
   <attachment
       type="photo"
       fileName="pic.jpg"

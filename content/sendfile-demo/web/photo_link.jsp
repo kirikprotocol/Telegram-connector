@@ -2,7 +2,11 @@
 
 <page version="2.0">
 
+  <div>
+    Вот и картинка.
+  </div>
+
   <attachment
       type="photo"
-      src="resources/pic.jpg"/>
+      src="https://api.miniapps.run/content/static/pic.jpg"/>
 </page>
