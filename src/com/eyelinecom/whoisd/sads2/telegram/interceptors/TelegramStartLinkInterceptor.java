@@ -71,6 +71,7 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
                 .set(msisdn);
           }
 
+          if (!profile.getWnumber().equals(request.getProfile().getWnumber())) profile.delete();
           closeSession(request, profile.getWnumber());
         }
       }
