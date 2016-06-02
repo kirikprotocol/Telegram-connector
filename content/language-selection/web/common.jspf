@@ -1,0 +1,79 @@
+<%@ page import="mobi.eyeline.utils.restclient.web.RestClient" %>
+<%@ page import="org.apache.log4j.Logger" %>
+<%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
+<%@ page import="java.net.HttpURLConnection" %>
+<%@ page import="java.net.URL" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page language="java" %>
+
+<%!
+
+  static final String MOBILIZER_ROOT = "https://api.miniapps.run";
+  static final String API_ROOT = "http://localhost:11201/wstorage";
+
+  Logger getLog() {
+    return Logger.getLogger("language-selection");
+  }
+
+    public void saveLang(String lang,String wnumber) throws Exception{
+
+        getLog().debug("try to save lang = "+lang+" to profile wnumber = "+wnumber);
+        new RestClient().json(API_ROOT+"/profile/"+wnumber+"/lang",RestClient.post(RestClient.content(lang)));
+    }
+
+
+  public static String getWnumber(HttpServletRequest req) {
+    final String wnumber = req.getParameter("wnumber");
+    return (wnumber == null || wnumber.isEmpty()) ? req.getParameter("subscriber") : wnumber;
+  }
+
+  private void sendGet(String url) throws Exception {
+    getLog().debug("Sending GET to [" + url + "]");
+
+    final HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+    con.setRequestMethod("GET");
+    con.getInputStream().close();
+  }
+
+
+  //
+  //  Locales.
+  //
+
+  private static final String BUNDLE_BASE = "language";
+
+
+    public static String _(String key, ResourceBundle rb) {
+        return new String(
+                rb.getString(key).getBytes(StandardCharsets.ISO_8859_1),
+                StandardCharsets.UTF_8);
+    }
+
+  public static String _(String key, String lang) {
+
+    ResourceBundle rb =getBundle(lang);
+    return _(key,rb);
+
+  }
+    public static String _(String key, HttpServletRequest req) {
+      return _(key, req.getParameter("lang"));
+    }
+
+    public static ResourceBundle getBundle(String lang) {
+        if (lang == null) {
+          lang = "ru";
+        }
+
+        final Locale expectedLocale = new Locale(lang);
+        ResourceBundle rb =
+            ResourceBundle.getBundle("/" + BUNDLE_BASE, expectedLocale);
+
+        if (!rb.getLocale().equals(expectedLocale)) {
+          // Falls back to system locale -> replace with default one
+          rb = ResourceBundle.getBundle("/" + BUNDLE_BASE, new Locale("en"));
+        }
+
+        return rb;
+      }
+
+%>
