@@ -1,10 +1,6 @@
 <%@ page import="org.apache.log4j.Logger" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
-<%@ page import="java.util.Arrays" %>
-<%@ page import="java.util.Iterator" %>
-<%@ page import="java.util.Locale" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.util.ResourceBundle" %>
+<%@ page import="java.util.*" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 
 <%!
@@ -36,7 +32,8 @@
   //  Locales.
   //
 
-  private static final String BUNDLE_BASE = "msisdn_confirmation";
+  private static final String BUNDLE_BASE = "error-page";
+
 
   public static String _(String key, String lang) {
     if (lang == null) {
