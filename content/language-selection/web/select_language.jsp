@@ -1,7 +1,5 @@
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@ page import="java.util.Enumeration" %>
-<%@ page import="java.util.Locale" %>
-<%@ page import="java.util.ResourceBundle" %>
 <%@include file="common.jspf" %>
 
 <%
@@ -9,16 +7,7 @@
     ResourceBundle bundle = getBundle(lang);
     String forwardUrl = request.getParameter("forwardUrl");
     if(forwardUrl==null){
-        %>
-<page version="2.0">
-  <div>
-          <%= _("error.message", bundle)%>
-  </div>
-
-</page>
-
-<%
-      return;
+        throw new RuntimeException("param 'forwardUrl' is empty");
     }
     request.getSession().setAttribute("forward-url",forwardUrl);
 %>

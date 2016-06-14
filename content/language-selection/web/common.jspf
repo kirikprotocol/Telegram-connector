@@ -4,11 +4,12 @@
 <%@ page import="java.net.HttpURLConnection" %>
 <%@ page import="java.net.URL" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.util.ResourceBundle" %>
 <%@ page language="java" %>
 
 <%!
 
-  static final String MOBILIZER_ROOT = "https://api.miniapps.run";
   static final String API_ROOT = "http://localhost:11201/wstorage";
 
   Logger getLog() {

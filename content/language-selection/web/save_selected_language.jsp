@@ -6,32 +6,14 @@
     final String wnumber =getWnumber(request);
     String lang = request.getParameter("selected_lang");
     if(lang==null){
-%>
-<page version="2.0">
-    <div>
-            <%= _("error.message", lang)%>
-    </div>
-
-</page>
-
-<%
-        return;
+        throw new RuntimeException(_("error.message", lang));
     }
 
     try {
         saveLang(lang,wnumber);
     } catch (Exception e) {
         getLog().error("can't save lang = " + lang + " to profile wnumber = " + wnumber,e);
-%>
-    <page version="2.0">
-    <div>
-            <%= _("error.message", lang)%>
-    </div>
-
-    </page>
-
-<%
-        return;
+        throw new RuntimeException(e);
     }
     response.sendRedirect((String)request.getSession().getAttribute("forward-url"));
 %>
