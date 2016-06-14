@@ -13,7 +13,7 @@ import com.eyelinecom.whoisd.sads2.profile.Profile;
  */
 public class UserLocaleInterceptor extends BlankInterceptor {
 
-  public static final String LANG_REQUEST_PARAM = "lang";
+  public static final String LANG_PARAM = "lang";
 
   @Override
   public void beforeContentRequest(SADSRequest request,
@@ -22,7 +22,7 @@ public class UserLocaleInterceptor extends BlankInterceptor {
 
     final String lang = getLangParam(request);
     if (lang != null) {
-      contentRequest.getParameters().put(LANG_REQUEST_PARAM, lang);
+      contentRequest.getParameters().put(LANG_PARAM, lang);
     }
 
     super.beforeContentRequest(request, contentRequest, dispatcher);
@@ -33,7 +33,7 @@ public class UserLocaleInterceptor extends BlankInterceptor {
     // 1. Check current session.
     final Session session = request.getSession();
     if (session != null && !session.isClosed()) {
-      final String sessionParam = (String) session.getAttribute("lang");
+      final String sessionParam = (String) session.getAttribute(LANG_PARAM);
       if (sessionParam != null) {
         return sessionParam;
       }
@@ -54,7 +54,7 @@ public class UserLocaleInterceptor extends BlankInterceptor {
 
       // 3. Check global profile.
       final String globalProfileParam = profile
-          .property("lang")
+          .property(LANG_PARAM)
           .getValue();
 
       if (globalProfileParam != null) {
@@ -65,7 +65,7 @@ public class UserLocaleInterceptor extends BlankInterceptor {
     // 4. Fall back to service config.
 
     final String serviceParam =
-        request.getServiceScenario().getAttributes().getProperty("lang", null);
+        request.getServiceScenario().getAttributes().getProperty(LANG_PARAM, null);
     if (serviceParam != null) {
       return serviceParam;
     }
