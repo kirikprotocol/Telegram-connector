@@ -32,7 +32,7 @@
   //  Locales.
   //
 
-  private static final String BUNDLE_BASE = "error-page";
+  private static final String BUNDLE_BASE = "error_page";
 
 
   public static String _(String key, String lang) {
