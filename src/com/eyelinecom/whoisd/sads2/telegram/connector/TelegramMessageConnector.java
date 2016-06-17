@@ -550,7 +550,15 @@ public class TelegramMessageConnector extends HttpServlet {
                 .find(wnumber)
                 .property("telegram-chats", serviceToken)
                 .getValue(),
-            "Bot name: @" + me.getUserName() + ".\nToken: " + serviceToken + ".\nService: " + serviceId + "."
+            StringUtils.join(
+                new String[] {
+                    "Bot name: @" + me.getUserName() + ".",
+                    "Token: " + serviceToken + ".",
+                    "Service: " + serviceId + ".",
+                    "Mobilizer instance: " + getRootUri()
+                },
+                "\n"
+            )
         );
 
       } else if (cmd == SHOW_PROFILE) {
@@ -683,19 +691,23 @@ public class TelegramMessageConnector extends HttpServlet {
       return msisdn;
     }
 
-    private String getFilePath(String serviceId, String fileId) {
-      final Properties mainProperties;
+    private String getRootUri() {
       try {
-        mainProperties = SADSInitializer.getMainProperties();
+        final Properties mainProperties = SADSInitializer.getMainProperties();
+        return mainProperties.getProperty("root.uri");
+
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    private String getFilePath(String serviceId, String fileId) {
 
       // Note: using absolute URL here seems redundant (and might cause a lot of issues),
       // but we don't have any way to inform content provider of our actual URL.
       //
       // Consider using headers for this, like always passing "X-MyHostName = ...".
-      return mainProperties.getProperty("root.uri") + "/files/" +  serviceId + "/telegram/" + fileId;
+      return getRootUri() + "/files/" +  serviceId + "/telegram/" + fileId;
     }
 
     private TelegramApi getClient() throws NotFoundResourceException {
