@@ -2,7 +2,6 @@ package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
-import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentRequest;
@@ -16,9 +15,10 @@ import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.Protocol.XHTML_MP;
 import static java.lang.Boolean.parseBoolean;
 
-public class MsisdnAttrVerificationInterceptor extends BlankInterceptor implements Initable {
+public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
 
   /**
    * Content page attribute marking it as requiring MSISDN verification.
@@ -68,13 +68,21 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor implemen
     }
   }
 
-  private boolean isEnabled(SADSRequest request) {
+  protected boolean isEnabled(SADSRequest request) {
     final Properties attrs = request.getServiceScenario().getAttributes();
     final Protocol protocol = request.getProtocol();
-    return
-        (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
-            ||
-        (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")));
+
+    //noinspection SimplifiableIfStatement
+    if ((protocol == XHTML_MP) || (protocol == Protocol.USSD)) {
+      // No need for verification as these protocols always have .
+      return false;
+
+    } else {
+      return
+          (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
+              ||
+          (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")));
+    }
   }
 
   private void redirectConfirmMsisdn(SADSRequest request,
@@ -147,14 +155,5 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor implemen
     }
 
     return originalUrl;
-  }
-
-  @Override
-  public void init(Properties config) throws Exception {
-  }
-
-  @Override
-  public void destroy() {
-
   }
 }
