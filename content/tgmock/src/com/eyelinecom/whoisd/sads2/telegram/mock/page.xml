@@ -1,0 +1,25 @@
+<page version="2.0">
+  <div>
+    <b>Привет!</b>
+
+    <br/><br/>
+
+    Выберите страницу для перехода.
+
+  </div>
+
+  <navigation>
+    <link pageId="page.xml">Страница 1</link>
+    <link pageId="page.xml">Страница 2</link>
+  </navigation>
+
+  <navigation>
+    <link pageId="page.xml">Страница 3</link>
+    <link pageId="page.xml">Страница 4</link>
+  </navigation>
+
+  <navigation>
+    <link pageId="page.xml">Страница 5</link>
+    <link pageId="page.xml">Страница 6</link>
+  </navigation>
+</page>

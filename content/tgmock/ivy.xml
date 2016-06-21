@@ -1,0 +1,20 @@
+<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd"
+            xmlns:m="http://ant.apache.org/ivy/maven.xsd">
+
+  <info organisation="mobi.eyeline" module="tgmock"/>
+
+  <configurations>
+  </configurations>
+
+  <dependencies>
+
+    <dependency org="org.codehaus.groovy" name="groovy-all" rev="2.4.5">
+      <artifact name="groovy-all" type="jar" ext="jar" m:classifier=""/>
+      <exclude org="javax.servlet" name="servlet-api"/>
+    </dependency>
+
+    <dependency org="io.netty" name="netty-all" rev="4.1.1.Final"/>
+
+  </dependencies>
+</ivy-module>
