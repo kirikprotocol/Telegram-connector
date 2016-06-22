@@ -15,6 +15,7 @@
     </dependency>
 
     <dependency org="io.netty" name="netty-all" rev="4.1.1.Final"/>
+    <dependency org="mysql" name="mysql-connector-java" rev="5.1.13"/>
 
   </dependencies>
 </ivy-module>

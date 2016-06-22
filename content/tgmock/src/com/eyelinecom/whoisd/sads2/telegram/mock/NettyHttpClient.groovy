@@ -2,18 +2,15 @@ package com.eyelinecom.whoisd.sads2.telegram.mock
 
 import groovy.transform.PackageScope
 import io.netty.bootstrap.Bootstrap
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelPipeline
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import io.netty.example.http.snoop.HttpSnoopClientHandler
 import io.netty.handler.codec.http.DefaultFullHttpRequest
 import io.netty.handler.codec.http.HttpClientCodec
 import io.netty.handler.codec.http.HttpHeaderNames
@@ -26,8 +23,7 @@ import io.netty.handler.codec.http.LastHttpContent
 import io.netty.util.CharsetUtil
 
 import java.util.concurrent.Executor
-
-import static java.nio.charset.StandardCharsets.UTF_8
+import java.util.concurrent.ThreadFactory
 
 @PackageScope
 class NettyHttpClient {
@@ -55,7 +51,11 @@ class NettyHttpClient {
   }
 
   NettyHttpClient(int nActors, Executor executor) {
-    group = new NioEventLoopGroup(/*nActors, executor*/)
+    group = new NioEventLoopGroup(nActors, new ThreadFactory() {
+      volatile int nClient = 0
+
+      @Override Thread newThread(Runnable r) { new Thread(r, "client-${nClient++}") }
+    })
   }
 
   void stop() {
@@ -84,8 +84,6 @@ class NettyHttpClient {
     request.content().writeBytes(buf)
 
     ch.writeAndFlush(request)
-
-    ch.closeFuture().sync()
   }
 
 }

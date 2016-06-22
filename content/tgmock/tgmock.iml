@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/web/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/web" relative="/" />
+        </webroots>
+      </configuration>
+    </facet>
+    <facet type="IvyIDEA" name="IvyIDEA">
+      <configuration ivyFile="$MODULE_DIR$/ivy.xml" useProjectSettings="false" useCustomIvySettings="true" ivySettingsFile="$USER_HOME$/.ivy2/ivysettings.xml" onlyResolveSelectedConfigs="false">
+        <propertiesSettings>
+          <propertiesFiles includeProjectLevelPropertiesFiles="true" />
+        </propertiesSettings>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="Tomcat 7.0.67" level="application_server_libraries" />
+    <orderEntry type="module-library">
+      <library name="IvyIDEA">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.groovy/groovy-all/jars/groovy-all-2.4.5.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant/jars/ant-1.9.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-launcher/jars/ant-launcher-1.9.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-antlr/jars/ant-antlr-1.9.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-junit/jars/ant-junit-1.9.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-logging/commons-logging/jars/commons-logging-1.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/bsf/bsf/jars/bsf-2.4.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.qdox/qdox/jars/qdox-1.12.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/jline/jline/jars/jline-2.12.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.servlet/jsp-api/jars/jsp-api-2.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.12.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/jars/testng-6.8.13.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.inject/guice/jars/guice-2.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/aopalliance/aopalliance/jars/aopalliance-1.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.47.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.xstream/xstream/jars/xstream-1.4.7.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.gpars/gpars/jars/gpars-1.2.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.multiverse/multiverse-core/jars/multiverse-core-0.7.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jsr166-mirror/jsr166y/jars/jsr166y-1.7.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ivy/ivy/jars/ivy-2.4.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.jansi/jansi/jars/jansi-1.11.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-all/jars/netty-all-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-buffer/jars/netty-buffer-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-common/jars/netty-common-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec/jars/netty-codec-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport/jars/netty-transport-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver/jars/netty-resolver-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-dns/jars/netty-codec-dns-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-haproxy/jars/netty-codec-haproxy-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http/jars/netty-codec-http-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http2/jars/netty-codec-http2-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler/jars/netty-handler-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-memcache/jars/netty-codec-memcache-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-mqtt/jars/netty-codec-mqtt-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-socks/jars/netty-codec-socks-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-stomp/jars/netty-codec-stomp-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler-proxy/jars/netty-handler-proxy-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver-dns/jars/netty-resolver-dns-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-rxtx/jars/netty-transport-rxtx-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.rxtx/rxtx/jars/rxtx-2.1.7.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-sctp/jars/netty-transport-sctp-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-udt/jars/netty-transport-udt-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.barchart.udt/barchart-udt-bundle/bundles/barchart-udt-bundle-2.3.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-example/jars/netty-example-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-redis/jars/netty-codec-redis-4.1.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/bundles/protobuf-java-2.6.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.yammer.metrics/metrics-core/jars/metrics-core-2.2.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.marshalling/jboss-marshalling/jars/jboss-marshalling-1.4.8.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mysql/mysql-connector-java/jars/mysql-connector-java-5.1.13.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.groovy/groovy-all/javadocs/groovy-all-2.4.5-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant/javadocs/ant-1.9.4-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-logging/commons-logging/javadocs/commons-logging-1.2-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.qdox/qdox/javadocs/qdox-1.12.1-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/jline/jline/javadocs/jline-2.12-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/javadocs/junit-4.12-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/javadocs/hamcrest-core-1.3-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/javadocs/testng-6.8.13-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/javadocs/jcommander-1.47-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.xstream/xstream/javadocs/xstream-1.4.7-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.gpars/gpars/javadocs/gpars-1.2.1-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.multiverse/multiverse-core/javadocs/multiverse-core-0.7.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jsr166-mirror/jsr166y/javadocs/jsr166y-1.7.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ivy/ivy/javadocs/ivy-2.4.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.jansi/jansi/javadocs/jansi-1.11-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-all/javadocs/netty-all-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-buffer/javadocs/netty-buffer-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-common/javadocs/netty-common-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec/javadocs/netty-codec-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport/javadocs/netty-transport-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver/javadocs/netty-resolver-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-dns/javadocs/netty-codec-dns-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-haproxy/javadocs/netty-codec-haproxy-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http/javadocs/netty-codec-http-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http2/javadocs/netty-codec-http2-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler/javadocs/netty-handler-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-memcache/javadocs/netty-codec-memcache-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-mqtt/javadocs/netty-codec-mqtt-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-socks/javadocs/netty-codec-socks-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-stomp/javadocs/netty-codec-stomp-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler-proxy/javadocs/netty-handler-proxy-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver-dns/javadocs/netty-resolver-dns-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-rxtx/javadocs/netty-transport-rxtx-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-sctp/javadocs/netty-transport-sctp-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-udt/javadocs/netty-transport-udt-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.barchart.udt/barchart-udt-bundle/javadocs/barchart-udt-bundle-2.3.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-example/javadocs/netty-example-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-redis/javadocs/netty-codec-redis-4.1.1.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/javadocs/protobuf-java-2.6.1-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-tcnative/javadocs/netty-tcnative-1.1.33.Fork17-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.yammer.metrics/metrics-core/javadocs/metrics-core-2.2.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.slf4j/slf4j-api/javadocs/slf4j-api-1.7.21-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.marshalling/jboss-marshalling/javadocs/jboss-marshalling-1.4.8.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/javadocs/log4j-1.2.17-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.groovy/groovy-all/sources/groovy-all-2.4.5-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant/sources/ant-1.9.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-launcher/sources/ant-launcher-1.9.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-antlr/sources/ant-antlr-1.9.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-junit/sources/ant-junit-1.9.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-logging/commons-logging/sources/commons-logging-1.2-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.qdox/qdox/sources/qdox-1.12.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/jline/jline/sources/jline-2.12-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.servlet/servlet-api/sources/servlet-api-2.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/sources/junit-4.12-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/sources/hamcrest-core-1.3-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/sources/testng-6.8.13-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.inject/guice/sources/guice-2.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/aopalliance/aopalliance/sources/aopalliance-1.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/sources/jcommander-1.47-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.thoughtworks.xstream/xstream/sources/xstream-1.4.7-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.gpars/gpars/sources/gpars-1.2.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.multiverse/multiverse-core/sources/multiverse-core-0.7.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jsr166-mirror/jsr166y/sources/jsr166y-1.7.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ivy/ivy/sources/ivy-2.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.fusesource.jansi/jansi/sources/jansi-1.11-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-all/sources/netty-all-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-buffer/sources/netty-buffer-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-common/sources/netty-common-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec/sources/netty-codec-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport/sources/netty-transport-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver/sources/netty-resolver-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-dns/sources/netty-codec-dns-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-haproxy/sources/netty-codec-haproxy-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http/sources/netty-codec-http-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-http2/sources/netty-codec-http2-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler/sources/netty-handler-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-memcache/sources/netty-codec-memcache-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-mqtt/sources/netty-codec-mqtt-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-socks/sources/netty-codec-socks-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-stomp/sources/netty-codec-stomp-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-handler-proxy/sources/netty-handler-proxy-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-resolver-dns/sources/netty-resolver-dns-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-rxtx/sources/netty-transport-rxtx-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-sctp/sources/netty-transport-sctp-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-transport-udt/sources/netty-transport-udt-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.barchart.udt/barchart-udt-bundle/sources/barchart-udt-bundle-2.3.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-example/sources/netty-example-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-codec-redis/sources/netty-codec-redis-4.1.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/sources/protobuf-java-2.6.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/io.netty/netty-tcnative/sources/netty-tcnative-1.1.33.Fork17-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.yammer.metrics/metrics-core/sources/metrics-core-2.2.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.slf4j/slf4j-api/sources/slf4j-api-1.7.21-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.marshalling/jboss-marshalling/sources/jboss-marshalling-1.4.8.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/sources/log4j-1.2.17-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

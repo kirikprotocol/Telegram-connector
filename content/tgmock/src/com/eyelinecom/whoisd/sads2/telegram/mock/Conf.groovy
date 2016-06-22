@@ -2,6 +2,10 @@ package com.eyelinecom.whoisd.sads2.telegram.mock
 
 class Conf {
 
+  String dbUrl = 'jdbc:mysql://192.168.2.112/profile_storage?allowMultiQueries=true'
+  String dbUser = 'tester'
+  String dbPassword = 'tester'
+
   String logFile = '/tmp/tg-mock.log'
 
   int nActors

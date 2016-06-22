@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.mock
 
 import groovy.json.JsonSlurper
+import groovy.sql.Sql
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
@@ -54,7 +55,7 @@ class TgMock implements Logger {
           }
           results << (System.currentTimeMillis() - sent)
 
-          _print "  << $chatId"
+          _debug "  << $chatId"
         }
 
         '''
@@ -80,31 +81,55 @@ class TgMock implements Logger {
   }
 
   void run() {
-    _printHeader "Warming up"
-
     int warmupCount = conf.nActors * conf.warmupMessagesPerActor
 
-    _print "Scheduling $warmupCount messages"
-    schedule(0..warmupCount)
+    ({
+      _printHeader "Warming up"
 
-    await warmupCount
-    results.clear()
+      _print "Scheduling $warmupCount messages"
+      schedule(1..(warmupCount+1))
 
-    _printHeader "Running"
+      await warmupCount
+      results.clear()
+    })()
 
-    final count = conf.nActors * conf.messagesPerActor
+    ({
+      _printHeader "Running cold"
 
-    _print "Scheduling $count messages"
-    schedule((warmupCount + 1)..(warmupCount + 1 + count))
+      final count = conf.nActors * conf.messagesPerActor
 
-    await count
-    reportResults count
+      _print "Scheduling $count messages"
 
-    results.clear()
+      final start = System.currentTimeMillis()
+      schedule((warmupCount + 1)..(warmupCount + 1 + count))
+
+      await count
+      reportResults count
+      _print "+ RPS: ${((double) start) / count}"
+
+      results.clear()
+    })()
+
+    ({
+      _printHeader "Running hot"
+
+      final count = conf.nActors * conf.messagesPerActor
+
+      _print "Scheduling $count messages"
+      final start = System.currentTimeMillis()
+      schedule((warmupCount + 1)..(warmupCount + 1 + count))
+
+      await count
+      reportResults count
+      _print "+ RPS: ${((double) start) / count}"
+
+      results.clear()
+    })()
   }
 
-  void reportResults(int nActors) {
-    _print "+ Actors: $nActors"
+  void reportResults(int count) {
+    _print "+ Actors: $conf.nActors"
+    _print "+ Messages: $count"
 
     final avg = results.sum() / results.size()
     _print "+ Response time: $avg"
@@ -115,6 +140,21 @@ class TgMock implements Logger {
   }
 
   void stop() {
+    _printHeader "Clearing DB"
+
+    final sql = Sql.newInstance(conf.dbUrl, conf.dbUser, conf.dbPassword, 'com.mysql.jdbc.Driver')
+    try {
+      sql.execute '''
+        START TRANSACTION;
+        CALL sample_clear_profiles('test-%');
+        COMMIT;
+      '''
+    } finally {
+      sql.close()
+    }
+
+    _print "DB cleared"
+
     client.stop()
 
     actors.shutdown()
@@ -127,16 +167,22 @@ class TgMock implements Logger {
     _print "Awaiting for $nRequests responses to arrive"
 
     while (true) {
-      Thread.sleep(TimeUnit.SECONDS.toMillis(5))
+      Thread.sleep(TimeUnit.SECONDS.toMillis(1))
 
-      final size = results.size()
+      final size = requests.size()
 
-      if (size < nRequests)   _print "  Got $size"
-      else                    return
+      if (size != 0) {
+        _prints "  $size"
+      } else {
+        _print ''
+        return
+      }
     }
+
   }
 
   void send(Long chatId) {
+    chatId = -chatId
     final msg = """{
         "update_id":657656097,
         "message":{
@@ -151,7 +197,7 @@ class TgMock implements Logger {
     requests.put(chatId, System.currentTimeMillis())
     client.request(conf.webhookHost, conf.webhookPort, conf.webhookPath, msg)
 
-    _print "  >> $chatId"
+    _debug "  >> $chatId"
   }
 
 }

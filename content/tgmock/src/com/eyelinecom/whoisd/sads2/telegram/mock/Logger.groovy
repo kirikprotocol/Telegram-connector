@@ -2,6 +2,8 @@ package com.eyelinecom.whoisd.sads2.telegram.mock
 
 trait Logger {
 
+  boolean debug = false
+
   private File outFile
 
   void printInit(String path) {
@@ -17,9 +19,19 @@ trait Logger {
     printInit '/tmp/tg-mock.log'
   }
 
-  synchronized void _print(_) {
-    System.out.println _
-    outFile.append(_ + "\n")
+  void _print(_) {
+    _prints "$_\n"
+  }
+
+  synchronized void _prints(_) {
+    System.out.print _
+    outFile.append _
+  }
+
+  void _debug(_) {
+    if (debug) {
+      _print " $_"
+    }
   }
 
   void _printHeader(_) {
