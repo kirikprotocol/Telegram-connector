@@ -2,12 +2,14 @@ package com.eyelinecom.whoisd.sads2.telegram.mock
 
 import groovy.json.JsonSlurper
 import groovy.sql.Sql
+import org.apache.http.client.entity.EntityBuilder
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.RequestBuilder
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+
+import static FiberClient.*
 
 class TgMock implements Logger {
 
@@ -18,26 +20,13 @@ class TgMock implements Logger {
 
   private final Conf conf
 
-  private final ExecutorService actors
-
-  private final NettyHttpClient client
+  private final FiberClient client
   private final NettyHttpServer server
 
   TgMock(Conf conf) {
     this.conf = conf
-    this.actors = Executors.newFixedThreadPool(
-        conf.nActors,
-        new ThreadFactory() {
-          private volatile int ct = 0
-          @Override Thread newThread(Runnable r) {
-            new Thread(r, "actor-${++ct}").with {
-              daemon = true; it
-            }
-          }
-        }
-    )
 
-    client = new NettyHttpClient(conf.nActors, actors)
+    client = new FiberClient()
     server = new NettyHttpServer(conf.mockPort, new NettyHttpServer.RequestHandler() {
       @Override
       String handle(String content) {
@@ -74,69 +63,112 @@ class TgMock implements Logger {
     printInit conf.logFile
 
     _printHeader "Initialized"
-    _print "Actors = $conf.nActors"
-    _print "Messages per actor, average = $conf.messagesPerActor"
-    _print "Warmup messages per actor, average = $conf.warmupMessagesPerActor"
+    _print "Target RPS = $conf.targetRps"
+    _print "Messages = $conf.totalMessages, of them warmup = $conf.warmupMessages"
     _print ""
   }
 
   void run() {
-    int warmupCount = conf.nActors * conf.warmupMessagesPerActor
-
     ({
-      _printHeader "Warming up"
+      _print "Running cold"
 
-      _print "Scheduling $warmupCount messages"
-      schedule(1..(warmupCount+1))
+      _print "Scheduling $conf.totalMessages messages"
 
-      await warmupCount
-      results.clear()
-    })()
+      schedule().join()
 
-    ({
-      _printHeader "Running cold"
-
-      final count = conf.nActors * conf.messagesPerActor
-
-      _print "Scheduling $count messages"
-
-      final start = System.currentTimeMillis()
-      schedule((warmupCount + 1)..(warmupCount + 1 + count))
-
-      await count
-      reportResults count
-      _print "+ RPS: ${((double) start) / count}"
+      await conf.totalMessages
+      reportResults()
 
       results.clear()
     })()
 
+    _printLine()
+
     ({
-      _printHeader "Running hot"
+      _print " Running hot "
 
-      final count = conf.nActors * conf.messagesPerActor
+      _print "Scheduling $conf.totalMessages messages"
 
-      _print "Scheduling $count messages"
-      final start = System.currentTimeMillis()
-      schedule((warmupCount + 1)..(warmupCount + 1 + count))
+      schedule().join()
 
-      await count
-      reportResults count
-      _print "+ RPS: ${((double) start) / count}"
+      await conf.totalMessages
+      reportResults()
 
       results.clear()
     })()
   }
 
-  void reportResults(int count) {
-    _print "+ Actors: $conf.nActors"
-    _print "+ Messages: $count"
+  void reportResults() {
+    def actual = conf.totalMessages - conf.warmupMessages
+
+    _print "+ Target RPS, client: $conf.targetRps"
+    _print "+ Actual RPS, client: ${(endMillis - startMillis) / actual}"
+    _print "+ Messages: ${actual}"
 
     final avg = results.sum() / results.size()
-    _print "+ Response time: $avg"
+    _print "+ AVG time, ms: $avg"
+    _print "+ MIN time, ms: ${results.min()}"
+    _print "+ MAX time, ms: ${results.max()}"
   }
 
-  void schedule(Range<Integer> chatIds) {
-    chatIds.each { chatId -> actors.execute { send chatId } }
+  int idx2ChatId(int idx) {
+    -(idx + 1)
+  }
+
+  int chatId2Idx(int chatId) {
+    -(chatId - 1)
+  }
+
+  volatile long startMillis
+  volatile long endMillis
+
+  Thread schedule() {
+    Thread.start 'sender', {
+      client.run(
+          conf.targetRps,
+          conf.totalMessages,
+
+          new RequestProducer() {
+            @Override
+            Request produce(int idx) {
+              final chatId = idx2ChatId idx
+              final msg = """{
+                "update_id":657656097,
+                "message":{
+                  "message_id":38,
+                  "from":{"id":$chatId,"first_name":"tester","username":"Tester"},
+                  "chat":{"id":$chatId,"first_name":"tester","username":"Tester","type":"private"},
+                  "date":1455522117,
+                  "text":"\\/start"
+                  }
+                }"""
+
+              final req = RequestBuilder
+                  .post()
+                  .setUri(conf.webhookUri)
+                  .setEntity(EntityBuilder.create().setText(msg).build())
+                  .build()
+
+              new Request(req as HttpPost, idx)
+            }
+          },
+
+          new ProgressTracker() {
+            @Override
+            void onExecuted(int idx) {
+              if (idx > conf.warmupMessages) {
+                if (startMillis == 0) {
+                  startMillis = System.currentTimeMillis()
+                }
+
+                requests.put idx2ChatId(idx), System.currentTimeMillis()
+
+                endMillis = System.currentTimeMillis()
+              }
+            }
+          }
+      )
+    }
   }
 
   void stop() {
@@ -164,7 +196,7 @@ class TgMock implements Logger {
   }
 
   void await(int nRequests) {
-    _print "Awaiting for $nRequests responses to arrive"
+    _print " Awaiting for $nRequests responses to arrive..."
 
     while (true) {
       Thread.sleep(TimeUnit.SECONDS.toMillis(1))
@@ -172,32 +204,13 @@ class TgMock implements Logger {
       final size = requests.size()
 
       if (size != 0) {
-        _prints "  $size"
+        _prints " $size"
       } else {
         _print ''
         return
       }
     }
 
-  }
-
-  void send(Long chatId) {
-    chatId = -chatId
-    final msg = """{
-        "update_id":657656097,
-        "message":{
-          "message_id":38,
-          "from":{"id":$chatId,"first_name":"tester","username":"Tester"},
-          "chat":{"id":$chatId,"first_name":"tester","username":"Tester","type":"private"},
-          "date":1455522117,
-          "text":"\\/start"
-          }
-        }"""
-
-    requests.put(chatId, System.currentTimeMillis())
-    client.request(conf.webhookHost, conf.webhookPort, conf.webhookPath, msg)
-
-    _debug "  >> $chatId"
   }
 
 }

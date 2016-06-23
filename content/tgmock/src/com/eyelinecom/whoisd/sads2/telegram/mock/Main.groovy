@@ -4,10 +4,9 @@ class Main {
 
   static void main(String[] args) {
     def confs = [
-        new Conf(nActors: 1),
-        new Conf(nActors: 10),
-        new Conf(nActors: 30),
-        new Conf(nActors: 50)
+        new Conf(targetRps: 10),
+        new Conf(targetRps: 20),
+        new Conf(targetRps: 30),
     ]
 
     confs.each { conf ->

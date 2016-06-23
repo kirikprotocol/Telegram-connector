@@ -17,5 +17,11 @@
     <dependency org="io.netty" name="netty-all" rev="4.1.1.Final"/>
     <dependency org="mysql" name="mysql-connector-java" rev="5.1.13"/>
 
+    <dependency org="co.paralleluniverse" name="quasar-core" rev="0.6.3-SNAPSHOT"/>
+    <dependency org="co.paralleluniverse" name="comsat-httpclient" rev="0.3.0"/>
+    <dependency org="com.pinterest" name="jbender" rev="1.0"/>
+    <dependency org="org.slf4j" name="slf4j-api" rev="1.7.12"/>
+    <dependency org="org.slf4j" name="slf4j-simple" rev="1.7.12"/>
+
   </dependencies>
 </ivy-module>
