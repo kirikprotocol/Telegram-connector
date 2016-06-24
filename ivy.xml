@@ -9,6 +9,10 @@
     <dependency org="mobi.eyeline.mobilizer" name="sads-smpp" rev="[0.104,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-profile-storage" rev="[0.3,)" changing="true"/>
 
+    <dependency org="mobi.eyeline.utils" name="db-template" rev="[0.01,)" changing="true" conf="*->default"/>
+    <!-- For ManagedSessionContext. -->
+    <dependency org="org.hibernate" name="hibernate-core" rev="5.1.0.Final" conf="*->default"/>
+
     <dependency org="commons-configuration" name="commons-configuration" rev="1.4"/>
     <dependency org="commons-lang" name="commons-lang" rev="2.3"/>
     <dependency org="commons-io" name="commons-io" rev="1.4"/>
