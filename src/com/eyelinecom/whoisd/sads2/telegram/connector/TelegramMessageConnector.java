@@ -7,6 +7,8 @@ import com.eyelinecom.whoisd.sads2.common.SADSUrlUtils;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.ChatCommand;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
+import com.eyelinecom.whoisd.sads2.connector.SADSRequestFactory;
+import com.eyelinecom.whoisd.sads2.connector.SADSRequestFactoryDelegate;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
@@ -15,6 +17,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
+import com.eyelinecom.whoisd.sads2.executors.connector.SimpleSADSRequestFactory;
 import com.eyelinecom.whoisd.sads2.input.AbstractInputType;
 import com.eyelinecom.whoisd.sads2.input.InputContact;
 import com.eyelinecom.whoisd.sads2.input.InputFile;
@@ -41,6 +44,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.utils.ConnectorUtils;
+import com.eyelinecom.whoisd.sads2.wstorage.resource.DbProfileStorage;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -78,7 +82,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
   public static final String ATTR_SESSION_PREVIOUS_PAGE_URI = "SADS-previous-page-uri";
 
-  private MessageConnector<TelegramWebhookRequest, SADSResponse> connector;
+  private TelegramMessageConnectorImpl connector;
 
   @Override
   public void destroy() {
@@ -172,6 +176,37 @@ public class TelegramMessageConnector extends HttpServlet {
     }
     //</editor-fold>
 
+
+    @Override
+    public SADSResponse process(TelegramWebhookRequest req) {
+      getProfileStorage().getContext().start();
+      try {
+        return super.process(req);
+
+      } finally {
+        getProfileStorage().getContext().close();
+      }
+    }
+
+    @Override
+    protected Runnable buildRunnable(final TelegramWebhookRequest req,
+                                     final SADSRequest sadsRequest,
+                                     final Runnable runnable) {
+      return new Runnable() {
+        @Override
+        public void run() {
+          getProfileStorage().getContext().start();
+          try {
+            TelegramMessageConnectorImpl.super
+                .buildRunnable(req, sadsRequest, runnable)
+                .run();
+          } finally {
+            getProfileStorage().getContext().close();
+          }
+        }
+      };
+    }
+
     /**
      * Response to a WebHook update.
      */
@@ -223,6 +258,10 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected String getSubscriberId(TelegramWebhookRequest req) throws Exception {
+      if (req.getProfile() != null) {
+        return req.getProfile().getWnumber();
+      }
+
       final String token = req.getServiceToken();
 
       final Update update = req.asUpdate();
@@ -273,6 +312,8 @@ public class TelegramMessageConnector extends HttpServlet {
       } else {
         profile = null;
       }
+
+      req.setProfile(profile);
 
       //noinspection ConstantConditions
       return profile.getWnumber();
@@ -509,8 +550,6 @@ public class TelegramMessageConnector extends HttpServlet {
 
       final CallbackQuery callback = update.getCallbackQuery();
 
-      // final Message repliedTo = callback.getMessage();
-
       final InlineCallbackQuery btnPayload =
           unmarshal(parse(callback.getData()), InlineCallbackQuery.class);
 
@@ -546,8 +585,8 @@ public class TelegramMessageConnector extends HttpServlet {
         getClient().sendMessage(
             getSessionManager(serviceId),
             serviceToken,
-            getProfileStorage()
-                .find(wnumber)
+            message
+                .getProfile()
                 .property("telegram-chats", serviceToken)
                 .getValue(),
             StringUtils.join(
@@ -691,6 +730,23 @@ public class TelegramMessageConnector extends HttpServlet {
       return msisdn;
     }
 
+    @Override
+    protected SADSRequest buildSadsRequest(SADSRequestFactory factory,
+                                           final TelegramWebhookRequest outerReq) throws Exception {
+
+      return new SADSRequestFactoryDelegate(factory) {
+
+        @Override
+        public SADSRequest buildSADSRequest() throws Exception {
+          final SADSRequest req = super.newSadsRequest();
+          req.setProfile(outerReq.getProfile());
+
+          fillSADSRequest(getLogger(), req);
+          return req;
+        }
+      }.buildSADSRequest();
+    }
+
     private String getRootUri() {
       try {
         final Properties mainProperties = SADSInitializer.getMainProperties();
@@ -720,8 +776,13 @@ public class TelegramMessageConnector extends HttpServlet {
       return serviceSessionManager.getSessionManager(TELEGRAM, serviceId);
     }
 
-    private ProfileStorage getProfileStorage() throws Exception {
-      return (ProfileStorage) getResource("profile-storage");
+    private DbProfileStorage getProfileStorage() {
+      try {
+        return (DbProfileStorage) getResource("profile-storage");
+
+      } catch (NotFoundResourceException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     private Log getLog(TelegramWebhookRequest req) {
