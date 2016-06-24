@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class WebHookConfigListener extends ServiceConfigListener {
 
   public static final String CONF_TOKEN = "telegram.token";
+  public static final String CONF_REGISTER_WEBHOOK = "telegram.register.webhook";
 
   private final Map<String, String> serviceId2Token = new HashMap<>();
   private TelegramApi client;
@@ -35,7 +36,7 @@ public class WebHookConfigListener extends ServiceConfigListener {
     final String serviceId = config.getId();
 
     if (config.isEmpty()) {
-      unRegisterWebHook(serviceId);
+      unRegisterWebHook((ServiceConfig) config, serviceId);
 
     } else if (config instanceof ServiceConfig) {
       final ServiceConfig serviceConfig = (ServiceConfig) config;
@@ -44,23 +45,30 @@ public class WebHookConfigListener extends ServiceConfigListener {
       token = StringUtils.trimToNull(token);
 
       if (token == null) {
-        unRegisterWebHook(serviceId);
+        unRegisterWebHook(serviceConfig, serviceId);
 
       } else {
         if (!token.equals(serviceId2Token.get(serviceId))) {
           // Token changed, unregister previous one first.
-          unRegisterWebHook(serviceId);
+          unRegisterWebHook(serviceConfig, serviceId);
         }
-        registerWebHook(serviceId, token);
+        registerWebHook(serviceConfig, serviceId, token);
       }
     }
   }
 
-  private void registerWebHook(String serviceId,
+  private boolean shouldRegisterWebhook(ServiceConfig config) {
+    return InitUtils.getBoolean(CONF_REGISTER_WEBHOOK, true, config.getAttributes());
+  }
+
+  private void registerWebHook(ServiceConfig config,
+                               String serviceId,
                                String token) throws ConfigurationException {
 
     try {
-      client.registerWebHook(token, client.getServiceUrl(serviceId, token));
+      if (shouldRegisterWebhook(config)) {
+        client.registerWebHook(token, client.getServiceUrl(serviceId, token));
+      }
       serviceId2Token.put(serviceId, token);
 
     } catch (TelegramApiException e) {
@@ -68,11 +76,14 @@ public class WebHookConfigListener extends ServiceConfigListener {
     }
   }
 
-  private void unRegisterWebHook(String serviceId) throws ConfigurationException {
+  private void unRegisterWebHook(ServiceConfig config,
+                                 String serviceId) throws ConfigurationException {
     try {
       final String token = serviceId2Token.get(serviceId);
       if (token != null) {
-        client.unRegisterWebHook(token);
+        if (shouldRegisterWebhook(config)) {
+          client.unRegisterWebHook(token);
+        }
         serviceId2Token.remove(token);
       }
 
