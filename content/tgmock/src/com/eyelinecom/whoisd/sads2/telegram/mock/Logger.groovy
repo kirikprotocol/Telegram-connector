@@ -15,10 +15,6 @@ trait Logger {
     _printLine()
   }
 
-  void printInit() {
-    printInit '/tmp/tg-mock.log'
-  }
-
   void _print(_) {
     _prints "$_\n"
   }
@@ -40,12 +36,6 @@ trait Logger {
 
   void _printLine() {
     _print ''.center(80, "=")
-  }
-
-  void _fatal(_) {
-    _print _
-
-    throw new Exception(String.valueOf(_))
   }
 
 }

@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact name="tgmock:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/tgmock_jar</output-path>
+    <root id="root">
+      <element id="archive" name="tgmock.jar">
+        <element id="module-output" name="tgmock" />
+      </element>
+      <element id="library" level="module" name="IvyIDEA" module-name="tgmock" />
+    </root>
+  </artifact>
+</component>

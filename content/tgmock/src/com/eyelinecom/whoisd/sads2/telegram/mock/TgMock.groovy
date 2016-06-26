@@ -1,22 +1,32 @@
 package com.eyelinecom.whoisd.sads2.telegram.mock
 
+import co.paralleluniverse.fibers.SuspendExecution
 import groovy.json.JsonSlurper
 import groovy.sql.Sql
+import groovy.transform.CompileStatic
+import groovy.transform.InheritConstructors
+import org.apache.commons.math3.stat.descriptive.rank.Percentile
 import org.apache.http.client.entity.EntityBuilder
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.RequestBuilder
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
-import static FiberClient.*
+import static com.eyelinecom.whoisd.sads2.telegram.mock.FiberClient.ProgressTracker
+import static com.eyelinecom.whoisd.sads2.telegram.mock.FiberClient.RequestProducer
 
+// Note: there's some UGLY (and even uglier) code, and it's written this way FOR A REASON.
+//
+// Comsat java agent performs some bytecode-level tricks and doesn't handle Groovy dynamic code
+// well, so some hacks and workarounds are required here and there.
 class TgMock implements Logger {
 
   /** chatId -> sent millis */
-  private final ConcurrentHashMap<Long, Long> requests = new ConcurrentHashMap<>()
+  private final ConcurrentHashMap<Integer, Long> requests
 
-  private final Set<Long> results = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>())
+  /** chatId -> async call duration, millis */
+  private final ConcurrentHashMap<Integer, Long> results
 
   private final Conf conf
 
@@ -33,18 +43,20 @@ class TgMock implements Logger {
         final obj = new JsonSlurper().parseText(content)
 
         if (obj.method == 'sendChatAction') {
-          // Ignore
+          // Ignore, async response.
 
         } else {
-          final chatId = obj.chat_id
+          final Integer chatId = obj.chat_id.toInteger()
 
-          final sent = requests.remove chatId.toLong()
+          _debug "<< $chatId [${Thread.currentThread().getName()}]"
+
+          final sent = requests.remove chatId
           if (sent == null) {
-            throw new RuntimeException()
-          }
-          results << (System.currentTimeMillis() - sent)
+            // Must be a response to a warm-up message
 
-          _debug "  << $chatId"
+          } else {
+            results.put(chatId, System.currentTimeMillis() - sent)
+          }
         }
 
         '''
@@ -62,65 +74,105 @@ class TgMock implements Logger {
 
     printInit conf.logFile
 
+    requests = new ConcurrentHashMap<>(conf.totalMessages, 0.75F, 32)
+    results = new ConcurrentHashMap<>(conf.totalMessages, 0.75F, 32)
+
     _printHeader "Initialized"
     _print "Target RPS = $conf.targetRps"
     _print "Messages = $conf.totalMessages, of them warmup = $conf.warmupMessages"
     _print ""
+
+    clearDb()
   }
 
   void run() {
+
+    firstActualRequestSent = lastActualRequestSent = 0
+
+    firstActualRequestSent = lastActualRequestSent = 0
+
     ({
-      _print "Running cold"
+      def start = new Date()
+      _print "Running cold at ${start.format('dd.MM.yyyy HH:mm:ss')}"
 
       _print "Scheduling $conf.totalMessages messages"
 
       schedule().join()
 
-      await conf.totalMessages
-      reportResults()
+      await()
+      reportResults(start)
 
       results.clear()
     })()
 
     _printLine()
 
+    firstActualRequestSent = lastActualRequestSent = 0
+
     ({
-      _print " Running hot "
+      def start = new Date()
+      _print " Running hot at ${start.format('dd.MM.yyyy HH:mm:ss')}"
 
       _print "Scheduling $conf.totalMessages messages"
 
       schedule().join()
 
-      await conf.totalMessages
-      reportResults()
+      await()
+      reportResults(start)
 
       results.clear()
     })()
   }
 
-  void reportResults() {
-    def actual = conf.totalMessages - conf.warmupMessages
+  static double rps(int count, Long millis) { count / (millis / 1000.0) }
 
+  void reportResults(Date start) {
+    def actualRequests = conf.totalMessages - conf.warmupMessages
+    def now = System.currentTimeMillis()
+
+    _print "Round ends at ${new Date(now).format('dd.MM.yyyy HH:mm:ss')}"
     _print "+ Target RPS, client: $conf.targetRps"
-    _print "+ Actual RPS, client: ${(endMillis - startMillis) / actual}"
-    _print "+ Messages: ${actual}"
+    _print "+ Actual RPS, client [SyncResponse]:" +
+        " ${rps(actualRequests, lastActualRequestSent - firstActualRequestSent)}"
 
-    final avg = results.sum() / results.size()
+    _print "+ Overall RPS [AsyncResponse]:" +
+        " ${rps(actualRequests, now - firstActualRequestSent)}"
+    _print "+ Messages: ${actualRequests}"
+    _print "+ Results: ${results.size()}"
+
+    final avg = results.values().sum() / results.size()
+
+    final sortedResults = results.values().sort().toArray(new Long[0])
+    float median = median(sortedResults)
+
     _print "+ AVG time, ms: $avg"
-    _print "+ MIN time, ms: ${results.min()}"
-    _print "+ MAX time, ms: ${results.max()}"
+    _print "+ MED time, ms: $median"
+    _print "+ 95%, ms: ${new Percentile().evaluate(sortedResults as double[], 95.0)}"
+    _print "+ MIN time, ms: ${results.values().min()}"
+    _print "+ MAX time, ms: ${results.values().max()}"
   }
 
-  int idx2ChatId(int idx) {
-    -(idx + 1)
+  private static float median(Long[] sortedResults) {
+    final mid = (sortedResults.size() / 2) as int
+    final float median =
+        sortedResults.size() % 2 != 0 ?
+            sortedResults[mid] :
+            ((sortedResults[mid] + sortedResults[mid - 1]) / 2.0)
+    median
   }
 
-  int chatId2Idx(int chatId) {
-    -(chatId - 1)
-  }
+  static int idx2ChatId(int idx) { -(idx + 1) }
 
-  volatile long startMillis
-  volatile long endMillis
+  static int chatId2Idx(int chatId) { -(chatId - 1) }
+
+  volatile long firstActualRequestSent
+  volatile long lastActualRequestSent
+
+  @CompileStatic
+  @InheritConstructors
+  static class HttpPostImpl extends HttpPost {
+    int reqIdx
+  }
 
   Thread schedule() {
     Thread.start 'sender', {
@@ -130,7 +182,7 @@ class TgMock implements Logger {
 
           new RequestProducer() {
             @Override
-            Request produce(int idx) {
+            HttpPostImpl produce(int idx) throws SuspendExecution {
               final chatId = idx2ChatId idx
               final msg = """{
                 "update_id":657656097,
@@ -143,27 +195,31 @@ class TgMock implements Logger {
                   }
                 }"""
 
-              final req = RequestBuilder
-                  .post()
-                  .setUri(conf.webhookUri)
-                  .setEntity(EntityBuilder.create().setText(msg).build())
-                  .build()
-
-              new Request(req as HttpPost, idx)
+              final post = new HttpPostImpl(conf.webhookUriUri)
+              post.reqIdx = idx
+              post.setEntity(EntityBuilder.create().setText(msg).build())
+              post
             }
           },
 
           new ProgressTracker() {
+            private AtomicInteger cIdx = new AtomicInteger(0)
+
             @Override
             void onExecuted(int idx) {
-              if (idx > conf.warmupMessages) {
-                if (startMillis == 0) {
-                  startMillis = System.currentTimeMillis()
+              _debug ">> ${idx2ChatId(idx)}"
+
+              if ((cIdx.incrementAndGet()) > conf.warmupMessages) {
+                if (TgMock.this.firstActualRequestSent == 0L) {
+                  firstActualRequestSent = System.currentTimeMillis()
                 }
 
-                requests.put idx2ChatId(idx), System.currentTimeMillis()
+                def prev = requests.put idx2ChatId(idx), System.currentTimeMillis()
+                if (prev) {
+                  throw new RuntimeException("Duplicate key [$idx]")
+                }
 
-                endMillis = System.currentTimeMillis()
+                TgMock.this.lastActualRequestSent = System.currentTimeMillis()
               }
             }
           }
@@ -172,10 +228,17 @@ class TgMock implements Logger {
   }
 
   void stop() {
+    clearDb()
+
+    server.stop()
+  }
+
+  private void clearDb() {
     _printHeader "Clearing DB"
 
     final sql = Sql.newInstance(conf.dbUrl, conf.dbUser, conf.dbPassword, 'com.mysql.jdbc.Driver')
     try {
+      //noinspection SqlNoDataSourceInspection,SqlDialectInspection
       sql.execute '''
         START TRANSACTION;
         CALL sample_clear_profiles('test-%');
@@ -186,29 +249,25 @@ class TgMock implements Logger {
     }
 
     _print "DB cleared"
-
-    client.stop()
-
-    actors.shutdown()
-    actors.awaitTermination(1, TimeUnit.MINUTES)
-
-    server.stop()
   }
 
-  void await(int nRequests) {
-    _print " Awaiting for $nRequests responses to arrive..."
+  @CompileStatic
+  void await() {
+    final actualMessages = conf.totalMessages - conf.warmupMessages
+    _print " Awaiting for ${actualMessages} responses..."
 
     while (true) {
-      Thread.sleep(TimeUnit.SECONDS.toMillis(1))
+      final size = results.size()
 
-      final size = requests.size()
-
-      if (size != 0) {
+      if (size < actualMessages) {
         _prints " $size"
+
       } else {
         _print ''
         return
       }
+
+      Thread.sleep(TimeUnit.SECONDS.toMillis(1))
     }
 
   }

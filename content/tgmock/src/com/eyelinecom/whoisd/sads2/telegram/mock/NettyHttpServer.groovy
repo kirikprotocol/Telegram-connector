@@ -2,28 +2,21 @@ package com.eyelinecom.whoisd.sads2.telegram.mock
 
 import groovy.transform.PackageScope
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelPipeline
+import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.DefaultFullHttpResponse
-import io.netty.handler.codec.http.FullHttpResponse
 import io.netty.handler.codec.http.HttpContent
-import io.netty.handler.codec.http.HttpHeaderNames
-import io.netty.handler.codec.http.HttpHeaderValues
-import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.codec.http.HttpResponseEncoder
-import io.netty.handler.codec.http.HttpUtil
-import io.netty.handler.codec.http.LastHttpContent
 import io.netty.util.CharsetUtil
 
 import static io.netty.handler.codec.http.HttpResponseStatus.OK
@@ -41,30 +34,32 @@ class NettyHttpServer {
     bossGroup = new NioEventLoopGroup(1)
     workerGroup = new NioEventLoopGroup()
 
-    ServerBootstrap b = new ServerBootstrap()
-    b.group(bossGroup, workerGroup)
+    final bootstrap = new ServerBootstrap()
+    bootstrap
+        .group(bossGroup, workerGroup)
         .channel(NioServerSocketChannel.class)
+        .option(ChannelOption.SO_BACKLOG, 10_240)
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
         .childHandler(new ChannelInitializer<SocketChannel>() {
 
       @Override
       protected void initChannel(SocketChannel ch) {
-        final ChannelPipeline p = ch.pipeline()
+        final pipeline = ch.pipeline()
 
-        p.addLast(new HttpRequestDecoder())
-        p.addLast(new HttpResponseEncoder())
-        p.addLast(new Handler(handler))
+        pipeline.addLast(new HttpRequestDecoder())
+        pipeline.addLast(new HttpResponseEncoder())
+        pipeline.addLast(new Handler(handler))
       }
     })
 
-    ch = b.bind(port).sync().channel()
+    ch = bootstrap.bind(port).sync().channel()
   }
 
   void await() {
     ch.closeFuture().sync()
   }
 
-  static class Handler extends SimpleChannelInboundHandler<Object> {
-    private HttpRequest request
+  private static class Handler extends SimpleChannelInboundHandler<Object> {
     private final RequestHandler handler
 
     Handler(RequestHandler handler) {
@@ -72,56 +67,35 @@ class NettyHttpServer {
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
+    void channelReadComplete(ChannelHandlerContext ctx) {
       ctx.flush()
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
-      if (msg instanceof HttpRequest) {
-        this.request = msg as HttpRequest
-      }
-
       if (msg instanceof HttpContent) {
-        HttpContent httpContent = (HttpContent) msg
+        final httpContent = msg as HttpContent
 
-        final ByteBuf content = httpContent.content()
+        final content = httpContent.content()
 
         final contentString = content.toString(CharsetUtil.UTF_8)
-        final String response = handler.handle contentString
+        final response = handler.handle contentString
 
-        if (msg instanceof LastHttpContent) {
-          if (!writeResponse(ctx, request, response)) {
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
-          }
-        }
+        writeResponse(ctx, response)
+        ctx
+            .writeAndFlush(Unpooled.EMPTY_BUFFER)
+            .addListener(ChannelFutureListener.CLOSE)
       }
     }
 
-    private static boolean writeResponse(ChannelHandlerContext ctx,
-                                         HttpRequest request,
+    private static void writeResponse(ChannelHandlerContext ctx,
                                          String content) {
 
-      boolean keepAlive = HttpUtil.isKeepAlive(request)
-
-      FullHttpResponse response = new DefaultFullHttpResponse(
+      final response = new DefaultFullHttpResponse(
           HTTP_1_1, OK,
-          Unpooled.copiedBuffer(content, CharsetUtil.UTF_8))
-
-//      response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain charset=UTF-8")
-
-      if (keepAlive) {
-        // Add 'Content-Length' header only for a keep-alive connection.
-        response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes())
-        // Add keep alive header as per:
-        // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
-        response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
-      }
-
-      // Write the response.
+          Unpooled.copiedBuffer(content, CharsetUtil.UTF_8)
+      )
       ctx.write(response)
-
-      return keepAlive
     }
 
     @Override
@@ -137,6 +111,13 @@ class NettyHttpServer {
   }
 
   static interface RequestHandler extends EventListener {
+
+    /**
+     * Called on each incoming request.
+     *
+     * @param content  Full HTTP request payload.
+     * @return Desired response.
+     */
     String handle(String content)
   }
 }
