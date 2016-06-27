@@ -15,8 +15,13 @@ import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
-import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.collections.IteratorUtils;
@@ -38,6 +43,7 @@ import java.util.Properties;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
+import static com.eyelinecom.whoisd.sads2.executors.connector.ProfileEnabledMessageConnector.ATTR_SESSION_PREVIOUS_PAGE_URI;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
@@ -126,7 +132,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     if (!shouldCloseSession) {
       session.setAttribute(SADSExecutor.ATTR_SESSION_PREVIOUS_PAGE, doc);
       session.setAttribute(
-          TelegramMessageConnector.ATTR_SESSION_PREVIOUS_PAGE_URI,
+          ATTR_SESSION_PREVIOUS_PAGE_URI,
           response.getAttributes().get(ContentRequestUtils.ATTR_REQUEST_URI));
     }
 

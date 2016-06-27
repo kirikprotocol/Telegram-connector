@@ -109,8 +109,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/xml-resolver/xml-resolver/jars/xml-resolver-1.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.xml.bind/jaxb-impl/jars/jaxb-impl-2.1.6.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.xml.bind/jaxb-xjc/jars/jaxb-xjc-2.1.6.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/jars/pvss-3.0.12.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/jars/utils-1.0.62.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jettison/jettison/bundles/jettison-1.3.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/stax/stax-api/jars/stax-api-1.0.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/smtp/jars/smtp-1.4.5.jar!/" />
@@ -135,6 +133,25 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma/jars/emma-2.1.5320.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma_ant/jars/emma_ant-2.1.5320.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.jsoup/jsoup/jars/jsoup-1.7.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.commons/commons-lang3/jars/commons-lang3-3.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-core/jars/hibernate-core-5.1.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.logging/jboss-logging/jars/jboss-logging-3.3.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate.javax.persistence/hibernate-jpa-2.1-api/jars/hibernate-jpa-2.1-api-1.0.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.javassist/javassist/bundles/javassist-3.20.0-GA.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/antlr/antlr/jars/antlr-2.7.7.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss/jandex/bundles/jandex-2.0.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.fasterxml/classmate/bundles/classmate-1.3.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate.common/hibernate-commons-annotations/jars/hibernate-commons-annotations-5.0.1.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-validator/jars/hibernate-validator-5.2.4.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.validation/validation-api/jars/validation-api-1.1.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-c3p0/jars/hibernate-c3p0-5.1.0.Final.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/c3p0/jars/c3p0-0.9.5.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/mchange-commons-java/jars/mchange-commons-java-0.2.11.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mysql/mysql-connector-java/jars/mysql-connector-java-5.1.13.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.glassfish.web/javax.el/jars/javax.el-2.2.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/jars/javax.el-api-2.2.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/jars/pvss-3.0.13.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/jars/utils-1.0.64.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/javadocs/commons-collections-3.2.1-javadoc.jar!/" />
@@ -163,8 +180,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-javamail_1.4_spec/javadocs/geronimo-javamail_1.4_spec-1.2-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-jms_1.1_spec/javadocs/geronimo-jms_1.1_spec-1.1-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-annotation_1.0_spec/javadocs/geronimo-annotation_1.0_spec-1.1-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/javadocs/pvss-javadoc-3.0.12.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/javadocs/utils-javadoc-1.0.62.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jettison/jettison/javadocs/jettison-1.3.1-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/smtp/javadocs/smtp-1.4.5-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/dsn/javadocs/dsn-1.4.5-javadoc.jar!/" />
@@ -184,6 +199,18 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma/javadocs/emma-2.1.5320-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma_ant/javadocs/emma_ant-2.1.5320-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.jsoup/jsoup/javadocs/jsoup-1.7.2-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.commons/commons-lang3/javadocs/commons-lang3-3.4-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.logging/jboss-logging/javadocs/jboss-logging-3.3.0.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate.javax.persistence/hibernate-jpa-2.1-api/javadocs/hibernate-jpa-2.1-api-1.0.0.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.javassist/javassist/javadocs/javassist-3.20.0-GA-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.fasterxml/classmate/javadocs/classmate-1.3.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.validation/validation-api/javadocs/validation-api-1.1.0.Final-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/c3p0/javadocs/c3p0-0.9.5.2-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/mchange-commons-java/javadocs/mchange-commons-java-0.2.11-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.glassfish.web/javax.el/javadocs/javax.el-2.2.4-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/javadocs/javax.el-api-2.2.4-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/javadocs/pvss-javadoc-3.0.13.zip!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/javadocs/utils-javadoc-1.0.64.zip!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/sources/commons-collections-3.2.1-sources.jar!/" />
@@ -246,8 +273,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/xml-resolver/xml-resolver/sources/xml-resolver-1.2-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.xml.bind/jaxb-impl/sources/jaxb-impl-2.1.6-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.xml.bind/jaxb-xjc/sources/jaxb-xjc-2.1.6-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/sources/pvss-sources-3.0.12.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/sources/utils-sources-1.0.62.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.jettison/jettison/sources/jettison-1.3.1-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/smtp/sources/smtp-1.4.5-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/dsn/sources/dsn-1.4.5-sources.jar!/" />
@@ -268,8 +293,26 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma/sources/emma-2.1.5320-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/emma/emma_ant/sources/emma_ant-2.1.5320-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.jsoup/jsoup/sources/jsoup-1.7.2-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.commons/commons-lang3/sources/commons-lang3-3.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-core/sources/hibernate-core-5.1.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss.logging/jboss-logging/sources/jboss-logging-3.3.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate.javax.persistence/hibernate-jpa-2.1-api/sources/hibernate-jpa-2.1-api-1.0.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.javassist/javassist/sources/javassist-3.20.0-GA-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.jboss/jandex/sources/jandex-2.0.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.fasterxml/classmate/sources/classmate-1.3.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate.common/hibernate-commons-annotations/sources/hibernate-commons-annotations-5.0.1.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-validator/sources/hibernate-validator-5.2.4.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.validation/validation-api/sources/validation-api-1.1.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hibernate/hibernate-c3p0/sources/hibernate-c3p0-5.1.0.Final-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/c3p0/sources/c3p0-0.9.5.2-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.mchange/mchange-commons-java/sources/mchange-commons-java-0.2.11-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.glassfish.web/javax.el/sources/javax.el-2.2.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/sources/javax.el-api-2.2.4-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/sources/pvss-sources-3.0.13.zip!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/sources/utils-sources-1.0.64.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="db-template" />
   </component>
 </module>

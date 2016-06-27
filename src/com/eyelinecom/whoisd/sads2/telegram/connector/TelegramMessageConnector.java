@@ -7,23 +7,17 @@ import com.eyelinecom.whoisd.sads2.common.SADSUrlUtils;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.ChatCommand;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
-import com.eyelinecom.whoisd.sads2.connector.SADSRequestFactory;
-import com.eyelinecom.whoisd.sads2.connector.SADSRequestFactoryDelegate;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
 import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector;
-import com.eyelinecom.whoisd.sads2.executors.connector.LazyMessageConnector;
-import com.eyelinecom.whoisd.sads2.executors.connector.MessageConnector;
+import com.eyelinecom.whoisd.sads2.executors.connector.ProfileEnabledMessageConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
-import com.eyelinecom.whoisd.sads2.executors.connector.SimpleSADSRequestFactory;
 import com.eyelinecom.whoisd.sads2.input.AbstractInputType;
 import com.eyelinecom.whoisd.sads2.input.InputContact;
 import com.eyelinecom.whoisd.sads2.input.InputFile;
 import com.eyelinecom.whoisd.sads2.input.InputLocation;
 import com.eyelinecom.whoisd.sads2.profile.Profile;
-import com.eyelinecom.whoisd.sads2.profile.ProfileStorage;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
@@ -44,7 +38,6 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.utils.ConnectorUtils;
-import com.eyelinecom.whoisd.sads2.wstorage.resource.DbProfileStorage;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -63,8 +56,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
 import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.CLEAR_PROFILE;
@@ -74,13 +65,10 @@ import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.WHO_IS;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
-import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 public class TelegramMessageConnector extends HttpServlet {
 
   private final static Log log = new Log4JLogger(Logger.getLogger(TelegramMessageConnector.class));
-
-  public static final String ATTR_SESSION_PREVIOUS_PAGE_URI = "SADS-previous-page-uri";
 
   private TelegramMessageConnectorImpl connector;
 
@@ -119,93 +107,7 @@ public class TelegramMessageConnector extends HttpServlet {
   //
 
   private class TelegramMessageConnectorImpl
-      extends LazyMessageConnector<TelegramWebhookRequest, SADSResponse> {
-
-    //<editor-fold desc="Thread pool boilerplate">
-    private static final int DEFAULT_DELAYED_JOBS_POLL_SIZE = 10;
-
-    private String executorResourceName;
-    private ScheduledExecutorService delayedExecutor;
-
-    @Override
-    public void init(Properties config) throws Exception {
-      super.init(config);
-
-      executorResourceName = InitUtils.getString("thread-pool", null, config);
-
-      if (getLogger().isDebugEnabled()) {
-        getLogger().debug("executor resourcename=" + executorResourceName);
-      }
-
-      if (StringUtils.isBlank(executorResourceName)) {
-        this.delayedExecutor =
-            newScheduledThreadPool(InitUtils.getInt("pool-size", DEFAULT_DELAYED_JOBS_POLL_SIZE, config));
-        getLogger().debug("created a new delayed executor");
-      }
-    }
-
-    @Override
-    protected ExecutorService getExecutor(ServiceConfig config, String subscriber) {
-      final Log log = getLogger();
-
-      if (delayedExecutor == null) {
-        try {
-          final String executorResource =
-              InitUtils.getString("executor", executorResourceName, config.getAttributes());
-          final ScheduledExecutorService executorService =
-              (ScheduledExecutorService) getResource(executorResource);
-
-          if (log.isDebugEnabled()) {
-            log.debug("Used resource executor: " + executorResource);
-          }
-          return executorService;
-
-        } catch (NotFoundResourceException e) {
-          if (log.isDebugEnabled()) {
-            log.debug("Used internal executor",e);
-          }
-          return delayedExecutor;
-        }
-
-      } else {
-        if (log.isDebugEnabled()) {
-          log.debug("Used internal executor (it's not null)");
-        }
-        return delayedExecutor;
-      }
-    }
-    //</editor-fold>
-
-
-    @Override
-    public SADSResponse process(TelegramWebhookRequest req) {
-      getProfileStorage().getContext().start();
-      try {
-        return super.process(req);
-
-      } finally {
-        getProfileStorage().getContext().close();
-      }
-    }
-
-    @Override
-    protected Runnable buildRunnable(final TelegramWebhookRequest req,
-                                     final SADSRequest sadsRequest,
-                                     final Runnable runnable) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          getProfileStorage().getContext().start();
-          try {
-            TelegramMessageConnectorImpl.super
-                .buildRunnable(req, sadsRequest, runnable)
-                .run();
-          } finally {
-            getProfileStorage().getContext().close();
-          }
-        }
-      };
-    }
+      extends ProfileEnabledMessageConnector<TelegramWebhookRequest> {
 
     /**
      * Response to a WebHook update.
@@ -248,12 +150,6 @@ public class TelegramMessageConnector extends HttpServlet {
     @Override
     protected Log getLogger() {
       return TelegramMessageConnector.log;
-    }
-
-    @Override
-    protected boolean isUSSDInitiator() {
-      // Always FALSE.
-      return false;
     }
 
     @Override
@@ -659,12 +555,6 @@ public class TelegramMessageConnector extends HttpServlet {
       }
     }
 
-    @Override
-    protected SADSResponse getSavedSADSResponse(TelegramWebhookRequest httpServletRequest) {
-      // Always NULL.
-      return null;
-    }
-
     /**
      * @param request   Request to the content provider
      * @param response  Response from content provider
@@ -731,30 +621,8 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected SADSRequest buildSadsRequest(SADSRequestFactory factory,
-                                           final TelegramWebhookRequest outerReq) throws Exception {
-
-      return new SADSRequestFactoryDelegate(factory) {
-
-        @Override
-        public SADSRequest buildSADSRequest() throws Exception {
-          final SADSRequest req = super.newSadsRequest();
-          req.setProfile(outerReq.getProfile());
-
-          fillSADSRequest(getLogger(), req);
-          return req;
-        }
-      }.buildSADSRequest();
-    }
-
-    private String getRootUri() {
-      try {
-        final Properties mainProperties = SADSInitializer.getMainProperties();
-        return mainProperties.getProperty("root.uri");
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    protected Profile getCachedProfile(TelegramWebhookRequest req) {
+      return req.getProfile();
     }
 
     private String getFilePath(String serviceId, String fileId) {
@@ -774,15 +642,6 @@ public class TelegramMessageConnector extends HttpServlet {
       final ServiceSessionManager serviceSessionManager =
           (ServiceSessionManager) getResource("session-manager");
       return serviceSessionManager.getSessionManager(TELEGRAM, serviceId);
-    }
-
-    private DbProfileStorage getProfileStorage() {
-      try {
-        return (DbProfileStorage) getResource("profile-storage");
-
-      } catch (NotFoundResourceException e) {
-        throw new RuntimeException(e);
-      }
     }
 
     private Log getLog(TelegramWebhookRequest req) {
