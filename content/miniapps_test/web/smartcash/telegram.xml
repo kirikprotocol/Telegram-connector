@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="KOI8-R"?>
+<page version="2.0" style="post_ussd">
+        <div>
+            Telegram bot has been sent to you via SMS
+        </div>
+        <div type="sms">
+            Link to Telegram Bot: <a href="protocol://telegram"/>
+        </div>
+</page>

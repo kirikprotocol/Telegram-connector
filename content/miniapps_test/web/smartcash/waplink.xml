@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="KOI8-R"?>
+<page version="2.0" style="post_ussd">
+        <div>
+            WAP-link has been sent to you via SMS
+        </div>
+        <div type="sms">
+            Smartcash WAP-portal: <a href="protocol://xhtml_mp/_ctrl_register.jsp"/>
+        </div>
+</page>

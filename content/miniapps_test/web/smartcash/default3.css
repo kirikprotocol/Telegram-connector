@@ -1,0 +1,131 @@
+body {
+  padding: 0px;
+  margin: 0px;
+  color: black;
+  font-size: 2em;
+}
+
+.div {
+	padding:10px;
+}
+
+.title {
+	color:#000000;
+	background-color:#e0e0e0;	
+	border:0; 
+	border-spacing:0; 
+	border-collapse: collapse; 
+	border-bottom:solid #cfcfcf 1px;
+	margin:0px; 
+	padding:3px 3px 3px 3px; 
+}
+
+.link{
+    clear:both;
+    border:0; 
+    border-spacing:0; 
+    border-collapse: collapse; 
+    border-bottom:solid #cfcfcf 1px;
+    margin:0px; 
+    padding:4px 1px 1px 3px; 
+    color:#555555;
+}
+
+div.link img{
+	margin:0px 5px 0px 5px;
+	vertical-align: middle;
+}
+
+div .link a{
+	text-decoration:none;
+	color:#555555;	
+	background-color:#ffffff;
+}
+div .link a:active, div.link a:hover, div.link a:focus{
+	text-decoration:none;	
+	color:#f01830;	
+	background-color:#ffffff;
+}
+
+.navigation {
+    clear:both;
+/*    white-space: nowrap;*/
+    border:0; 
+    border-spacing:0; 
+    border-collapse: collapse; 
+}
+
+
+a {
+  margin: 0px;
+  color: black; 
+}
+
+a:focus { 
+  margin: 0px;
+  background-color: #dadbdd;
+  color: #aa0000;
+} 
+
+a:active { 
+  margin: 0px;
+  color: #aa0000; 
+  background-color: #dadbdd;
+}
+
+a:hover { 
+  margin: 0px;
+  color: #aa0000; 
+  background-color: #dadbdd;
+}
+
+img {
+  margin: 0px 0 0px 0;
+}
+
+input {
+  color: black;
+}
+
+a:link img, a:visited img { border-style: none } /* no border on img links */
+
+a img { color: white; }        /* trick to hide the border in Netscape 4 */
+@media all {                   /* hide the next rule from Netscape 4 */
+  a img { color: inherit; }    /* undo the color change above */
+}
+
+@media screen {  /* hide from IE3 */
+a[href]:hover { background: #dadbdd }
+}
+
+@media aural {  
+  h1, h2, h3 { stress: 20; richness: 90 }
+  .hide { speak: none }
+  p.copyright { volume: x-soft; speech-rate: x-fast }
+  dt { pause-before: 20% }
+  pre { speak-punctuation: code } 
+}
+
+pre, code { font-family: monospace } /* navigator 4 requires this */
+
+.foot{
+	width:100%;
+	height: 28px;
+	/*background: #e0e0e0 url('http://wap.watago.mobi/mg/volni.png');*/
+	background: #e0e0e0 url('volni.png');
+}
+
+
+.head {
+	width:100%; 
+	height:20px;
+  	background-color: #961A1D;	
+/*  	white-space: nowrap;*/
+	border:0; 
+	border-spacing:0; 
+	border-collapse: collapse; 
+	margin:0px; 
+	padding:0px; 
+}
+
+

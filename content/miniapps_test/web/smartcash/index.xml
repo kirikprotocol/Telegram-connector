@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page version="2.0" style="category">
+  <attributes>                                                                                                                                                              
+    <attribute name="keywords" value="kw1,kw2,kw3"/>                                                                                                                        
+  </attributes>        
+
+  <div>
+  	Welcome to Global USSD financial demo service! Please select:
+  </div>
+
+  <navigation>
+    <link pageId="survey_age.jsp" accesskey="1"><div protocol="telegram">📝</div>Take Survey</link>
+    <link pageId="_ctrl_register.jsp"  accesskey="2"><div protocol="telegram">💵</div>See Financial Demo</link>
+    <link pageId="../index.jsp"  accesskey="3"><div protocol="telegram">💵</div>Back to main menu</link>
+    <link protocol="ussd" pageId="waplink.xml" accesskey="3">WAP version</link>
+  </navigation>
+
+</page>
