@@ -1,6 +1,11 @@
 <%@ page import="org.apache.log4j.Logger" %>
+<%@ page import="org.json.JSONObject" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.Arrays" %>
+<%@ page import="java.util.Iterator" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.ResourceBundle" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 
 <%!
@@ -65,6 +70,17 @@
   if (message != null) {
     log.warn(message);
 
+    try {
+      final JSONObject obj = new JSONObject(message);
+      final String startPage = obj.optString("serviceStartPage");
+      if (startPage != null) {
+        request.setAttribute("startPage", startPage);
+      }
+
+    } catch (Exception e) {
+      log.warn("Failed parsing error message", e);
+    }
+
   } else {
     log.warn("No error message present." +
         " Request uri = [" + request.getRequestURI() + "]," +
@@ -76,4 +92,10 @@
   <div>
     <%= _("error.message", request) %>
   </div>
+
+  <% if (request.getAttribute("startPage") != null) { %>
+    <navigation>
+      <link pageId="<%= request.getAttribute("startPage") %>"><%= _("start.page", request) %></link>
+    </navigation>
+  <% } %>
 </page>
