@@ -17,16 +17,39 @@
   }
 
   private void setPhase(String wnumber, String serviceId, String phase) throws IOException {
-    final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".phase";
+    final String safeSid = serviceId.replace(".", "_");
+    final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".phase";
 
-    try {
-      int maxPhases = 3;
-      while (maxPhases-- > 0) {
-        new RestClient().json(path, RestClient.delete());
-      }
-    } catch (Exception ignored) {}
-
+    new RestClient().json(path + "?purge=true", RestClient.delete());
     new RestClient().json(path, post(RestClient.content(phase)));
+  }
+
+  private void setType(String wnumber, String serviceId, String type) throws IOException {
+    final String safeSid = serviceId.replace(".", "_");
+    final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".type";
+
+    new RestClient().json(path + "?purge=true", RestClient.delete());
+    new RestClient().json(path, post(RestClient.content(type)));
+  }
+
+  private String getType(String wnumber, String serviceId) throws IOException {
+    try {
+      return new RestClient()
+          .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + serviceId.replace(".", "_") + ".type")
+          .object()
+          .getString("value");
+
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private void setPin(String wnumber, String serviceId, String pin) throws IOException {
+    final String safeSid = serviceId.replace(".", "_");
+    final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".pin";
+
+    new RestClient().json(path + "?purge=true", RestClient.delete());
+    new RestClient().json(path, post(RestClient.content(pin)));
   }
 
   private String handle(HttpServletRequest request) throws Exception {
@@ -36,6 +59,9 @@
 
     if (phase == null) {
       setPhase(wnumber, serviceId, PHASE_ASKED_FOR_MSISDN);
+
+      final String type = request.getParameter("type");
+      setType(wnumber, serviceId, type == null ? "c2s" : type);
 
       return "PAGE_REQUEST_MSISDN";
 
@@ -116,7 +142,30 @@
                   API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol",
                   post(RestClient.content(request.getParameter("protocol"))));
 
-          return "PAGE_REQUEST_CALLBACK";
+          final String type = getType(wnumber, serviceId);
+          if ("c2s".equals(type)) {
+            return "PAGE_REQUEST_CALLBACK";
+
+          } else if ("sms".equals(type)) {
+            // 4 digits.
+            final String pin = "" + ((int) (Math.random() * 9000) + 1000);
+            setPin(wnumber, serviceId, pin);
+
+            sendGet(MOBILIZER_ROOT + "/push?" +
+                "service=" + serviceId +
+                "&subscriber=" + enteredMsisdn +
+                "&protocol=sms" +
+                "&message=" + URLEncoder.encode(_("pin.message", request, pin), "UTF-8") +
+                "&scenario=push");
+
+            return "PAGE_REQUEST_PIN";
+
+          } else {
+            getLog().warn("Unexpected verification type [" + type + "]." +
+                " ServiceId = [" + serviceId + "], wnumber = [" + wnumber + "]");
+            return "PAGE_REQUEST_CALLBACK";
+          }
+
         }
 
       } else {
@@ -158,6 +207,9 @@
 
 <% } else if (target.equals("PAGE_REQUEST_CALLBACK")) { %>
   <jsp:include page="request_callback.jsp" flush="true"/>
+
+<% } else if (target.equals("PAGE_REQUEST_PIN")) { %>
+  <jsp:include page="request_pin.jsp" flush="true"/>
 
 <% } else if (target.equals("PAGE_EMPTY")) { %>
   <jsp:include page="empty.jsp" flush="true"/>
