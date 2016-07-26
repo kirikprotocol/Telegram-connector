@@ -66,15 +66,22 @@
 
 <%
 
+  request.setAttribute("error.message.code", "error.message");
+
   final String message = request.getParameter("error");
   if (message != null) {
     log.warn(message);
 
     try {
       final JSONObject obj = new JSONObject(message);
+
       final String startPage = obj.optString("serviceStartPage");
       if (startPage != null) {
         request.setAttribute("startPage", startPage);
+      }
+
+      if ("TG_UNSUPPORTED_CLIENT".equals(obj.optString("code"))) {
+        request.setAttribute("error.message.code", "error.message.tg_unsupported_client");
       }
 
     } catch (Exception e) {
@@ -90,7 +97,7 @@
 
 <page version="2.0">
   <div>
-    <%= _("error.message", request) %>
+    <%= _((String) request.getAttribute("error.message.code"), request) %>
   </div>
 
   <% if (request.getAttribute("startPage") != null) { %>
