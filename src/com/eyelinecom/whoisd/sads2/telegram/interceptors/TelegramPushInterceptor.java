@@ -144,7 +144,10 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
           .getValue();
 
       if (!isEditRequest(doc)) {
-        final Message message = client.sendMessage(sessionManager, token, chatId, text, keyboard);
+        // Hide keyboard if none is present in the current page.
+        // This will hide the keyboard if previous page has links and the current one doesn't.
+        final Message message = client.sendMessage(
+            sessionManager, token, chatId, text, keyboard != null ? keyboard : new ReplyKeyboardHide());
 
         // Save `content page ID` -> `Telegram message ID mapping`.
         final String messageId = getMessageId(doc);
