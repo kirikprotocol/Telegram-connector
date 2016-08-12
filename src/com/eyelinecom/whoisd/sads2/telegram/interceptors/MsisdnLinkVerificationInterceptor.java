@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import static com.eyelinecom.whoisd.sads2.Protocol.FACEBOOK;
 import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.Protocol.VKONTAKTE;
 
 public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInterceptor {
 
@@ -35,7 +36,7 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
     }
 
     final Protocol protocol = request.getProtocol();
-    if (protocol == TELEGRAM || protocol == SKYPE || protocol == FACEBOOK) {
+    if (protocol == TELEGRAM || protocol == SKYPE || protocol == FACEBOOK || protocol == VKONTAKTE) {
       request.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
     }
   }

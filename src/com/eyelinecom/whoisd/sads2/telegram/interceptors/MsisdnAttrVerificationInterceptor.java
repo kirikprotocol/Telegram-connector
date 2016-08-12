@@ -16,6 +16,7 @@ import java.util.Properties;
 import static com.eyelinecom.whoisd.sads2.Protocol.FACEBOOK;
 import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.Protocol.VKONTAKTE;
 import static com.eyelinecom.whoisd.sads2.Protocol.XHTML_MP;
 import static java.lang.Boolean.parseBoolean;
 
@@ -29,6 +30,7 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
   private static final String CONF_ENABLED_TG         = "telegram.msisdn.confirmation.enabled";
   private static final String CONF_ENABLED_SKYPE      = "skype.msisdn.confirmation.enabled";
   private static final String CONF_ENABLED_FACEBOOK   = "facebook.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_VKONTAKTE  = "vkontakte.msisdn.confirmation.enabled";
 
   static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
 
@@ -85,7 +87,9 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
               ||
           (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")))
               ||
-          (protocol == FACEBOOK && parseBoolean(attrs.getProperty(CONF_ENABLED_FACEBOOK, "false")));
+          (protocol == FACEBOOK && parseBoolean(attrs.getProperty(CONF_ENABLED_FACEBOOK, "false")))
+              ||
+          (protocol == VKONTAKTE && parseBoolean(attrs.getProperty(CONF_ENABLED_VKONTAKTE, "false")));
     }
   }
 
