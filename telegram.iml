@@ -151,8 +151,8 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/jars/javax.el-api-2.2.4.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/jars/pvss-3.0.13.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/jars/utils-1.0.64.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/db-template/jars/db-template-0.02.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/bundles/guava-19.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/db-template/jars/db-template-0.03.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/javadocs/commons-collections-3.2.1-javadoc.jar!/" />

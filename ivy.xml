@@ -10,7 +10,7 @@
     <dependency org="mobi.eyeline.mobilizer" name="sads-profile-storage" rev="[0.4,)" changing="true"/>
 
     <!-- For ManagedSessionContext. -->
-    <dependency org="mobi.eyeline.utils" name="db-template" rev="[0.02,)" changing="true" conf="*->default"/>
+    <dependency org="mobi.eyeline.utils" name="db-template" rev="0.03" changing="true" conf="*->default"/>
     <dependency org="org.hibernate" name="hibernate-core" rev="5.1.0.Final" conf="*->default"/>
 
     <dependency org="commons-configuration" name="commons-configuration" rev="1.4"/>
