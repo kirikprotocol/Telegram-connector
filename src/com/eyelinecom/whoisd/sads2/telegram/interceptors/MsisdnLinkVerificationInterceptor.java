@@ -25,6 +25,9 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
   private static final String SUCCESS_REDIRECT_URL_PARAM      = "success_url";
   private static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
 
+  /** Supply MSISDN as a result of plugin execution */
+  private static final String MSISDN_URL_PARAM                = "msisdn";
+
   @Override
   public void afterContentResponse(SADSRequest request,
                                    ContentRequest contentRequest,
@@ -104,6 +107,7 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
           String successUrl =
               UrlUtils.getParameter(request.getResourceURI(), SUCCESS_REDIRECT_URL_PARAM);
           successUrl = resolveForwardUrl(request, successUrl);
+          successUrl = UrlUtils.addParameter(successUrl, MSISDN_URL_PARAM, msisdn);
 
           super.redirectBack(request, dispatcher, successUrl);
         }
@@ -129,7 +133,9 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
                             RequestDispatcher dispatcher,
                             Log log) throws Exception {
 
-    final String originalUrl = popOrigUrl(msisdn, request, log);
+    String originalUrl = popOrigUrl(msisdn, request, log);
+    originalUrl = UrlUtils.addParameter(originalUrl, MSISDN_URL_PARAM, msisdn);
+
     contentRequest.setResourceURI(originalUrl);
     super.redirectBack(request, dispatcher, originalUrl);
   }
