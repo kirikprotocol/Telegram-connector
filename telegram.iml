@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="Utils" />
     <orderEntry type="module" module-name="core" />
     <orderEntry type="module" module-name="Impl" />
-    <orderEntry type="module" module-name="Smpp" />
     <orderEntry type="module" module-name="profile-storage" />
     <orderEntry type="module-library">
       <library name="IvyIDEA-telegram-default">

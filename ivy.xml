@@ -6,7 +6,6 @@
     <dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.31,)" changing="true" transitive="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-core" rev="[0.34,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-impl" rev="[0.124,)" changing="true"/>
-    <dependency org="mobi.eyeline.mobilizer" name="sads-smpp" rev="[0.104,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-profile-storage" rev="[0.4,)" changing="true"/>
 
     <!-- For ManagedSessionContext. -->
