@@ -10,8 +10,8 @@
     Это либо внутренний идентификатор Mobilizer, либо действительно MSISDN (если он уже был получен ранее).
   </div>
   <navigation>
-    <link pageId="verify://msisdn?success_url=authorize.jsp">Авторизоваться по C2S</link>
-    <link pageId="verify://msisdn?success_url=authorize.jsp&amp;type=sms">Авторизоваться по СМС</link>
+    <link pageId="http://plugins.miniapps.run/msisdn-verification?success_url=authorize.jsp">Авторизоваться по C2S</link>
+    <link pageId="http://plugins.miniapps.run/msisdn-verification?success_url=authorize.jsp&amp;type=sms">Авторизоваться по СМС</link>
     <link pageId="reset.jsp">Сбросить профиль</link>
   </navigation>
 </page>
