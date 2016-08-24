@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.common.StoredHttpRequest;
+import com.eyelinecom.whoisd.sads2.events.Event;
 import com.eyelinecom.whoisd.sads2.profile.Profile;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
@@ -21,6 +22,7 @@ public class TelegramWebhookRequest extends StoredHttpRequest {
   private final String serviceId;
 
   private transient Profile profile;
+  private transient Event event;
 
   TelegramWebhookRequest(HttpServletRequest request) {
     super(request);
@@ -74,5 +76,13 @@ public class TelegramWebhookRequest extends StoredHttpRequest {
 
   public void setProfile(Profile profile) {
     this.profile = profile;
+  }
+
+  public Event getEvent() {
+    return event;
+  }
+
+  public void setEvent(Event event) {
+    this.event = event;
   }
 }

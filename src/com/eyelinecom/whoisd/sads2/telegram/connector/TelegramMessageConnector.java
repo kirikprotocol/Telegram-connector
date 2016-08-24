@@ -2,13 +2,15 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
-import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.SADSUrlUtils;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.ChatCommand;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
+import com.eyelinecom.whoisd.sads2.events.Event;
+import com.eyelinecom.whoisd.sads2.events.LinkEvent;
+import com.eyelinecom.whoisd.sads2.events.MessageEvent.TextMessageEvent;
 import com.eyelinecom.whoisd.sads2.exception.NotFoundResourceException;
 import com.eyelinecom.whoisd.sads2.executors.connector.AbstractHTTPPushConnector;
 import com.eyelinecom.whoisd.sads2.executors.connector.ProfileEnabledMessageConnector;
@@ -19,7 +21,6 @@ import com.eyelinecom.whoisd.sads2.input.InputFile;
 import com.eyelinecom.whoisd.sads2.input.InputLocation;
 import com.eyelinecom.whoisd.sads2.profile.Profile;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
-import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
 import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.internal.InlineCallbackQuery;
@@ -159,12 +160,10 @@ public class TelegramMessageConnector extends HttpServlet {
       }
 
       final String token = req.getServiceToken();
-
       final Update update = req.asUpdate();
-
       final String incoming = req.getMessageText();
 
-      if (ChatCommand.match(incoming, TELEGRAM) == CLEAR_PROFILE) {
+      if (ChatCommand.match(getServiceId(req), incoming, TELEGRAM) == CLEAR_PROFILE) {
         // Reset profile of the current user.
         final String userId = String.valueOf(update.getMessage().getFrom().getId());
         final Profile profile = getProfileStorage()
@@ -278,6 +277,9 @@ public class TelegramMessageConnector extends HttpServlet {
       if (mediaList.size() <= 0) {
         return;
       }
+
+      // XXX: can there be more than one attachment?
+      req.setEvent(mediaList.iterator().next().asEvent());
 
       final String inputName;
       {
@@ -468,7 +470,7 @@ public class TelegramMessageConnector extends HttpServlet {
 
       Session session = getSessionManager(serviceId).getSession(wnumber);
 
-      final ChatCommand cmd = ChatCommand.match(incoming, TELEGRAM);
+      final ChatCommand cmd = ChatCommand.match(serviceId, incoming, TELEGRAM);
       if (cmd == INVALIDATE_SESSION) {
         // Invalidate the current session.
         session.close();
@@ -511,6 +513,7 @@ public class TelegramMessageConnector extends HttpServlet {
       final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
       if (prevUri == null) {
         // No previous page means this is an initial request, thus serve the start page.
+        message.setEvent(new TextMessageEvent(incoming));
         return super.getRequestUri(config, wnumber, message);
 
       } else {
@@ -523,9 +526,12 @@ public class TelegramMessageConnector extends HttpServlet {
         // Look for a button with a corresponding label.
         //noinspection unchecked
         for (Element e : (List<Element>) prevPage.getRootElement().elements("button")) {
-          if (StringUtils.equals(e.getTextTrim(), incoming)) {
+          final String btnLabel = e.getTextTrim();
+
+          if (StringUtils.equals(btnLabel, incoming)) {
             final String btnHref = e.attributeValue("href");
             href = btnHref != null ? btnHref : e.attributeValue("target");
+            message.setEvent(new LinkEvent(btnLabel, prevUri));
           }
         }
 
@@ -544,6 +550,10 @@ public class TelegramMessageConnector extends HttpServlet {
               InitUtils.getString("bad-command-page", "", config.getAttributes());
           href = UrlUtils.merge(prevUri, badCommandPage);
           href = UrlUtils.addParameter(href, "bad_command", incoming);
+        }
+
+        if (message.getEvent() == null) {
+          message.setEvent(new TextMessageEvent(incoming));
         }
 
         href = SADSUrlUtils.processUssdForm(href, StringUtils.trim(incoming));
@@ -579,30 +589,6 @@ public class TelegramMessageConnector extends HttpServlet {
       return rc;
     }
 
-    @Override
-    protected SADSResponse sadsRequestBuildError(Exception e,
-                                                 TelegramWebhookRequest req) {
-      getLog(req).error("SADSRequest build error", e);
-      return null;
-    }
-
-    @Override
-    protected SADSResponse sadsResponseBuildError(Exception e,
-                                                  TelegramWebhookRequest req,
-                                                  SADSRequest sadsRequest) {
-      getLog(req).error("SADSResponse build error", e);
-      return null;
-    }
-
-    @Override
-    protected SADSResponse messageProcessingError(Exception e,
-                                                  TelegramWebhookRequest req,
-                                                  SADSRequest sadsRequest,
-                                                  SADSResponse response) {
-      getLog(req).error("Message processing error", e);
-      return null;
-    }
-
     private String normalize(String msisdn) {
       if (msisdn == null) {
         return null;
@@ -625,6 +611,11 @@ public class TelegramMessageConnector extends HttpServlet {
       return req.getProfile();
     }
 
+    @Override
+    protected Event getEvent(TelegramWebhookRequest req) {
+      return req.getEvent();
+    }
+
     private String getFilePath(String serviceId, String fileId) {
 
       // Note: using absolute URL here seems redundant (and might cause a lot of issues),
@@ -639,19 +630,9 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     private SessionManager getSessionManager(String serviceId) throws Exception {
-      final ServiceSessionManager serviceSessionManager =
-          (ServiceSessionManager) getResource("session-manager");
-      return serviceSessionManager.getSessionManager(TELEGRAM, serviceId);
+      return getSessionManager(TELEGRAM, serviceId);
     }
 
-    private Log getLog(TelegramWebhookRequest req) {
-      try{
-        return SADSLogger.getLogger(getServiceId(req), getSubscriberId(req), getClass());
-
-      } catch (Exception e) {
-        return getLogger();
-      }
-    }
   }
 
 }
