@@ -11,10 +11,6 @@ import com.eyelinecom.whoisd.sads2.content.ContentRequestUtils;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
-import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
-import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
@@ -40,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
 import static com.eyelinecom.whoisd.sads2.common.ArrayUtil.transformArray;
 import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
 import static com.eyelinecom.whoisd.sads2.executors.connector.ProfileEnabledMessageConnector.ATTR_SESSION_PREVIOUS_PAGE_URI;
@@ -54,7 +49,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   private static final Logger log = Logger.getLogger(TelegramPushInterceptor.class);
 
   private TelegramApi client;
-  private ServiceSessionManager sessionManager;
 
   @Override
   public void afterResponseRender(SADSRequest request,
@@ -71,8 +65,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
 
     try {
-      final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
-
       if (isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
@@ -125,8 +117,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         keyboard == null && doc.getRootElement().elements("input").isEmpty() &&
             !getAttributes(doc.getRootElement()).getBoolean("telegram.keep.session").or(false);
 
-    final SessionManager sessionManager =
-        this.sessionManager.getSessionManager(TELEGRAM, serviceId);
     final Session session = request.getSession();
 
     if (!shouldCloseSession) {
@@ -147,7 +137,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         // Hide keyboard if none is present in the current page.
         // This will hide the keyboard if previous page has links and the current one doesn't.
         final Message message = client.sendMessage(
-            sessionManager, token, chatId, text, keyboard != null ? keyboard : new ReplyKeyboardHide());
+            session, token, chatId, text, keyboard != null ? keyboard : new ReplyKeyboardHide());
 
         // Save `content page ID` -> `Telegram message ID mapping`.
         final String messageId = getMessageId(doc);
@@ -160,7 +150,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
         final Integer tgMessageId = (Integer) session.getAttribute("message-" + contentMessageId);
         if (tgMessageId != null) {
           client.editMessage(
-              sessionManager,
+              session,
               token,
               chatId,
               String.valueOf(tgMessageId),
@@ -189,9 +179,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
                                    String keyboard) throws Exception {
 
     final String serviceId = request.getServiceId();
-    final SessionManager sessionManager =
-        this.sessionManager.getSessionManager(TELEGRAM, serviceId);
-
     final String token =
         request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
 
@@ -219,7 +206,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
 
     client.sendMessage(
-        sessionManager,
+        request.getSession(),
         token,
         chatId,
         message,
@@ -278,7 +265,6 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
   @Override
   public void init(Properties config) throws Exception {
     client = SADSInitUtils.getResource("client", config);
-    sessionManager = SADSInitUtils.getResource("session-manager", config);
   }
 
   @Override

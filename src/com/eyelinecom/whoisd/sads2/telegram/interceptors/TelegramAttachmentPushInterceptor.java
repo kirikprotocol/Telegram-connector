@@ -12,8 +12,6 @@ import com.eyelinecom.whoisd.sads2.content.attachments.Attachment;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
 import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
-import com.eyelinecom.whoisd.sads2.session.ServiceSessionManager;
-import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.api.TgAttachmentMethodConverter;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
@@ -30,15 +28,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
-
 @SuppressWarnings("unused")
 public class TelegramAttachmentPushInterceptor extends TelegramPushBase implements Initable {
 
   private static final Logger log = Logger.getLogger(TelegramAttachmentPushInterceptor.class);
 
   private TelegramApi client;
-  private ServiceSessionManager sessionManager;
   private HttpDataLoader loader;
 
   @Override
@@ -86,7 +81,6 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     final String chatId = request.getProfile()
         .property("telegram-chats", token)
         .getValue();
-    final SessionManager sessionManager = this.sessionManager.getSessionManager(TELEGRAM, serviceId);
 
     // Resend keyboard along with the attachments so it stays on the screen.
     final ReplyKeyboardMarkup keyboard = getKeyboard(doc);
@@ -108,7 +102,7 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
       method.setReplyMarkup(keyboard);
 
       client.sendData(
-          sessionManager,
+          request.getSession(),
           token,
           chatId,
           method
@@ -132,7 +126,6 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
   @Override
   public void init(Properties config) throws Exception {
     client = SADSInitUtils.getResource("client", config);
-    sessionManager = SADSInitUtils.getResource("session-manager", config);
     loader = SADSInitUtils.getResource("loader", config);
   }
 

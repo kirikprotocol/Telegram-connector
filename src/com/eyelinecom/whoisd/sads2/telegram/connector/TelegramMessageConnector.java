@@ -481,7 +481,7 @@ public class TelegramMessageConnector extends HttpServlet {
         final User me = getClient().getMe(serviceToken);
 
         getClient().sendMessage(
-            getSessionManager(serviceId),
+            session,
             serviceToken,
             message
                 .getProfile()
@@ -503,7 +503,7 @@ public class TelegramMessageConnector extends HttpServlet {
         final String serviceToken = message.getServiceToken();
 
         getClient().sendMessage(
-            getSessionManager(serviceId),
+            session,
             serviceToken,
             profile.property("telegram-chats", serviceToken).getValue(),
             profile.dump()

@@ -5,11 +5,20 @@ import com.eyelinecom.whoisd.sads2.common.RateLimiter;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
-import com.eyelinecom.whoisd.sads2.session.SessionManager;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.*;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.EditMessageText;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.User;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -90,13 +99,13 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public Message sendMessage(SessionManager sessionManager,
+  public Message sendMessage(Session session,
                              String token,
                              String chatId,
                              String text,
                              Keyboard keyboard) throws TelegramApiException {
 
-    acquireChatLimit(sessionManager, chatId);
+    acquireChatLimit(session, chatId);
 
     final SendMessage method = new SendMessage();
     method.setChatId(chatId);
@@ -111,22 +120,22 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public Message sendMessage(SessionManager sessionManager,
+  public Message sendMessage(Session session,
                              String token,
                              String chatId,
                              String text) throws TelegramApiException {
-    return sendMessage(sessionManager, token, chatId, text, null);
+    return sendMessage(session, token, chatId, text, null);
   }
 
   @Override
-  public void editMessage(SessionManager sessionManager,
+  public void editMessage(Session session,
                           String token,
                           String chatId,
                           String messageId,
                           String text,
                           InlineKeyboardMarkup keyboard) throws TelegramApiException {
 
-    acquireChatLimit(sessionManager, chatId);
+    acquireChatLimit(session, chatId);
 
     final EditMessageText method = new EditMessageText();
     method.setChatId(chatId);
@@ -142,12 +151,12 @@ public class TelegramApiImpl implements TelegramApi {
   }
 
   @Override
-  public void sendData(SessionManager sessionManager,
+  public void sendData(Session session,
                        String token,
                        String chatId,
                        ApiSendMethod method) throws TelegramApiException {
 
-    acquireChatLimit(sessionManager, chatId);
+    acquireChatLimit(session, chatId);
 
     call(token, method);
   }
@@ -169,9 +178,8 @@ public class TelegramApiImpl implements TelegramApi {
     return file;
   }
 
-  private void acquireChatLimit(SessionManager sessionManager, String chatId) {
+  private void acquireChatLimit(Session session, String chatId) {
     try {
-      final Session session = sessionManager.getSession(chatId, false);
       if (session != null) {
         RateLimiter rateLimiter = (RateLimiter) session.getAttribute("rate-limiter");
         if (rateLimiter == null) {
