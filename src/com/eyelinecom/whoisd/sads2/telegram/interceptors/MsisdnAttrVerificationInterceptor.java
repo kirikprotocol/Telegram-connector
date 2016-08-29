@@ -48,7 +48,7 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
     }
 
     try {
-      final String wnumber = request.getAbonent();
+      final String wnumber = request.getProfile().getWnumber();
 
       final String msisdn = request.getProfile()
           .property("mobile", "msisdn")
