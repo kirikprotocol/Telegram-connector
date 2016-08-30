@@ -173,8 +173,8 @@
 
   private void sendGet(String url) {
     getLog().debug("Sending GET to [" + url + "]");
-
     new RestClient().json(url);
+    getLog().debug("Request completed");
   }
 
 %>

@@ -4,7 +4,6 @@
 
 <%!
 
-
   private String handle(HttpServletRequest request) throws Exception {
     final String event = request.getParameter("event");
     final String eventType = request.getParameter("event.type");
@@ -27,7 +26,7 @@
   }
 
   private String doProxy(HttpServletRequest req,
-                         String serviceId,
+                         final String serviceId,
                          ServiceRegistryEntry serviceRegistryEntry) {
 
     req.setAttribute(
@@ -47,11 +46,16 @@
     {
       final String userId = req.getParameter("user_id");
       final String protocol = req.getParameter("protocol");
-      sendGet(MOBILIZER_ROOT + "/push?" +
-          "service=" + serviceId +
-          "&user_id=" + userId +
-          "&protocol=" + protocol +
-          "&scenario=default-noinform");
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          sendGet(MOBILIZER_ROOT + "/push?" +
+              "service=" + serviceId +
+              "&user_id=" + userId +
+              "&protocol=" + protocol +
+              "&scenario=default-noinform");
+        }
+      }).start();
     }
 
     return "PROXY_OK";
