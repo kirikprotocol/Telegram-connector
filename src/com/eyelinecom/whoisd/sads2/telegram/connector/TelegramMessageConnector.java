@@ -233,14 +233,14 @@ public class TelegramMessageConnector extends HttpServlet {
 
     @Override
     protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
-      super.fillSADSRequest(sadsRequest, req);
-
       try {
         handleFileUpload(sadsRequest, req);
 
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }
+
+      super.fillSADSRequest(sadsRequest, req);
     }
 
     private void handleFileUpload(SADSRequest sadsRequest,
