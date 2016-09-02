@@ -9,17 +9,18 @@
     final String eventType = request.getParameter("event.type");
     final String eventText = request.getParameter("event.text");
 
-    if ("message".equals(event) && "text".equals(eventType)) {
-      if (eventText != null && eventText.startsWith("proxy ")) {
-        final String serviceId = eventText.substring("proxy ".length());
+    if (eventText != null && eventText.trim().equalsIgnoreCase("proxy stop")) {
+      return "PROXY_STOP";
 
-        final ServiceRegistryEntry serviceRegistryEntry = findServiceInRegistry(serviceId);
-        if (serviceRegistryEntry != null) {
-          return doProxy(request, serviceId, serviceRegistryEntry);
-        }
+    } else if (eventText != null && eventText.startsWith("proxy ")) {
+      final String serviceId = eventText.substring("proxy ".length());
 
-        return "PROXY_SERVICE_INVALID";
+      final ServiceRegistryEntry serviceRegistryEntry = findServiceInRegistry(serviceId);
+      if (serviceRegistryEntry != null) {
+        return doProxy(request, serviceId, serviceRegistryEntry);
       }
+
+      return "PROXY_SERVICE_INVALID";
     }
 
     return "PROXY_START_PAGE";
@@ -77,7 +78,8 @@
     </div>
     <div>
       <br/>
-      Use the command: <b>proxy [your-service-id]</b>.
+      Now just type <b>proxy [service-id]</b> to start proxying your service (e.g. proxy globalussd-lk.44.1444333222111),
+      and then <b>proxy stop</b> to stop.
     </div>
   </page>
 
@@ -85,6 +87,15 @@
   <page version="2.0">
     <div>
       Invalid service identifier. Please, try again.
+    </div>
+  </page>
+
+<% } else if (target.equals("PROXY_STOP")) { %>
+  <page version="2.0">
+    <div>
+      Okay, your proxy session is terminated.
+      <br/>
+      Type <b>proxy [your-service-id]</b> to start again.
     </div>
   </page>
 
