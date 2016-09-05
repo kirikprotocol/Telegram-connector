@@ -11,6 +11,7 @@ import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,8 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
   public static final String CONF_TOKEN = "telegram.token";
   public static final String CONF_REGISTER_WEBHOOK = "telegram.register.webhook";
+
+  private final Logger logger = Logger.getLogger(WebHookConfigListener.class);
 
   private final Map<String, String> serviceId2Token = new HashMap<>();
   private TelegramApi client;
@@ -78,17 +81,20 @@ public class WebHookConfigListener extends ServiceConfigListener {
 
   private void unRegisterWebHook(ServiceConfig config,
                                  String serviceId) throws ConfigurationException {
-    try {
-      final String token = serviceId2Token.get(serviceId);
-      if (token != null) {
-        if (shouldRegisterWebhook(config)) {
+
+    final String token = serviceId2Token.get(serviceId);
+    if (token != null) {
+      if (shouldRegisterWebhook(config)) {
+        try {
           client.unRegisterWebHook(token);
+
+        } catch (TelegramApiException e) {
+          logger.warn("Failed to unbind webhook:" +
+              " serviceId = [" + serviceId + "]: " + e.getMessage());
         }
-        serviceId2Token.remove(token);
       }
 
-    } catch (TelegramApiException e) {
-      throw new ConfigurationException(serviceId, e.getMessage());
+      serviceId2Token.remove(serviceId);
     }
   }
 
