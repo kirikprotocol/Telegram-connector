@@ -17,7 +17,7 @@
 
       final ServiceRegistryEntry serviceRegistryEntry = findServiceInRegistry(serviceId);
       if (serviceRegistryEntry != null) {
-        return doProxy(request, serviceId, serviceRegistryEntry);
+        return doProxy(request, serviceRegistryEntry);
       }
 
       return "PROXY_SERVICE_INVALID";
@@ -27,12 +27,13 @@
   }
 
   private String doProxy(HttpServletRequest req,
-                         final String serviceId,
-                         ServiceRegistryEntry serviceRegistryEntry) {
+                         ServiceRegistryEntry registryEntry) {
+
+    final String serviceId = registryEntry.getId();
 
     req.setAttribute(
         "PROXY_SERVICE_TITLE",
-        serviceRegistryEntry.getTitle() != null ? serviceRegistryEntry.getTitle() : serviceId
+        registryEntry.getTitle() != null ? registryEntry.getTitle() : serviceId
     );
 
     {
@@ -48,7 +49,6 @@
       final String userId = req.getParameter("user_id");
       final String protocol = req.getParameter("protocol");
       new Thread(new Runnable() {
-        @Override
         public void run() {
           sendGet(MOBILIZER_ROOT + "/push?" +
               "service=" + serviceId +

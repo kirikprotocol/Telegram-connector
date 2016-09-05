@@ -1,30 +1,32 @@
 <%@ page import="mobi.eyeline.utils.restclient.web.RestClient" %>
 <%@ page import="org.apache.log4j.Logger" %>
-<%@ page import="org.json.JSONArray" %>
 <%@ page import="org.json.JSONObject" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.delete" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
-<%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.util.HashSet" %>
-<%@ page import="java.util.Set" %>
 <%@include file="l10n.jspf" %>
 <%@ page language="java" %>
 
 <%!
 
-  static final String MOBILIZER_ROOT = "http://devel.globalussd.mobi";
-//  static final String API_ROOT = "http://localhost:11201/wstorage";
-  static final String API_ROOT = "http:///wstorage/v2";
+  static final String MOBILIZER_ROOT = "https://api.miniapps.run";
+  static final String API_ROOT = "http://localhost:11201/wstorage/v2";
+//  static final String API_ROOT = "http:///wstorage/v2";
 
   Logger getLog() {
     return Logger.getLogger("msisdn-confirmation");
   }
 
   static class ServiceRegistryEntry {
+    private final String id;
     private final String title;
 
     public ServiceRegistryEntry(JSONObject obj) {
+      this.id = obj.getString("id");
       this.title = obj.optString("title");
+    }
+
+    public String getId() {
+      return id;
     }
 
     public String getTitle() {
@@ -47,128 +49,6 @@
 
       throw e;
     }
-  }
-
-
-
-  public void verify(String msisdn) throws Exception {
-    verify(msisdn, true);
-  }
-
-  /**
-   * Complete MSISDN verification for the specified service & redirect to the next content page.
-   *
-   * Pre-conditions:
-   *  - Verification is initiated for any service,
-   *  - Specified MSISDN is requested to be verified by the user,
-   *  - Specified MSISDN is successfully verified (e.g. by C2S request).
-   *
-   * Post-conditions:
-   *  - MSISDN is persisted to the profile,
-   *  - Current session is redirected to the next content page,
-   *  - All the temporary verification data is cleaned up.
-   */
-  public void verify(String msisdn, boolean push) throws Exception {
-
-    //
-    //  Update profile storage.
-    //
-
-    final JSONArray profiles = new RestClient()
-        .json(API_ROOT + "/profile?services.auth-*.entered-msisdn=" + msisdn).array();
-
-    for (int i = 0; i < profiles.length(); i++) {
-      final String wnumber = profiles.getString(i);
-      getLog().debug("Verifying MSISDN = [" + msisdn + "] for wnumber = [" + wnumber + "]");
-
-      final Set<String> safeServiceIds = new HashSet<String>();
-      {
-        final JSONArray enteredMsisdnProps = new RestClient()
-            .json(API_ROOT + "/profile/" + wnumber + "/services.auth-*.entered-msisdn/list").array();
-
-        for (int j = 0; j < enteredMsisdnProps.length(); j++) {
-          final JSONObject prop = enteredMsisdnProps.getJSONObject(j);
-
-          if (msisdn.equals(prop.getString("value"))) {
-            final String path = prop.getString("path");
-            final String[] parts = path.split("\\.");
-            if (parts.length == 3 && parts[1].startsWith("auth-")) {
-              safeServiceIds.add(parts[1].replace("auth-", ""));
-            }
-          }
-        }
-      }
-
-      final Set<String[]> serviceIds = new HashSet<String[]>() {{
-        for (String safeSid : safeServiceIds) {
-          add(new String[]{
-              new RestClient()
-                  .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id")
-                  .object()
-                  .getString("value"),
-              new RestClient()
-                  .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol")
-                  .object()
-                  .getString("value"),
-          }
-          );
-        }
-      }};
-
-      for (String[] service : serviceIds) {
-        verify(msisdn, wnumber, service[0], service[1], push);
-      }
-
-    }
-  }
-
-  private void verify(String msisdn, String wnumber, String serviceId, String protocol, boolean push) throws Exception {
-    final String safeSid = serviceId.replace(".", "_");
-
-    new RestClient()
-        .json(API_ROOT + "/profile/" + wnumber + "/mobile.msisdn", post(RestClient.content(msisdn)));
-
-    final String prevUrl = new RestClient()
-        .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".MSISDN_CONFIRMATION_REDIRECTED")
-        .object()
-        .getString("value");
-
-    clearAll(wnumber, serviceId);
-
-    //
-    //  Push the next service page.
-    //
-
-    if (push) {
-      sendGet(MOBILIZER_ROOT + "/push?" +
-          "service=" + serviceId +
-          "&subscriber=" + wnumber +
-          "&protocol=" + protocol +
-          "&pageId=" + URLEncoder.encode(prevUrl, "UTF-8") +
-          "&scenario=default-noinform");
-    }
-  }
-
-  /**
-   * Clears all plugin-specific data from subscriber profile.
-   */
-  public void clearAll(String wnumber,
-                       String serviceId) throws Exception {
-
-    getLog().debug("Clearing plugin profile:" +
-        " wnumber = [" + wnumber + "], serviceId = [" + serviceId + "]");
-
-    final String safeSid = serviceId.replace(".", "_");
-    final String pluginProfile = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid;
-
-    new RestClient().json(pluginProfile + ".service-id?purge=true", delete());
-    new RestClient().json(pluginProfile + ".protocol?purge=true", delete());
-    new RestClient().json(pluginProfile + ".phase?purge=true", delete());
-
-    new RestClient().json(pluginProfile + ".entered-msisdn?purge=true", delete());
-
-    new RestClient().json(pluginProfile + ".pin?purge=true", delete());
-    new RestClient().json(pluginProfile + ".MSISDN_CONFIRMATION_REDIRECTED?purge=true", delete());
   }
 
   private void sendGet(String url) {

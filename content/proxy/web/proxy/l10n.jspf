@@ -9,7 +9,7 @@
   //  Locales.
   //
 
-  private static final String BUNDLE_BASE = "msisdn_confirmation";
+  private static final String BUNDLE_BASE = "proxy";
 
   public static String _(String key, String lang) {
     if (lang == null) {
