@@ -626,7 +626,7 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     private TelegramApi getClient() throws NotFoundResourceException {
-      return (TelegramApi) getResource("telegram-api");
+      return getResource("telegram-api");
     }
 
     private SessionManager getSessionManager(String serviceId) throws Exception {
