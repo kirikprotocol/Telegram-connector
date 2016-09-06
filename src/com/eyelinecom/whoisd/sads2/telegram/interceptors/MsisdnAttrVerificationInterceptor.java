@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.Protocol.FACEBOOK;
+import static com.eyelinecom.whoisd.sads2.Protocol.LINE;
 import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
 import static com.eyelinecom.whoisd.sads2.Protocol.VKONTAKTE;
@@ -31,6 +32,7 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
   private static final String CONF_ENABLED_SKYPE      = "skype.msisdn.confirmation.enabled";
   private static final String CONF_ENABLED_FACEBOOK   = "facebook.msisdn.confirmation.enabled";
   private static final String CONF_ENABLED_VKONTAKTE  = "vkontakte.msisdn.confirmation.enabled";
+  private static final String CONF_ENABLED_LINE       = "line.msisdn.confirmation.enabled";
 
   static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
 
@@ -89,7 +91,9 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
               ||
           (protocol == FACEBOOK && parseBoolean(attrs.getProperty(CONF_ENABLED_FACEBOOK, "false")))
               ||
-          (protocol == VKONTAKTE && parseBoolean(attrs.getProperty(CONF_ENABLED_VKONTAKTE, "false")));
+          (protocol == VKONTAKTE && parseBoolean(attrs.getProperty(CONF_ENABLED_VKONTAKTE, "false")))
+              ||
+          (protocol == LINE && parseBoolean(attrs.getProperty(CONF_ENABLED_LINE, "false")));
     }
   }
 
