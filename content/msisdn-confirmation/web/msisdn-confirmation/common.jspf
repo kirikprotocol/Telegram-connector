@@ -4,18 +4,19 @@
 <%@ page import="org.json.JSONObject" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.delete" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
-<%@ page import="java.net.HttpURLConnection" %>
-<%@ page import="java.net.URL" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collection" %>
 <%@ page import="java.util.HashSet" %>
+<%@ page import="java.util.LinkedHashSet" %>
 <%@ page import="java.util.Set" %>
 <%@include file="l10n.jspf" %>
 <%@ page language="java" %>
 
 <%!
 
-  static final String MOBILIZER_ROOT = "http://devel.globalussd.mobi";
-  static final String API_ROOT = "http://localhost:11201/wstorage";
+  static final String MOBILIZER_ROOT = "https://api.miniapps.run";
+  static final String API_ROOT = "http://localhost:11201/wstorage/v2";
 
   public static final String PHASE_ASKED_FOR_MSISDN = "ASKED_FOR_MSISDN";
   public static final String PHASE_HAS_MSISDN = "HAS_MSISDN";
@@ -43,38 +44,37 @@
    */
   public void verify(String msisdn, boolean push) throws Exception {
 
-    //
-    //  Update profile storage.
-    //
+    final Collection<VerificationEntry> verificationEntries = findVerificationEntries(msisdn);
+    for (VerificationEntry entry : verificationEntries) {
+      verify(msisdn, entry.wnumber, entry.serviceId, entry.protocol, push);
+    }
+  }
 
-    final JSONArray profiles = new RestClient()
-        .json(API_ROOT + "/profile?services.auth-*.entered-msisdn=" + msisdn).array();
+  public Collection<VerificationEntry> findVerificationEntries(final String msisdn) {
+    return new ArrayList<VerificationEntry>() {{
+      for (final String wnumber : listProfilesPendingVerifiction(msisdn)) {
+        getLog().debug("Verifying MSISDN = [" + msisdn + "] for wnumber = [" + wnumber + "]");
 
-    for (int i = 0; i < profiles.length(); i++) {
-      final String wnumber = profiles.getString(i);
-      getLog().debug("Verifying MSISDN = [" + msisdn + "] for wnumber = [" + wnumber + "]");
+        final Set<String> safeServiceIds = new HashSet<String>() {{
+          final JSONArray enteredMsisdnProps = new RestClient()
+              .json(API_ROOT + "/profile/" + wnumber + "/services.auth-*.entered-msisdn/history").array();
 
-      final Set<String> safeServiceIds = new HashSet<String>();
-      {
-        final JSONArray enteredMsisdnProps = new RestClient()
-            .json(API_ROOT + "/profile/" + wnumber + "/services.auth-*.entered-msisdn/list").array();
+          for (int j = 0; j < enteredMsisdnProps.length(); j++) {
+            final JSONObject prop = enteredMsisdnProps.getJSONObject(j);
 
-        for (int j = 0; j < enteredMsisdnProps.length(); j++) {
-          final JSONObject prop = enteredMsisdnProps.getJSONObject(j);
-
-          if (msisdn.equals(prop.getString("value"))) {
-            final String path = prop.getString("path");
-            final String[] parts = path.split("\\.");
-            if (parts.length == 3 && parts[1].startsWith("auth-")) {
-              safeServiceIds.add(parts[1].replace("auth-", ""));
+            if (msisdn.equals(prop.getString("value"))) {
+              final String path = prop.getString("path");
+              final String[] parts = path.split("\\.");
+              if (parts.length == 3 && parts[1].startsWith("auth-")) {
+                add(parts[1].replace("auth-", ""));
+              }
             }
           }
-        }
-      }
+        }};
 
-      final Set<String[]> serviceIds = new HashSet<String[]>() {{
         for (String safeSid : safeServiceIds) {
-          add(new String[]{
+          add(new VerificationEntry(
+              wnumber,
               new RestClient()
                   .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id")
                   .object()
@@ -82,17 +82,34 @@
               new RestClient()
                   .json(API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol")
                   .object()
-                  .getString("value"),
-          }
-          );
-        }
-      }};
-
-      for (String[] service : serviceIds) {
-        verify(msisdn, wnumber, service[0], service[1], push);
+                  .getString("value")
+          ));
+        };
       }
+    }};
+  }
 
+  public static class VerificationEntry {
+    String wnumber;
+    String serviceId;
+    String protocol;
+
+    public VerificationEntry(String wnumber, String serviceId, String protocol) {
+      this.wnumber = wnumber;
+      this.serviceId = serviceId;
+      this.protocol = protocol;
     }
+  }
+
+  private Collection<String> listProfilesPendingVerifiction(String msisdn) {
+    final JSONArray profiles = new RestClient()
+        .json(API_ROOT + "/profile?services.auth-*.entered-msisdn=" + msisdn).array();
+
+    return new LinkedHashSet<String>() {{
+      for (int i = 0; i < profiles.length(); i++) {
+        add(profiles.getString(i));
+      }
+    }};
   }
 
   private void verify(String msisdn, String wnumber, String serviceId, String protocol, boolean push) throws Exception {
@@ -134,27 +151,25 @@
     final String safeSid = serviceId.replace(".", "_");
     final String pluginProfile = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid;
 
-    new RestClient().json(pluginProfile + ".service-id?purge=true", delete());
-    new RestClient().json(pluginProfile + ".protocol?purge=true", delete());
-    new RestClient().json(pluginProfile + ".phase?purge=true", delete());
+    new RestClient().json(pluginProfile + ".service-id/history", delete());
+    new RestClient().json(pluginProfile + ".protocol/history", delete());
+    new RestClient().json(pluginProfile + ".phase/history", delete());
+    new RestClient().json(pluginProfile + ".type/history", delete());
 
-    new RestClient().json(pluginProfile + ".entered-msisdn?purge=true", delete());
+    new RestClient().json(pluginProfile + ".entered-msisdn/history", delete());
 
-    new RestClient().json(pluginProfile + ".pin?purge=true", delete());
-    new RestClient().json(pluginProfile + ".MSISDN_CONFIRMATION_REDIRECTED?purge=true", delete());
+    new RestClient().json(pluginProfile + ".pin/history", delete());
+    new RestClient().json(pluginProfile + ".MSISDN_CONFIRMATION_REDIRECTED/history", delete());
   }
 
   public static String getWnumber(HttpServletRequest req) {
-    final String wnumber = req.getParameter("wnumber");
-    return (wnumber == null || wnumber.isEmpty()) ? req.getParameter("subscriber") : wnumber;
+    return req.getParameter("user_id");
   }
 
   private void sendGet(String url) throws Exception {
     getLog().debug("Sending GET to [" + url + "]");
 
-    final HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-    con.setRequestMethod("GET");
-    con.getInputStream().close();
+    new RestClient().json(url).text();
   }
 
 %>

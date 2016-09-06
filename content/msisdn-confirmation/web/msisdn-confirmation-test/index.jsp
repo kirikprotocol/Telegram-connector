@@ -12,6 +12,7 @@
   <navigation>
     <link pageId="http://plugins.miniapps.run/msisdn-verification?success_url=authorize.jsp">Авторизоваться по C2S</link>
     <link pageId="http://plugins.miniapps.run/msisdn-verification?success_url=authorize.jsp&amp;type=sms">Авторизоваться по СМС</link>
+    <link pageId="http://plugins.miniapps.run/msisdn-verification?success_url=authorize.jsp&amp;type=ussd_dialog">Авторизоваться по USSD</link>
     <link pageId="reset.jsp">Сбросить профиль</link>
   </navigation>
 </page>

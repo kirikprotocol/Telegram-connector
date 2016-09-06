@@ -34,14 +34,15 @@
     <orderEntry type="module-library">
       <library name="IvyIDEA">
         <CLASSES>
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/rest-client/jars/rest-client-0.01.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.16.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/rest-client/jars/rest-client-0.02.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/javadocs/log4j-1.2.16-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/sources/log4j-1.2.16-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/rest-client/sources/rest-client-sources-0.02.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

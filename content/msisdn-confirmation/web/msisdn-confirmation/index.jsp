@@ -1,5 +1,6 @@
 <%@ page import="java.io.IOException" %>
 <%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.post" %>
+<%@ page import="static mobi.eyeline.utils.restclient.web.RestClient.put" %>
 <%@ page contentType="application/xml; charset=UTF-8" language="java" %>
 <%@include file="common.jspf" %>
 
@@ -20,16 +21,14 @@
     final String safeSid = serviceId.replace(".", "_");
     final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".phase";
 
-    new RestClient().json(path + "?purge=true", RestClient.delete());
-    new RestClient().json(path, post(RestClient.content(phase)));
+    new RestClient().json(path, put(RestClient.content(phase)));
   }
 
   private void setType(String wnumber, String serviceId, String type) throws IOException {
     final String safeSid = serviceId.replace(".", "_");
     final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".type";
 
-    new RestClient().json(path + "?purge=true", RestClient.delete());
-    new RestClient().json(path, post(RestClient.content(type)));
+    new RestClient().json(path, put(RestClient.content(type)));
   }
 
   private String getType(String wnumber, String serviceId) throws IOException {
@@ -48,8 +47,7 @@
     final String safeSid = serviceId.replace(".", "_");
     final String path = API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".pin";
 
-    new RestClient().json(path + "?purge=true", RestClient.delete());
-    new RestClient().json(path, post(RestClient.content(pin)));
+    new RestClient().json(path, put(RestClient.content(pin)));
   }
 
   private String handle(HttpServletRequest request) throws Exception {
@@ -77,12 +75,15 @@
 
         String enteredMsisdn = null;
         try {
-          if ("json".equals(request.getParameter("input_type"))) {
-            // Attachment. Treat it as a contact input (or fail and ignore).
-            final JSONObject contact = new JSONArray(payload).getJSONObject(0);
-            enteredMsisdn = normalize(contact.getString("msisdn"));
+          final String event = request.getParameter("event");
+          final String eventType = request.getParameter("event.type");
+          if ("message".equals(event) && "contact".equals(eventType)) {
+            // Contact data received.
+            // Try matching to the current user and entered verification data (or fail and ignore).
 
-            final String contactWnumber = contact.optString("id");
+            enteredMsisdn = normalize(request.getParameter("event.msisdn"));
+
+            final String contactWnumber = request.getParameter("event.id");
             if (wnumber.equals(contactWnumber) && enteredMsisdn != null) {
               // Got a contact info with:
               //   - Valid MSISDN, which is
@@ -95,17 +96,17 @@
               new RestClient()
                   .json(
                       API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".entered-msisdn",
-                      post(RestClient.content(enteredMsisdn)));
+                      put(RestClient.content(enteredMsisdn)));
 
               new RestClient()
                   .json(
                       API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
-                      post(RestClient.content(serviceId)));
+                      put(RestClient.content(serviceId)));
 
               new RestClient()
                   .json(
                       API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol",
-                      post(RestClient.content(request.getParameter("protocol"))));
+                      put(RestClient.content(request.getParameter("protocol"))));
 
               verify(enteredMsisdn);
               return "PAGE_EMPTY";
@@ -130,17 +131,17 @@
           new RestClient()
               .json(
                   API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".entered-msisdn",
-                  post(RestClient.content(enteredMsisdn)));
+                  put(RestClient.content(enteredMsisdn)));
 
           new RestClient()
               .json(
                   API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".service-id",
-                  post(RestClient.content(serviceId)));
+                  put(RestClient.content(serviceId)));
 
           new RestClient()
               .json(
                   API_ROOT + "/profile/" + wnumber + "/services.auth-" + safeSid + ".protocol",
-                  post(RestClient.content(request.getParameter("protocol"))));
+                  put(RestClient.content(request.getParameter("protocol"))));
 
           final String type = getType(wnumber, serviceId);
           if ("c2s".equals(type)) {
@@ -159,6 +160,16 @@
                 "&scenario=push");
 
             return "PAGE_REQUEST_PIN";
+
+          } else if ("ussd_dialog".equals(type)) {
+            sendGet(MOBILIZER_ROOT + "/push?" +
+                "service=" + serviceId +
+                "&subscriber=" + enteredMsisdn +
+                "&protocol=ussd" +
+                "&document=" + URLEncoder.encode(_("ussd.dialog.confirmation", request), "UTF-8") +
+                "&scenario=xmlpush");
+
+            return "PAGE_REQUEST_USSD_CONFIRMATION";
 
           } else {
             getLog().warn("Unexpected verification type [" + type + "]." +
@@ -210,6 +221,9 @@
 
 <% } else if (target.equals("PAGE_REQUEST_PIN")) { %>
   <jsp:include page="request_pin.jsp" flush="true"/>
+
+<% } else if (target.equals("PAGE_REQUEST_USSD_CONFIRMATION")) { %>
+  <jsp:include page="request_ussd_confirmation.jsp" flush="true"/>
 
 <% } else if (target.equals("PAGE_EMPTY")) { %>
   <jsp:include page="empty.jsp" flush="true"/>
