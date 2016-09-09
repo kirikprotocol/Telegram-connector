@@ -70,7 +70,6 @@
 				<attribute name="Build-Date" value="${build-date}"/>
 			</manifest>
 			<fileset dir="${build-dir}/out" includes="**/*"/>
-			<fileset file="${basedir}/homeregion.txt"/>
 		</jar>
 	</target>
 

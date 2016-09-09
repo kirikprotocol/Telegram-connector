@@ -1,0 +1,8 @@
+<page version="2.0" style="post_ussd">
+  <div>
+    <input navigationId="submit" name="input" title="Input" />
+  </div>
+  <navigation id="submit">
+    <link accesskey="1" pageId="test.jsp?foo=bar">Ok</link>
+  </navigation>
+</page>
