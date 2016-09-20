@@ -152,6 +152,7 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/jars/utils-1.0.64.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/bundles/guava-19.0.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/db-template/jars/db-template-0.03.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.mobilizer/sads-smpp/jars/sads-smpp-0.106.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/javadocs/commons-collections-3.2.1-javadoc.jar!/" />
