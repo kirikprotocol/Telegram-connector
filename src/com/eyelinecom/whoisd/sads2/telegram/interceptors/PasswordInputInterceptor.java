@@ -8,8 +8,8 @@ import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.Session;
+import com.eyelinecom.whoisd.sads2.content.ContentRequest;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
-import com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.profile.Profile.PropertyQuery;
@@ -17,7 +17,6 @@ import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils;
 import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramRequestUtils.ExtLink;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import org.apache.commons.logging.Log;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -27,38 +26,60 @@ import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.telegram.interceptors.TelegramPushInterceptor.getText;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.xml.bind.DatatypeConverter.parseBase64Binary;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 
 public class PasswordInputInterceptor extends BlankInterceptor implements Initable {
+
+  @Override
+  public void beforeContentRequest(SADSRequest request,
+                                   ContentRequest contentRequest,
+                                   RequestDispatcher dispatcher) throws InterceptionException {
+
+    final String serviceId = request.getServiceId();
+    final Session session = request.getSession();
+    final String redirectUri =
+        request.getServiceScenario().getAttributes().getProperty("password-input-uri");
+
+    final PropertyQuery passwordProp = request
+        .getProfile()
+        .property("services", "password-" + serviceId.replace(".", "_"));
+
+    final String passwordValue = passwordProp.getValue();
+
+    if (passwordValue != null && !request.getResourceURI().startsWith(redirectUri)) {
+      // Password value is already known in profile storage.
+      //
+      // Submit the value using session attrs:
+      //  - password-uri: submit URL
+      //  - password-name: input name
+      //
+
+      passwordProp.delete();
+
+      String href = (String) session.getAttribute("password-uri");
+      final String inputName = (String) session.getAttribute("password-name");
+
+      href = UrlUtils.addParameter(href, inputName, passwordValue);
+      request.setResourceURI(href);
+
+      processRequest(request, dispatcher);
+
+    }
+  }
 
   @Override
   public void beforeResponseRender(SADSRequest request,
                                    ContentResponse content,
                                    RequestDispatcher dispatcher) throws InterceptionException {
 
-    final String serviceId = request.getServiceId();
-
     final Document doc = (Document) content.getAttributes().get(PageBuilder.VALUE_DOCUMENT);
-    final Element rootElement = doc.getRootElement();
 
-    final Optional<String> redirect =
-        AttributeReader.getAttributes(rootElement).getString("telegram.redirect");
-    if (redirect.isPresent()) {
-      final String redirectBase64 = redirect.get();
-      request.setResourceURI(new String(parseBase64Binary(redirectBase64), UTF_8));
-      processRequest(request, dispatcher);
-
-      return;
-    }
-
-    final Element inputElement = (Element) rootElement
+    final Element inputElement = (Element) doc.getRootElement()
         .selectSingleNode("//input[@type='password']");
 
     final String redirectUri =
         request.getServiceScenario().getAttributes().getProperty("password-input-uri");
 
-    final Session session = request.getSession();
     if (inputElement != null) {
       redirectToPasswordInput(
           request,
@@ -67,33 +88,6 @@ public class PasswordInputInterceptor extends BlankInterceptor implements Initab
           inputElement,
           redirectUri);
 
-    } else {
-
-      final PropertyQuery passwordProp = request
-          .getProfile()
-          .property("services", "password-" + serviceId.replace(".", "_"));
-
-      final String passwordValue = passwordProp.getValue();
-
-      if (passwordValue != null && !request.getResourceURI().startsWith(redirectUri)) {
-        // Password value is already known in profile storage.
-        //
-        // Submit the value using session attrs:
-        //  - password-uri: submit URL
-        //  - password-name: input name
-        //
-
-        passwordProp.delete();
-
-        String href = (String) session.getAttribute("password-uri");
-        final String inputName = (String) session.getAttribute("password-name");
-
-        href = UrlUtils.addParameter(href, inputName, passwordValue);
-        request.setResourceURI(href);
-
-        processRequest(request, dispatcher);
-
-      }
     }
   }
 
