@@ -4,6 +4,8 @@ import com.eyelinecom.whoisd.sads2.common.HttpDataLoader;
 import com.eyelinecom.whoisd.sads2.common.RateLimiter;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
 import com.eyelinecom.whoisd.sads2.connector.Session;
+import com.eyelinecom.whoisd.sads2.eventstat.DetailedStatLogger;
+import com.eyelinecom.whoisd.sads2.executors.connector.Context;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
@@ -31,6 +33,7 @@ public class TelegramApiImpl implements TelegramApi {
   private static final Logger log = Logger.getLogger(TelegramApiImpl.class);
 
   private final HttpDataLoader loader;
+  private final DetailedStatLogger detailedStatLogger;
   private final String publicKeyPath;
   private final String baseUrl;
   private final String connectorBaseUrl;
@@ -48,8 +51,11 @@ public class TelegramApiImpl implements TelegramApi {
   private final int maxRateLimitRetries;
 
   public TelegramApiImpl(HttpDataLoader loader,
+                         DetailedStatLogger detailedStatLogger,
                          Properties properties) throws Exception {
+
     this.loader = loader;
+    this.detailedStatLogger = detailedStatLogger;
 
     this.publicKeyPath = getPublicKeyPath(properties);
     this.baseUrl = properties.getProperty("base.url");
@@ -116,6 +122,10 @@ public class TelegramApiImpl implements TelegramApi {
       method.setReplyMarkup(keyboard);
     }
 
+    if (Context.getSadsRequest() != null) {
+      detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
+    }
+
     return call(token, method);
   }
 
@@ -147,6 +157,10 @@ public class TelegramApiImpl implements TelegramApi {
       method.setReplyMarkup(keyboard);
     }
 
+    if (Context.getSadsRequest() != null) {
+      detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
+    }
+
     call(token, method);
   }
 
@@ -158,6 +172,10 @@ public class TelegramApiImpl implements TelegramApi {
 
     acquireChatLimit(session, chatId);
 
+    if (Context.getSadsRequest() != null) {
+      detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
+    }
+
     call(token, method);
   }
 
@@ -168,7 +186,12 @@ public class TelegramApiImpl implements TelegramApi {
 
   @Override
   public File getFile(String token, String fileId) throws TelegramApiException {
-    final File file = call(token, new GetFile(fileId));
+    final GetFile method = new GetFile(fileId);
+    if (Context.getSadsRequest() != null) {
+      detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
+    }
+
+    final File file = call(token, method);
     file.setUrl(
         StringUtils.join(
             new String[]{baseUrl, "file", "bot" + token, file.getFilePath()},
@@ -215,8 +238,9 @@ public class TelegramApiImpl implements TelegramApi {
                              HierarchicalConfiguration config) throws Exception {
 
       final HttpDataLoader loader = SADSInitUtils.getResource("loader", properties);
+      final DetailedStatLogger detailedStatLogger = SADSInitUtils.getResource("detailed-stat-logger", properties);
 
-      return new TelegramApiImpl(loader, properties);
+      return new TelegramApiImpl(loader, detailedStatLogger, properties);
     }
 
     @Override public boolean isHeavyResource() { return false; }
