@@ -2,6 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.common.StoredHttpRequest;
 import com.eyelinecom.whoisd.sads2.events.Event;
+import com.eyelinecom.whoisd.sads2.eventstat.LoggableExternalRequest;
 import com.eyelinecom.whoisd.sads2.profile.Profile;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.Update;
@@ -14,7 +15,7 @@ import java.io.IOException;
  * <br/>
  * Expected to land at {@literal <MOBILIZER_ROOT>/<TELEGRAM_CONNECTOR>/<telegram.token>/<service.id>}.
  */
-public class TelegramWebhookRequest extends StoredHttpRequest {
+public class TelegramWebhookRequest extends StoredHttpRequest implements LoggableExternalRequest {
 
   private Update update;
 
@@ -84,5 +85,15 @@ public class TelegramWebhookRequest extends StoredHttpRequest {
 
   public void setEvent(Event event) {
     this.event = event;
+  }
+
+  @Override
+  public Object getLoggableData() {
+    try {
+      return asUpdate();
+
+    } catch (IOException|TelegramApiException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
