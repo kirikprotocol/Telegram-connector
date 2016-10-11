@@ -355,6 +355,8 @@ public class TelegramMessageConnector extends HttpServlet {
         final InputFile file = new InputFile();
         file.setMediaType("voice");
         file.setUrl(getFilePath(serviceId, voice.getFileId()));
+        file.setContentType(voice.getMimeType());
+        file.setSize(voice.getFileSize());
         mediaList.add(file);
       }
 
