@@ -4,6 +4,7 @@ import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
+import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.SADSRequest;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.executors.interceptor.BlankConnectorInterceptor;
@@ -97,9 +98,15 @@ public class TelegramStartLinkInterceptor extends BlankConnectorInterceptor impl
 
     // Start page is already set by now in message connector, but session got suddenly invalidated.
     // Fix that.
+    // Also clean up any stale request parameters which got there from query-string of the previous
+    // content URL.
+    request.getParameters().keySet().removeAll(
+        UrlUtils.getParametersMap(request.getResourceURI()).keySet()
+    );
     request.setResourceURI(
         InitUtils.getString(CONF_STARTPAGE, "", request.getServiceScenario().getAttributes())
     );
+    request.getParameters().putAll(UrlUtils.getParametersMap(request.getResourceURI()));
   }
 
   @Override
