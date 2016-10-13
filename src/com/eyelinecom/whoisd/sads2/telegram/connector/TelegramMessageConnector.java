@@ -39,6 +39,7 @@ import com.eyelinecom.whoisd.sads2.telegram.api.types.Voice;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.utils.ConnectorUtils;
+import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -55,6 +56,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
@@ -66,6 +68,8 @@ import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.WHO_IS;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.unmarshal;
 import static com.eyelinecom.whoisd.sads2.wstorage.profile.QueryRestrictions.property;
+import static com.google.common.collect.Iterables.all;
+import static java.util.Arrays.asList;
 
 public class TelegramMessageConnector extends HttpServlet {
 
@@ -315,13 +319,50 @@ public class TelegramMessageConnector extends HttpServlet {
 
       final PhotoSize[] photoArray = message.getPhoto();
       if (photoArray != null && photoArray.length > 0) {
-        for (PhotoSize photo : photoArray) {
-          final InputFile file = new InputFile();
-          file.setMediaType("photo");
-          file.setUrl(getFilePath(serviceId, photo.getFileId()));
-          file.setSize(photo.getFileSize());
-          mediaList.add(file);
+
+        // Multiple thumbnails of a single image (file, sticker etc).
+        // Find the biggest one and ignore others.
+        final PhotoSize photo;
+        {
+          if (photoArray.length == 1) {
+            photo = photoArray[0];
+
+          } else {
+            final List<PhotoSize> photoList = asList(photoArray);
+
+            // The best way is to filter by file size, but it's an optional parameter.
+            final boolean allHaveSize = all(
+                photoList,
+                new Predicate<PhotoSize>() {
+                  @Override public boolean apply(PhotoSize _) { return _.getFileSize() != null; }
+                });
+
+            if (allHaveSize) {
+              photo = Collections.max(photoList, new Comparator<PhotoSize>() {
+                @Override
+                public int compare(PhotoSize _1, PhotoSize _2) {
+                  return Integer.compare(_1.getFileSize(), _2.getFileSize());
+                }
+              });
+
+            } else {
+              // Fallback: get the largest by one of dimensions (as well, all thumbnails
+              // should be scaled while keeping aspect ratio).
+              photo = Collections.max(photoList, new Comparator<PhotoSize>() {
+                @Override
+                public int compare(PhotoSize _1, PhotoSize _2) {
+                  return Integer.compare(_1.getWidth(), _2.getWidth());
+                }
+              });
+            }
+          }
         }
+
+        final InputFile file = new InputFile();
+        file.setMediaType("photo");
+        file.setUrl(getFilePath(serviceId, photo.getFileId()));
+        file.setSize(photo.getFileSize());
+        mediaList.add(file);
       }
 
       final Audio audio = message.getAudio();
