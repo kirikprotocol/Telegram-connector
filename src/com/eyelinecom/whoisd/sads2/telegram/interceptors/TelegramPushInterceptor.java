@@ -9,6 +9,7 @@ import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.connector.Session;
 import com.eyelinecom.whoisd.sads2.content.ContentRequestUtils;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeSet;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
@@ -113,9 +114,18 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       text = text.isEmpty() ? "." : text;
     }
 
-    final boolean shouldCloseSession =
-        keyboard == null && doc.getRootElement().elements("input").isEmpty() &&
-            !getAttributes(doc.getRootElement()).getBoolean("telegram.keep.session").or(false);
+    final boolean shouldCloseSession;
+    {
+      if (keyboard != null || !doc.getRootElement().elements("input").isEmpty()) {
+        shouldCloseSession = false;
+
+      } else {
+        final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
+        shouldCloseSession = !pageAttributes.getBoolean("telegram.keep.session")
+            .or(pageAttributes.getBoolean("keep.session"))
+            .or(false);
+      }
+    }
 
     final Session session = request.getSession();
 
