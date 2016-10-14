@@ -2,6 +2,7 @@ package com.eyelinecom.whoisd.sads2.telegram.connector;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.common.InitUtils;
+import com.eyelinecom.whoisd.sads2.common.ProfileUtil;
 import com.eyelinecom.whoisd.sads2.common.SADSUrlUtils;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
 import com.eyelinecom.whoisd.sads2.connector.ChatCommand;
@@ -41,6 +42,7 @@ import com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils;
 import com.eyelinecom.whoisd.sads2.utils.ConnectorUtils;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.Logger;
@@ -61,8 +63,10 @@ import java.util.List;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.common.ProfileUtil.inProfile;
 import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.CLEAR_PROFILE;
 import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.INVALIDATE_SESSION;
+import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.SET_DEVELOPER_MODE;
 import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.SHOW_PROFILE;
 import static com.eyelinecom.whoisd.sads2.connector.ChatCommand.WHO_IS;
 import static com.eyelinecom.whoisd.sads2.telegram.util.MarshalUtils.parse;
@@ -175,7 +179,10 @@ public class TelegramMessageConnector extends HttpServlet {
             .where(property("telegram", "id").eq(userId))
             .get();
         if (profile != null) {
-          profile.delete();
+          final boolean isDevModeEnabled = inProfile(profile).getDeveloperMode(req.getServiceId());
+          if (isDevModeEnabled) {
+            profile.delete();
+          }
         }
       }
 
@@ -233,6 +240,18 @@ public class TelegramMessageConnector extends HttpServlet {
     protected String getGatewayRequestDescription(TelegramWebhookRequest httpServletRequest) {
       // Arbitrary description, passed to content Provider via headers (detailed)
       return "Telegram";
+    }
+
+    @Override
+    protected boolean isTerminated(TelegramWebhookRequest req) throws Exception {
+      final String incoming = req.getMessageText();
+
+      final boolean isDevModeEnabled = req.getProfile() != null &&
+          ProfileUtil.inProfile(req.getProfile()).getDeveloperMode(req.getServiceId());
+
+      final ChatCommand command = ChatCommand.match(getServiceId(req), incoming, TELEGRAM);
+      return command == SET_DEVELOPER_MODE ||
+          isDevModeEnabled && asList(SHOW_PROFILE, WHO_IS).contains(command);
     }
 
     @Override
@@ -513,44 +532,76 @@ public class TelegramMessageConnector extends HttpServlet {
 
       Session session = getSessionManager(serviceId).getSession(wnumber);
 
+      final Profile profile = getProfileStorage().find(wnumber);
+      final boolean isDevModeEnabled = inProfile(profile).getDeveloperMode(serviceId);
+
       final ChatCommand cmd = ChatCommand.match(serviceId, incoming, TELEGRAM);
-      if (cmd == INVALIDATE_SESSION) {
+      if (cmd == INVALIDATE_SESSION && isDevModeEnabled) {
         // Invalidate the current session.
         session.close();
         session = getSessionManager(serviceId).getSession(wnumber);
 
-      } else if (cmd == WHO_IS) {
-        final String serviceToken = message.getServiceToken();
-        final User me = getClient().getMe(serviceToken);
+      } else {
+        final TelegramApi client = getClient();
 
-        getClient().sendMessage(
-            session,
-            serviceToken,
-            message
-                .getProfile()
-                .property("telegram-chats", serviceToken)
-                .getValue(),
-            StringUtils.join(
-                new String[] {
-                    "Bot name: @" + me.getUserName() + ".",
-                    "Token: " + serviceToken + ".",
-                    "Service: " + serviceId + ".",
-                    "Mobilizer instance: " + getRootUri()
-                },
-                "\n"
-            )
-        );
+        if (cmd == WHO_IS && isDevModeEnabled) {
+          final String serviceToken = message.getServiceToken();
+          final User me = client.getMe(serviceToken);
 
-      } else if (cmd == SHOW_PROFILE) {
-        final Profile profile = getProfileStorage().find(wnumber);
-        final String serviceToken = message.getServiceToken();
+          client.sendMessage(
+              session,
+              serviceToken,
+              message
+                  .getProfile()
+                  .property("telegram-chats", serviceToken)
+                  .getValue(),
+              StringUtils.join(
+                  new String[] {
+                      "Bot name: @" + me.getUserName() + ".",
+                      "Token: " + serviceToken + ".",
+                      "Service: " + serviceId + ".",
+                      "Mobilizer instance: " + getRootUri()
+                  },
+                  "\n"
+              )
+          );
 
-        getClient().sendMessage(
-            session,
-            serviceToken,
-            profile.property("telegram-chats", serviceToken).getValue(),
-            profile.dump()
-        );
+        } else if (cmd == SHOW_PROFILE && isDevModeEnabled) {
+          final String serviceToken = message.getServiceToken();
+
+          client.sendMessage(
+              session,
+              serviceToken,
+              profile.property("telegram-chats", serviceToken).getValue(),
+              profile.dump()
+          );
+
+        } else if (cmd == SET_DEVELOPER_MODE) {
+          final String value = ChatCommand.getCommandValue(incoming);
+          final Boolean devMode = BooleanUtils.toBooleanObject(value);
+          if (devMode != null) {
+            inProfile(profile).setDeveloperMode(serviceId, devMode);
+
+            final String serviceToken = message.getServiceToken();
+            client.sendMessage(
+                session,
+                serviceToken,
+                profile.property("telegram-chats", serviceToken).getValue(),
+                "Developer mode is " + (devMode ? "enabled" : "disabled") + "."
+            );
+
+          } else {
+            final String serviceToken = message.getServiceToken();
+            client.sendMessage(
+                session,
+                serviceToken,
+                profile.property("telegram-chats", serviceToken).getValue(),
+                "Developer mode is " +
+                    (inProfile(profile).getDeveloperMode(serviceId) ? "enabled" : "disabled") +
+                    "."
+            );
+          }
+        }
       }
 
       final String prevUri = (String) session.getAttribute(ATTR_SESSION_PREVIOUS_PAGE_URI);
