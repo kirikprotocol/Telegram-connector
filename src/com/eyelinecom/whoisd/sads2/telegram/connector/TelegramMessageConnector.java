@@ -181,7 +181,8 @@ public class TelegramMessageConnector extends HttpServlet {
         if (profile != null) {
           final boolean isDevModeEnabled = inProfile(profile).getDeveloperMode(req.getServiceId());
           if (isDevModeEnabled) {
-            profile.delete();
+            inProfile(profile).clear();
+            inProfile(profile).setDeveloperMode(getServiceId(req), true);
           }
         }
       }
@@ -558,9 +559,8 @@ public class TelegramMessageConnector extends HttpServlet {
               StringUtils.join(
                   new String[] {
                       "Bot name: @" + me.getUserName() + ".",
-                      "Token: " + serviceToken + ".",
                       "Service: " + serviceId + ".",
-                      "Mobilizer instance: " + getRootUri()
+                      "MiniApps host: " + getRootUri()
                   },
                   "\n"
               )
