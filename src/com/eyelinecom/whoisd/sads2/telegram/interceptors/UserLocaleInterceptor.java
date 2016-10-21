@@ -23,6 +23,12 @@ public class UserLocaleInterceptor extends BlankInterceptor {
     final String lang = getLangParam(request);
     if (lang != null) {
       contentRequest.getParameters().put(LANG_PARAM, lang);
+
+      // For internal use.
+
+      // XXX: Better find a way to avoid this duplication. Maybe, just put it
+      // into SADSRequest parameters?
+      request.getAttributes().put(LANG_PARAM, lang);
     }
 
     super.beforeContentRequest(request, contentRequest, dispatcher);
