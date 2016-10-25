@@ -87,15 +87,6 @@ public class TelegramWebhookRequest extends StoredHttpRequest implements Loggabl
     this.event = event;
   }
 
-  public Long getRequestTimestamp() throws IOException, TelegramApiException {
-    final Update update = asUpdate();
-    if (update.getMessage() != null && update.getMessage().getDate() != null) {
-      return update.getMessage().getDate().longValue();
-    }
-
-    return null;
-  }
-
   @Override
   public Object getLoggableData() {
     try {

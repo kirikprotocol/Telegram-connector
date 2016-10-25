@@ -1,12 +1,17 @@
 package com.eyelinecom.whoisd.sads2.telegram.xslt;
 
 
+import com.eyelinecom.whoisd.sads2.common.DocumentUtils;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeSet;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
 import static org.junit.Assert.assertEquals;
@@ -100,4 +105,27 @@ public class AttributeReaderTest {
     assertEquals("baz", getAttributes(message).getString("bar").orNull());
   }
 
+  @Test
+  public void test3() throws DocumentException {
+    final String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<page attributes=\"bar: baz\">\n" +
+        "  <message> Введите код доступа</message>\n" +
+        "  <attributes>\n" +
+        "    <attribute name=\"foo\" value=\"bar\"/>\n" +
+        "    <attribute name=\"telegram.keyboard.onetime\" value=\"true\"/>\n" +
+        "  </attributes>\n" +
+        "  <input href=\"entry_2.jsp\" name=\"passwd\"/>\n" +
+        "</page>";
+
+    final Document doc = DocumentUtils.parseDocument(xml.getBytes(StandardCharsets.UTF_8));
+
+    final AttributeSet rootAttrs = AttributeReader.getAttributes(doc);
+
+    assertNull(rootAttrs.getString("keywords").orNull());
+    assertEquals("bar", rootAttrs.getString("foo").orNull());
+    assertEquals("baz", rootAttrs.getString("bar").orNull());
+
+    final AttributeSet pageAttrs = AttributeReader.getAttributes(doc.selectSingleNode("//page"));
+    assertEquals(true, pageAttrs.getBoolean("telegram.keyboard.onetime").or(false));
+  }
 }

@@ -263,12 +263,13 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected Long getRequestTimestamp(TelegramWebhookRequest req) {
+    protected Long getEventOrder(TelegramWebhookRequest req) {
       try {
-        return req.getRequestTimestamp();
+        final Integer updateId = req.asUpdate().getUpdateId();
+        return updateId == null ? null : updateId.longValue();
 
       } catch (IOException | TelegramApiException e) {
-        getLog(req).error("Failed obtaining request timestamp", e);
+        getLog(req).error("Failed obtaining request update_id", e);
         return null;
       }
     }
