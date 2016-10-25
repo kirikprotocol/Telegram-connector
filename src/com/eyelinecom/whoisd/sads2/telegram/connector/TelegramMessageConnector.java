@@ -263,6 +263,17 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
+    protected Long getRequestTimestamp(TelegramWebhookRequest req) {
+      try {
+        return req.getRequestTimestamp();
+
+      } catch (IOException | TelegramApiException e) {
+        getLog(req).error("Failed obtaining request timestamp", e);
+        return null;
+      }
+    }
+
+    @Override
     protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
       try {
         handleFileUpload(sadsRequest, req);
