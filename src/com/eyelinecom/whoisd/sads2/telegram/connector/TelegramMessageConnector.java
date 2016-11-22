@@ -106,6 +106,19 @@ public class TelegramMessageConnector extends HttpServlet {
 
     final TelegramWebhookRequest request = new TelegramWebhookRequest(req);
 
+    // We cannot handle some types of TG requests. Detect them here and stop processing
+    // to avoid responding with an error, which might result in continuous resend attempts.
+    try {
+      final Update update = request.asUpdate();
+      if (update.getMessage() == null && update.getCallbackQuery() == null) {
+        ConnectorUtils.fillHttpResponse(resp, connector.buildWebhookResponse(200));
+        return;
+      }
+
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
+
     final SADSResponse response = connector.process(request);
     ConnectorUtils.fillHttpResponse(resp, response);
   }
