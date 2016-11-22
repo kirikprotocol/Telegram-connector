@@ -10,8 +10,6 @@ import com.eyelinecom.whoisd.sads2.connector.SADSResponse;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.content.attachments.Attachment;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
-import com.eyelinecom.whoisd.sads2.executors.connector.SADSInitializer;
-import com.eyelinecom.whoisd.sads2.resource.ResourceStorage;
 import com.eyelinecom.whoisd.sads2.telegram.api.TgAttachmentMethodConverter;
 import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
@@ -51,13 +49,11 @@ public class TelegramAttachmentPushInterceptor extends TelegramPushBase implemen
     }
 
     try {
-      final ResourceStorage resourceStorage = SADSInitializer.getResourceStorage();
-
       if (StringUtils.isBlank(request.getParameters().get("sadsSmsMessage"))) {
         sendTelegramMessage(request, content, response);
       }
 
-      dispatcher.stop(response);
+      //dispatcher.stop(response);
 
     } catch (Exception e) {
       throw new InterceptionException(e);
