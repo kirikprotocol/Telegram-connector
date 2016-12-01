@@ -48,8 +48,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.10.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/jars/error_prone_annotations-2.0.2.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/jars/j2objc-annotations-0.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.mojo/animal-sniffer-annotations/jars/animal-sniffer-annotations-1.14.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/dom4j/dom4j/jars/dom4j-1.6.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/jaxme/jaxme-api/jars/jaxme-api-0.3.jar!/" />
@@ -117,10 +115,7 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.mobilizer/personalization-helpers/jars/personalization-helpers-0.10.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppcharsets/jars/smppcharsets-1.1.3.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.mobilizer/sads-wnumber/jars/sads-wnumber-0.05.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-dbcp/commons-dbcp/jars/commons-dbcp-1.4.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/jars/commons-pool-1.5.4.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-jta_1.1_spec/jars/geronimo-jta_1.1_spec-1.1.1.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.mobicents.servlet.sip/sip-servlets-spec/jars/sip-servlets-spec-1.7.0.FINAL.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.sip/jain-sip-api/jars/jain-sip-api-1.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppsme/jars/smppsme-3.5.0.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/conpool/jars/conpool-2.0.11.jar!/" />
@@ -150,9 +145,13 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/jars/javax.el-api-2.2.4.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/jars/pvss-3.0.13.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/jars/utils-1.0.64.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/bundles/guava-19.0.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.utils/db-template/jars/db-template-0.03.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.mobilizer/sads-smpp/jars/sads-smpp-0.106.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-dbcp/commons-dbcp/jars/commons-dbcp-1.2.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/jars/commons-pool-1.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.mobicents.servlet.sip/sip-servlets-spec/jars/sip-servlets-spec-1.1.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/bundles/guava-20.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/jars/error_prone_annotations-2.0.12.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/jars/j2objc-annotations-1.1.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/javadocs/commons-collections-3.2.1-javadoc.jar!/" />
@@ -162,8 +161,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-logging/commons-logging/javadocs/commons-logging-1.1.1-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/log4j/log4j/javadocs/log4j-1.2.17-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/javadocs/junit-4.10-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/javadocs/error_prone_annotations-2.0.2-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/javadocs/j2objc-annotations-0.1-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.mojo/animal-sniffer-annotations/javadocs/animal-sniffer-annotations-1.14-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/jaxen/jaxen/javadocs/jaxen-1.1.6-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppapi/javadocs/smppapi-javadoc-5.1.2.zip!/" />
@@ -186,10 +183,7 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/javax.mail/javadocs/javax.mail-1.4.5-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/mailapi/javadocs/mailapi-1.4.5-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppcharsets/javadocs/smppcharsets-javadoc-1.1.3.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-dbcp/commons-dbcp/javadocs/commons-dbcp-1.4-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/javadocs/commons-pool-1.5.4-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-jta_1.1_spec/javadocs/geronimo-jta_1.1_spec-1.1.1-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.mobicents.servlet.sip/sip-servlets-spec/javadocs/sip-servlets-spec-1.7.0.FINAL-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppsme/javadocs/smppsme-javadoc-3.5.0.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/conpool/javadocs/conpool-javadoc-2.0.11.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppappgw/javadocs/smppappgw-javadoc-3.5.0.zip!/" />
@@ -211,7 +205,9 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/javadocs/javax.el-api-2.2.4-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/javadocs/pvss-javadoc-3.0.13.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/javadocs/utils-javadoc-1.0.64.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/javadocs/guava-19.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/javadocs/guava-20.0-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/javadocs/error_prone_annotations-2.0.12-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/javadocs/j2objc-annotations-1.1-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-collections/commons-collections/sources/commons-collections-3.2.1-sources.jar!/" />
@@ -229,8 +225,6 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.openejb/javaee-api/sources/javaee-api-5.0-2-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/sources/junit-4.10-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/sources/hamcrest-core-1.1-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/sources/error_prone_annotations-2.0.2-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/sources/j2objc-annotations-0.1-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.codehaus.mojo/animal-sniffer-annotations/sources/animal-sniffer-annotations-1.14-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/dom4j/dom4j/sources/dom4j-1.6.1-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/jaxen/jaxen/sources/jaxen-1.1.6-sources.jar!/" />
@@ -279,10 +273,7 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/javax.mail/sources/javax.mail-1.4.5-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.sun.mail/mailapi/sources/mailapi-1.4.5-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppcharsets/sources/smppcharsets-sources-1.1.3.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-dbcp/commons-dbcp/sources/commons-dbcp-1.4-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/sources/commons-pool-1.5.4-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.geronimo.specs/geronimo-jta_1.1_spec/sources/geronimo-jta_1.1_spec-1.1.1-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.mobicents.servlet.sip/sip-servlets-spec/sources/sip-servlets-spec-1.7.0.FINAL-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.sip/jain-sip-api/sources/jain-sip-api-1.2-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.smpp/smppsme/sources/smppsme-sources-3.5.0.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/conpool/sources/conpool-sources-2.0.11.zip!/" />
@@ -310,7 +301,11 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.el/javax.el-api/sources/javax.el-api-2.2.4-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.esdp/pvss/sources/pvss-sources-3.0.13.zip!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/mobi.eyeline.util/utils/sources/utils-sources-1.0.64.zip!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/sources/guava-19.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-dbcp/commons-dbcp/sources/commons-dbcp-1.2.2-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/sources/commons-pool-1.3-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.guava/guava/sources/guava-20.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.errorprone/error_prone_annotations/sources/error_prone_annotations-2.0.12-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.j2objc/j2objc-annotations/sources/j2objc-annotations-1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
