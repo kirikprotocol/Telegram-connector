@@ -119,7 +119,17 @@ public class TelegramMessageConnector extends HttpServlet {
       log.error(e.getMessage(), e);
     }
 
-    final SADSResponse response = connector.process(request);
+    SADSResponse response = connector.buildWebhookResponse(200);
+    try {
+      final SADSResponse connectorResponse = connector.process(request);
+      if (connectorResponse != null) {
+        response = connectorResponse;
+      }
+
+    } catch (Exception e) {
+      response = connector.buildQueueErrorResponse(e, request, null);
+    }
+
     ConnectorUtils.fillHttpResponse(resp, response);
   }
 
@@ -163,10 +173,25 @@ public class TelegramMessageConnector extends HttpServlet {
     }
 
     @Override
-    protected SADSResponse buildQueueErrorResponse(Exception e,
-                                                   TelegramWebhookRequest httpServletRequest,
+    protected SADSResponse buildQueueErrorResponse(Exception cause,
+                                                   TelegramWebhookRequest req,
                                                    SADSRequest sadsRequest) {
-      return buildWebhookResponse(500);
+
+      String content = null;
+      try {
+        content = req.getContent();
+
+      } catch (IOException e) {
+        log.error("Failed reading request content (should never happen)", e);
+      }
+
+      //
+      // Returning failure code here might lead to an infinite loop, in which case
+      // TG redelivers a single erroneous message again and again without even trying other requests
+      // and effectively resulting in total channel halt.
+      //
+      log.warn("Failed processing request, content = [" + content + "]", cause);
+      return buildWebhookResponse(200);
     }
 
     @Override
