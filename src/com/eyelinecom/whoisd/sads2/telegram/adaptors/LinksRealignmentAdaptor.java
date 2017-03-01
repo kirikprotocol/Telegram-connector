@@ -2,8 +2,10 @@ package com.eyelinecom.whoisd.sads2.telegram.adaptors;
 
 import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.adaptor.DocumentAdaptor;
+import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.content.ContentResponseUtils;
+import com.eyelinecom.whoisd.sads2.content.attributes.AttributeSet;
 import com.eyelinecom.whoisd.sads2.exception.AdaptationException;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
 import org.apache.commons.collections.CollectionUtils;
@@ -15,8 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Boolean.parseBoolean;
-import static java.lang.Integer.parseInt;
+import static com.eyelinecom.whoisd.sads2.content.attributes.AttributeReader.getAttributes;
 
 /**
  * Splits buttons into several rows to not exceed maximal allowed line length.
@@ -40,11 +41,11 @@ public class LinksRealignmentAdaptor extends DocumentAdaptor {
 
     final ServiceConfig serviceConfig = getServiceScenario(response);
 
-    if (!isEnabled(serviceConfig)) {
+    if (!isEnabled(serviceConfig, document)) {
       return document;
     }
 
-    final int maxLineLength = getMaxLineLength(serviceConfig);
+    final int maxLineLength = getMaxLineLength(serviceConfig, document);
 
     return realign(document, maxLineLength);
   }
@@ -153,20 +154,22 @@ public class LinksRealignmentAdaptor extends DocumentAdaptor {
     return rows;
   }
 
-  protected int getMaxLineLength(ServiceConfig serviceConfig) {
-    return parseInt(
-        serviceConfig.getAttributes().getProperty(
-            CONF_TELEGRAM_LINKS_REALIGNMENT_THRESHOLD,
-            String.valueOf(TELEGRAM_LINKS_REALIGNMENT_THRESHOLD_DEFAULT))
-    );
+  protected int getMaxLineLength(ServiceConfig serviceConfig, Document doc) {
+    final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
+    final Integer threshold = pageAttributes.getInteger(CONF_TELEGRAM_LINKS_REALIGNMENT_THRESHOLD)
+            .or(InitUtils.getInt(CONF_TELEGRAM_LINKS_REALIGNMENT_THRESHOLD,
+                    TELEGRAM_LINKS_REALIGNMENT_THRESHOLD_DEFAULT,
+                    serviceConfig.getAttributes()));
+    if (threshold==null || threshold<=0) {
+      return TELEGRAM_LINKS_REALIGNMENT_THRESHOLD_DEFAULT;
+    }
+    return threshold;
   }
 
-  protected boolean isEnabled(ServiceConfig serviceConfig) {
-    return parseBoolean(
-        serviceConfig.getAttributes().getProperty(
-            CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED,
-            "false")
-    );
+  protected boolean isEnabled(ServiceConfig serviceConfig, Document doc) {
+    final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
+    return pageAttributes.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED).
+            or(InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes()));
   }
 
   protected void checkRequest(ContentResponse response) throws AdaptationException {
