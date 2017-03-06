@@ -42,11 +42,11 @@ public class LinksRealignmentAdaptor extends DocumentAdaptor {
 
     final ServiceConfig serviceConfig = getServiceScenario(response);
 
-    if (!isEnabled(serviceConfig, document)) {
+    if (!isEnabled(serviceConfig, document, response)) {
       return document;
     }
 
-    final int maxLineLength = getMaxLineLength(serviceConfig, document);
+    final int maxLineLength = getMaxLineLength(serviceConfig, document, response);
 
     return realign(document, maxLineLength);
   }
@@ -155,26 +155,37 @@ public class LinksRealignmentAdaptor extends DocumentAdaptor {
     return rows;
   }
 
-  protected int getMaxLineLength(ServiceConfig serviceConfig, Document doc) {
+  protected int getMaxLineLength(ServiceConfig serviceConfig, Document doc, ContentResponse response) {
     final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
     final Integer threshold = pageAttributes.getInteger(CONF_TELEGRAM_LINKS_REALIGNMENT_THRESHOLD)
             .or(InitUtils.getInt(CONF_TELEGRAM_LINKS_REALIGNMENT_THRESHOLD,
                     TELEGRAM_LINKS_REALIGNMENT_THRESHOLD_DEFAULT,
                     serviceConfig.getAttributes()));
+
     if (threshold==null || threshold<=0) {
       return TELEGRAM_LINKS_REALIGNMENT_THRESHOLD_DEFAULT;
     }
     return threshold;
   }
 
-  protected boolean isEnabled(ServiceConfig serviceConfig, Document doc) {
+  protected boolean isEnabled(ServiceConfig serviceConfig, Document doc, ContentResponse response) {
     final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
-      Optional<Boolean> pageOption = pageAttributes.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED);
-      if (pageOption.isPresent()) {
-          return pageOption.get();
-      } else {
-          return InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes());
-      }
+    Optional<Boolean> pageOption = pageAttributes.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED);
+    if (pageOption.isPresent()) {
+        return pageOption.get();
+    } else {
+        Object attr = response.getAttributes().get(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED);
+        if (attr == null) {
+            return InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes());
+        } else {
+            try{
+                return Boolean.parseBoolean(attr.toString());
+            } catch (Exception e) {
+                //
+            }
+        }
+    }
+    return InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes());
   }
 
   protected void checkRequest(ContentResponse response) throws AdaptationException {
