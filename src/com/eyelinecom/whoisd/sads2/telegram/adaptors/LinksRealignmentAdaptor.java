@@ -8,6 +8,7 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponseUtils;
 import com.eyelinecom.whoisd.sads2.content.attributes.AttributeSet;
 import com.eyelinecom.whoisd.sads2.exception.AdaptationException;
 import com.eyelinecom.whoisd.sads2.registry.ServiceConfig;
+import com.google.common.base.Optional;
 import org.apache.commons.collections.CollectionUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -168,8 +169,12 @@ public class LinksRealignmentAdaptor extends DocumentAdaptor {
 
   protected boolean isEnabled(ServiceConfig serviceConfig, Document doc) {
     final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
-    return pageAttributes.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED).
-            or(InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes()));
+      Optional<Boolean> pageOption = pageAttributes.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED);
+      if (pageOption.isPresent()) {
+          return pageOption.get();
+      } else {
+          return InitUtils.getBoolean(CONF_TELEGRAM_LINKS_REALIGNMENT_ENABLED, false, serviceConfig.getAttributes());
+      }
   }
 
   protected void checkRequest(ContentResponse response) throws AdaptationException {
