@@ -21,8 +21,8 @@ class LinksRealignmentAdaptorTestHarness {
                                              final int maxLength) {
 
     return new LinksRealignmentAdaptor() {
-      @Override protected int getMaxLineLength(ServiceConfig serviceConfig, Document doc) { return maxLength; }
-      @Override protected boolean isEnabled(ServiceConfig serviceConfig, Document doc) { return enabled; }
+      @Override protected int getMaxLineLength(ServiceConfig serviceConfig, Document doc, ContentResponse response) { return maxLength; }
+      @Override protected boolean isEnabled(ServiceConfig serviceConfig, Document doc, ContentResponse response) { return enabled; }
       @Override protected void checkRequest(ContentResponse response) { }
       @Override protected ServiceConfig getServiceScenario(ContentResponse response) { return null; }
     };
