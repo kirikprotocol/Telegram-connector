@@ -302,4 +302,34 @@ public class ContentExtractionTest {
     assertNull(root.selectSingleNode("//input[@type='hidden']"));
   }
 
+  @Test
+  public void test13() throws Exception {
+    final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<page><message>1\n" +
+        "\n" +
+        "  2\n" +
+        "\n" +
+        "\n" +
+        "  3\n" +
+        "\n" +
+        "</message></page>";
+    final Document rawDocument =
+        new SAXReader().read(new ByteArrayInputStream(text.getBytes()));
+
+    final String content =
+        TelegramPushInterceptor.getContent(rawDocument.getRootElement());
+
+    assertEquals(
+        "<message>1\n" +
+            "\n" +
+            "2\n" +
+            "\n" +
+            "\n" +
+            "3\n" +
+            "\n" +
+            "</message>",
+        content
+    );
+  }
+
 }

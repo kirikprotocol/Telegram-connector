@@ -257,7 +257,7 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       //noinspection unchecked
       for (Node e : (List<Node>) messageElement.selectNodes("//text()")) {
         if (!"pre".equals(e.getParent().getName())) {
-          e.setText(e.getText().replaceAll("\\n\\s+", "\n"));
+          e.setText(e.getText().replaceAll("\\n[ \\t]+", "\n"));
         }
       }
 
