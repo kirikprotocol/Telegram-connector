@@ -3,7 +3,7 @@
   <dependencies>
     <dependency org="commons-collections" name="commons-collections" rev="3.2.1"/>
 
-    <dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.31,)" changing="true" transitive="true"/>
+    <dependency org="mobi.eyeline.mobilizer" name="sads-utils" rev="[0.37,)" changing="true" transitive="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-core" rev="[0.37,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-impl" rev="[0.164,)" changing="true"/>
     <dependency org="mobi.eyeline.mobilizer" name="sads-profile-storage" rev="[0.6,)" changing="true"/>
