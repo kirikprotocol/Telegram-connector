@@ -1,6 +1,5 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
-import com.eyelinecom.whoisd.sads2.Protocol;
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
 import com.eyelinecom.whoisd.sads2.common.SADSLogger;
 import com.eyelinecom.whoisd.sads2.common.UrlUtils;
@@ -10,23 +9,18 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import org.apache.commons.logging.Log;
 
-import static com.eyelinecom.whoisd.sads2.Protocol.FACEBOOK;
-import static com.eyelinecom.whoisd.sads2.Protocol.LINE;
-import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
-import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
-import static com.eyelinecom.whoisd.sads2.Protocol.VKONTAKTE;
-
 public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInterceptor {
 
   /**
    * Request url must start with {@code verify://msisdn?success_url=...} to mark that
    * verification is needed.
    */
-  private static final String MSISDN_REQUIRED_SIGN            = "verify://msisdn";
+  private static final String MSISDN_REQUIRED_PREFIX          = "verify://msisdn";
+
   private static final String SUCCESS_REDIRECT_URL_PARAM      = "success_url";
   private static final String PREVIOUS_PAGE_URL_SESSION_PARAM = "previous-page-url";
 
-  /** Supply MSISDN as a result of plugin execution */
+  /** Request parameter to return MSISDN as a result of plugin execution */
   private static final String MSISDN_URL_PARAM                = "msisdn";
 
   @Override
@@ -39,10 +33,7 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
       return;
     }
 
-    final Protocol protocol = request.getProtocol();
-    if (protocol == TELEGRAM || protocol == SKYPE || protocol == FACEBOOK || protocol == VKONTAKTE || protocol == LINE) {
-      request.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
-    }
+    request.getSession().setAttribute(PREVIOUS_PAGE_URL_SESSION_PARAM, request.getResourceURI());
   }
 
   @Override
@@ -52,7 +43,7 @@ public class MsisdnLinkVerificationInterceptor extends MsisdnAttrVerificationInt
 
     final Log log = SADSLogger.getLogger(request.getServiceId(), getClass());
     final String requestUri = request.getResourceURI();
-    if (requestUri == null || !requestUri.startsWith(MSISDN_REQUIRED_SIGN)){
+    if (requestUri == null || !requestUri.startsWith(MSISDN_REQUIRED_PREFIX)){
        return;
     }
 

@@ -11,15 +11,19 @@ import com.eyelinecom.whoisd.sads2.interceptor.BlankInterceptor;
 import com.eyelinecom.whoisd.sads2.profile.Profile.PropertyQuery;
 import org.apache.commons.logging.Log;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Properties;
 
 import static com.eyelinecom.whoisd.sads2.Protocol.FACEBOOK;
 import static com.eyelinecom.whoisd.sads2.Protocol.LINE;
 import static com.eyelinecom.whoisd.sads2.Protocol.SKYPE;
 import static com.eyelinecom.whoisd.sads2.Protocol.TELEGRAM;
+import static com.eyelinecom.whoisd.sads2.Protocol.VIBER;
 import static com.eyelinecom.whoisd.sads2.Protocol.VKONTAKTE;
 import static com.eyelinecom.whoisd.sads2.Protocol.XHTML_MP;
 import static java.lang.Boolean.parseBoolean;
+import static java.util.Arrays.asList;
 
 public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
 
@@ -28,13 +32,16 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
    */
   private static final String ATTR_MSISDN_REQUIRED  = "msisdn-required";
 
-  private static final String CONF_ENABLED_TG         = "telegram.msisdn.confirmation.enabled";
-  private static final String CONF_ENABLED_SKYPE      = "skype.msisdn.confirmation.enabled";
-  private static final String CONF_ENABLED_FACEBOOK   = "facebook.msisdn.confirmation.enabled";
-  private static final String CONF_ENABLED_VKONTAKTE  = "vkontakte.msisdn.confirmation.enabled";
-  private static final String CONF_ENABLED_LINE       = "line.msisdn.confirmation.enabled";
+  static final String VAR_MSISDN_CONFIRMATION_REDIRECTED  = "MSISDN_CONFIRMATION_REDIRECTED";
 
-  static final String VAR_MSISDN_CONFIRMATION_REDIRECTED = "MSISDN_CONFIRMATION_REDIRECTED";
+  private static final Collection<Protocol> PROTOCOLS_SUPPORTED = new HashSet<>(asList(
+      TELEGRAM,
+      SKYPE,
+      FACEBOOK,
+      VKONTAKTE,
+      LINE,
+      VIBER
+  ));
 
   @Override
   public void afterContentResponse(SADSRequest request,
@@ -74,26 +81,26 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
     }
   }
 
-  protected boolean isEnabled(SADSRequest request) {
+  @SuppressWarnings("SimplifiableIfStatement")
+  boolean isEnabled(SADSRequest request) {
     final Properties attrs = request.getServiceScenario().getAttributes();
     final Protocol protocol = request.getProtocol();
 
-    //noinspection SimplifiableIfStatement
     if ((protocol == XHTML_MP) || (protocol == Protocol.USSD)) {
-      // No need for verification as these protocols always have .
+      // No need for verification as these protocols always have MSISDN.
       return false;
 
+    } else if (PROTOCOLS_SUPPORTED.contains(protocol)) {
+      return parseBoolean(
+          attrs.getProperty(
+              protocol.getProtocolName().toLowerCase() + ".msisdn.confirmation.enabled",
+              "false"
+          )
+      );
+
     } else {
-      return
-          (protocol == TELEGRAM && parseBoolean(attrs.getProperty(CONF_ENABLED_TG, "false")))
-              ||
-          (protocol == SKYPE && parseBoolean(attrs.getProperty(CONF_ENABLED_SKYPE, "false")))
-              ||
-          (protocol == FACEBOOK && parseBoolean(attrs.getProperty(CONF_ENABLED_FACEBOOK, "false")))
-              ||
-          (protocol == VKONTAKTE && parseBoolean(attrs.getProperty(CONF_ENABLED_VKONTAKTE, "false")))
-              ||
-          (protocol == LINE && parseBoolean(attrs.getProperty(CONF_ENABLED_LINE, "false")));
+      // Unsupported protocol.
+      return false;
     }
   }
 
@@ -105,10 +112,10 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
     redirectTo(request, dispatcher, log, prevUri);
   }
 
-  protected void redirectTo(SADSRequest request,
-                            RequestDispatcher dispatcher,
-                            Log log,
-                            String onSuccess) throws Exception {
+  void redirectTo(SADSRequest request,
+                  RequestDispatcher dispatcher,
+                  Log log,
+                  String onSuccess) throws Exception {
 
     final String serviceId = request.getServiceId();
     final String redirectUri =
@@ -140,13 +147,11 @@ public class MsisdnAttrVerificationInterceptor extends BlankInterceptor {
     redirectBack(request, dispatcher, originalUrl);
   }
 
-  String redirectBack(SADSRequest request,
-                      RequestDispatcher dispatcher,
-                      String originalUrl) throws Exception {
+  void redirectBack(SADSRequest request,
+                    RequestDispatcher dispatcher,
+                    String originalUrl) throws Exception {
     request.setResourceURI(originalUrl);
     dispatcher.processRequest(request);
-
-    return originalUrl;
   }
 
   String popOrigUrl(String msisdn, SADSRequest request, Log log) {
