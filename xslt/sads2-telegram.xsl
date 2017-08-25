@@ -49,11 +49,17 @@
   </xsl:template>
 
   <xsl:template match="a">
-    <xsl:text> </xsl:text>
-    <xsl:if test="string-length(text()) > 0">
-      <xsl:value-of select='text()'/><xsl:text>: </xsl:text>
-    </xsl:if>
-    <xsl:value-of select='@href'/><xsl:text> </xsl:text>
+    <xsl:copy-of select="."/>
+    <!-- Markdown format -->
+    <!--<xsl:choose>
+      <xsl:when test="string-length(text()) > 0">
+        <xsl:text>[</xsl:text><xsl:value-of select='@href'/><xsl:text>]</xsl:text>
+        <xsl:text>(</xsl:text><xsl:value-of select='text()'/><xsl:text>)</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select='@href'/>
+      </xsl:otherwise>
+    </xsl:choose>-->
   </xsl:template>
 
   <xsl:template match="u">
