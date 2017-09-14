@@ -76,6 +76,7 @@ import static com.google.common.collect.Iterables.all;
 import static java.util.Arrays.asList;
 
 public class TelegramMessageConnector extends HttpServlet {
+  public static final String ATTR_TELEGRAM_RAW_REQUEST_UPDATE = "telegram.raw-request-update";
 
   private final static Log log = new Log4JLogger(Logger.getLogger(TelegramMessageConnector.class));
 
@@ -315,12 +316,15 @@ public class TelegramMessageConnector extends HttpServlet {
     @Override
     protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
       try {
-        handleFileUpload(sadsRequest, req);
-
+        sadsRequest.getAttributes().put(ATTR_TELEGRAM_RAW_REQUEST_UPDATE, req.asUpdate());
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }
-
+      try {
+        handleFileUpload(sadsRequest, req);
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+      }
       super.fillSADSRequest(sadsRequest, req);
     }
 

@@ -22,6 +22,13 @@ public interface TelegramApi {
                       String token,
                       String chatId,
                       String text,
+                      Integer replyToMessageId,
+                      Keyboard keyboard) throws TelegramApiException;
+
+  Message sendMessage(Session session,
+                      String token,
+                      String chatId,
+                      String text,
                       Keyboard keyboard) throws TelegramApiException;
 
   Message sendMessage(Session session,

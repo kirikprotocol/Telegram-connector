@@ -12,13 +12,8 @@ import com.eyelinecom.whoisd.sads2.content.ContentResponse;
 import com.eyelinecom.whoisd.sads2.content.attributes.AttributeSet;
 import com.eyelinecom.whoisd.sads2.exception.InterceptionException;
 import com.eyelinecom.whoisd.sads2.executors.connector.SADSExecutor;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Keyboard;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.KeyboardButton;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.Message;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardHide;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.ReplyKeyboardMarkup;
-import com.eyelinecom.whoisd.sads2.telegram.api.types.TextButton;
+import com.eyelinecom.whoisd.sads2.telegram.api.types.*;
+import com.eyelinecom.whoisd.sads2.telegram.connector.TelegramMessageConnector;
 import com.eyelinecom.whoisd.sads2.telegram.registry.WebHookConfigListener;
 import com.eyelinecom.whoisd.sads2.telegram.resource.TelegramApi;
 import org.apache.commons.collections.IteratorUtils;
@@ -144,10 +139,26 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
           .getValue();
 
       if (!isEditRequest(doc)) {
-        // Hide keyboard if none is present in the current page.
-        // This will hide the keyboard if previous page has links and the current one doesn't.
-        final Message message = client.sendMessage(
-            session, token, chatId, text, keyboard != null ? keyboard : new ReplyKeyboardHide());
+        final AttributeSet pageAttributes = getAttributes(doc.getRootElement());
+        boolean shouldReply = pageAttributes.getBoolean("telegram.reply")
+                .or(false);
+        Message message = null;
+        if (shouldReply) {
+          Update originalRequest = (Update) request.getAttributes().get(TelegramMessageConnector.ATTR_TELEGRAM_RAW_REQUEST_UPDATE);
+          if (originalRequest!=null) {
+            Message originalMessage = originalRequest.getMessage();
+            if (originalMessage!=null) {
+              message = client.sendMessage(
+                      session, token, chatId, text, originalMessage.getMessageId(), keyboard != null ? keyboard : new ReplyKeyboardHide());
+            }
+          }
+        }
+        if (message == null) {
+          // Hide keyboard if none is present in the current page.
+          // This will hide the keyboard if previous page has links and the current one doesn't.
+          message = client.sendMessage(
+                  session, token, chatId, text, keyboard != null ? keyboard : new ReplyKeyboardHide());
+        }
 
         // Save `content page ID` -> `Telegram message ID mapping`.
         final String messageId = getMessageId(doc);

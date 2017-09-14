@@ -109,6 +109,7 @@ public class TelegramApiImpl implements TelegramApi {
                              String token,
                              String chatId,
                              String text,
+                             Integer replyToMessageId,
                              Keyboard keyboard) throws TelegramApiException {
 
     acquireChatLimit(session, chatId);
@@ -118,6 +119,9 @@ public class TelegramApiImpl implements TelegramApi {
     method.setText(text);
     // Always using HTML seems quite safe.
     method.setParseMode("HTML");
+    if (replyToMessageId!=null) {
+      method.setReplyToMessageId(replyToMessageId);
+    }
     if (keyboard != null) {
       method.setReplyMarkup(keyboard);
     }
@@ -127,6 +131,15 @@ public class TelegramApiImpl implements TelegramApi {
     }
 
     return call(token, method);
+  }
+
+  @Override
+  public Message sendMessage(Session session,
+                             String token,
+                             String chatId,
+                             String text,
+                             Keyboard keyboard) throws TelegramApiException {
+    return sendMessage(session, token, chatId, text, null, keyboard);
   }
 
   @Override
