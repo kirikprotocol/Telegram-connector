@@ -101,4 +101,9 @@ public class TransformTest {
   public void test12() throws Exception {
     checkTransform("content-12.xml", "response-12.xml");
   }
+
+  @Test
+  public void test13() throws Exception {
+    checkTransform("content-13.xml", "response-13.xml");
+  }
 }
