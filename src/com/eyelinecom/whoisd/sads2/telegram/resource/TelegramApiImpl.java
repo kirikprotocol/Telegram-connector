@@ -9,12 +9,7 @@ import com.eyelinecom.whoisd.sads2.executors.connector.Context;
 import com.eyelinecom.whoisd.sads2.resource.ResourceFactory;
 import com.eyelinecom.whoisd.sads2.telegram.TelegramApiException;
 import com.eyelinecom.whoisd.sads2.telegram.api.BotApiClient;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.ApiSendMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.BaseApiMethod;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.EditMessageText;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetFile;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.GetMe;
-import com.eyelinecom.whoisd.sads2.telegram.api.methods.SendMessage;
+import com.eyelinecom.whoisd.sads2.telegram.api.methods.*;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.ApiType;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.File;
 import com.eyelinecom.whoisd.sads2.telegram.api.types.InlineKeyboardMarkup;
@@ -130,6 +125,19 @@ public class TelegramApiImpl implements TelegramApi {
       detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
     }
 
+    return call(token, method);
+  }
+
+  @Override
+  public Message forwardMessage(Session session, String token, String chatId, String fromChatId, boolean disableNotification, Integer messageId) throws TelegramApiException {
+    ForwardMessage method = new ForwardMessage();
+    method.setChatId(chatId);
+    method.setFromChatId(fromChatId);
+    method.setDisableNotification(disableNotification);
+    method.setMessageId(messageId);
+    if (Context.getSadsRequest() != null) {
+      detailedStatLogger.onOuterResponse(Context.getSadsRequest(), method);
+    }
     return call(token, method);
   }
 

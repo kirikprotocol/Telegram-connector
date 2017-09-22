@@ -316,10 +316,17 @@ public class TelegramMessageConnector extends HttpServlet {
     @Override
     protected void fillSADSRequest(SADSRequest sadsRequest, TelegramWebhookRequest req) {
       try {
-        sadsRequest.getAttributes().put(ATTR_TELEGRAM_RAW_REQUEST_UPDATE, req.asUpdate());
+        Update update = req.asUpdate();
+        sadsRequest.getAttributes().put(ATTR_TELEGRAM_RAW_REQUEST_UPDATE, update);
+        Message message = update.getMessage();
+        Long chatId = message.getChat().getId();
+        Integer messageId = message.getMessageId();
+        String eventId = chatId+":"+messageId;
+        sadsRequest.getParameters().put("event.id", eventId);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }
+
       try {
         handleFileUpload(sadsRequest, req);
       } catch (Exception e) {

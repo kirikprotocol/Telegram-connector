@@ -1,6 +1,7 @@
 package com.eyelinecom.whoisd.sads2.telegram.interceptors;
 
 import com.eyelinecom.whoisd.sads2.RequestDispatcher;
+import com.eyelinecom.whoisd.sads2.common.InitUtils;
 import com.eyelinecom.whoisd.sads2.common.Initable;
 import com.eyelinecom.whoisd.sads2.common.PageBuilder;
 import com.eyelinecom.whoisd.sads2.common.SADSInitUtils;
@@ -61,7 +62,11 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
     }
 
     try {
-      if (isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
+      if (isNotBlank(request.getParameters().get("forward_event"))) {
+        forwardTelegramMessage(request,
+                request.getParameters().get("forward_event")
+        );
+      } else if (isNotBlank(request.getParameters().get("sadsSmsMessage"))) {
         // TODO: rely on MessagesAdaptor, use concatenated message text & clear them after processing.
         sendTelegramMessage(
             request,
@@ -190,6 +195,37 @@ public class TelegramPushInterceptor extends TelegramPushBase implements Initabl
       session.close();
     }
   }
+
+  /**
+   * Processes forward messages.
+   */
+  private void forwardTelegramMessage(final SADSRequest request,
+                                   String eventId) throws Exception {
+    String[] eventParams = eventId.split(":", 2);
+    String fromChatId = eventParams[0];
+    Integer messageId = Integer.valueOf(eventParams[1]);
+
+    final String serviceId = request.getServiceId();
+    final String token =
+            request.getServiceScenario().getAttributes().getProperty(WebHookConfigListener.CONF_TOKEN);
+
+    String requestChatId = request
+            .getProfile()
+            .property("telegram-chats", token)
+            .getValue();
+
+    String chatId =
+            InitUtils.getString("telegram-override-forward-chatid", requestChatId, request.getServiceScenario().getAttributes());
+
+    client.forwardMessage(
+            request.getSession(),
+            token,
+            chatId,
+            fromChatId,
+            InitUtils.getBoolean("telegram-forward-notification", true, request.getServiceScenario().getAttributes()),
+            messageId);
+  }
+
 
   /**
    * Processes PUSH messages.

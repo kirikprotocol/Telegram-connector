@@ -25,6 +25,13 @@ public interface TelegramApi {
                       Integer replyToMessageId,
                       Keyboard keyboard) throws TelegramApiException;
 
+  Message forwardMessage(Session session,
+                      String token,
+                      String chatId,
+                      String fromChatId,
+                      boolean disableNotification,
+                      Integer messageId) throws TelegramApiException;
+
   Message sendMessage(Session session,
                       String token,
                       String chatId,
