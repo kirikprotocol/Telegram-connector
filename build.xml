@@ -28,7 +28,7 @@
 		<ivy:settings file="${user.home}/.ivy2/ivysettings.xml"/>
 		<ivy:resolve transitive="false"/>
 		<mkdir dir="${build-dir}/lib"/>
-		<ivy:retrieve pattern="${build-dir}/lib/[artifact]-[revision].[ext]" type="jar,bundle"/>
+		<ivy:retrieve pattern="${build-dir}/lib/[artifact]-[revision].[ext]" type="jar,bundle" symlink="true"/>
 		<mkdir dir="${report-dir}/ivy"/>
 		<ivy:report todir="${report-dir}/ivy" graph="true"/>
 	</target>
