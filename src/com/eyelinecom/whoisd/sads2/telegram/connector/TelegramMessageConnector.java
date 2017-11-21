@@ -150,7 +150,8 @@ public class TelegramMessageConnector extends HttpServlet {
                                                SADSRequest sadsRequest) {
       try {
         final Update update = req.asUpdate();
-        if (update.getMessage() != null) {
+        boolean sendTyping = InitUtils.getBoolean("telegram.webhook_send_typing", true, sadsRequest.getServiceScenario().getAttributes());
+        if (update.getMessage() != null && sendTyping) {
           return buildWebhookResponse(
               200,
               new SendChatAction(
